@@ -5,11 +5,11 @@
 
 | No | Nama Lengkap        | NIM | Peran / Modul                               |
 | -- | ------------------- | --- | ------------------------------------------- |
-| 1  | **Rafa Rally Soelistiono**    | 2406344675   | Modul 1 – Autentikasi & Role Management     |
+| 1  | **Rafa Rally Soelistiono**    | 2406344675   | Modul 1,6 – Autentikasi & Role Management & Wishlist    |
 | 2  | **Wildan Al Rizka Yusuf** | 2406407083   | Modul 2 – Booking Lapangan                  |
 | 3  | **Justin Timothy Wirawan**   |  2406413981  | Modul 3 – Manajemen Lapangan (Admin Tempat) |
-| 4  | **Msy. Aulya Salsabila Putri**  | 2406353364  | Modul 4 – Social Invite & Komunitas         |
-| 5  | **Khayra Tazkiya**    | 2406428876   | Modul 5 – Dashboard Admin |
+| 4  | **Msy. Aulya Salsabila Putri**  | 2406353364  | Modul 5 – Iklan         |
+| 5  | **Khayra Tazkiya**    | 2406428876   | Modul 4 – Artikel Berita |
 
 ---
 
@@ -21,20 +21,16 @@ Melalui platform ini:
 
 * Pengguna (*User*) dapat **mencari, memesan, dan bergabung bermain** dengan pemain lain secara mudah.
 * Pemilik tempat (*Penyedia Lapangan*) dapat **mengatur jadwal dan mengelola lapangan** secara efisien.
-* Sistem juga dilengkapi **dashboard** untuk memastikan performa aplikasi dan menentukan arah proses bisnis kedepannya.
 
 ### **Tujuan & manfaat**
 
 * Mempercepat proses dalam transaksi dan booking tempat.
 * Meningkatkan relasi dan hubungan antara sesama penyuka olahraga.
 * Mempermudah penyedia lapangan dalam manajemen wwaktu dan alokasi tempat.
-* Menyediakan dashboard bagi super admin untuk memberikan insight dan model bisnis yang tepat.
 
 ---
 
 ## **Daftar Modul yang Diimplementasikan**
-
----
 
 ### 1. Modul Autentikasi & Role Management
 
@@ -67,12 +63,12 @@ Melalui platform ini:
 
 **AJAX:**
 
-* Validasi username & email unik saat registrasi
-* Update data profil dan penambahan akun
+* Update data profil dan penambahan akun tanpa perlu reload halaman
 
 **Filter Pengguna:**
 
-* Data pribadi (alamat, nomor HP, tanggal lahir) hanya dapat dilihat oleh user yang sudah login
+
+* hanya dapat dilihat oleh user yang sudah login
 
 ---
 
@@ -84,9 +80,8 @@ Melalui platform ini:
 
 * Booking
 
-  * user (Fk : UserProfile)
-  * lapangan (Fk : Lapangan)
   * tanggal
+  * id booking
   * jam_mulai
   * jam_selesai
   * total_harga
@@ -95,10 +90,11 @@ Melalui platform ini:
 
 **Views:**
 
-* booking_list_view() : menampilkan daftar lapangan dengan filter (harga, lokasi, kategori)
+* booking_list_view() : menampilkan daftar lapangan
 * booking_create_view() : form pemesanan lapangan
-* booking_history_view() : menampilkan riwayat booking milik user
 * cancel_booking_view() : membatalkan pemesanan
+* update_booking_view() : update tanggal pemesanan
+
 
 **Templates:**
 
@@ -108,8 +104,7 @@ Melalui platform ini:
 
 **AJAX:**
 
-* Mengecek ketersediaan slot waktu lapangan tanpa reload halaman
-* Konfirmasi atau pembatalan booking tanpa reload halaman
+* CRUD booking tanpa reload halaman
 
 **Filter Pengguna:**
 
@@ -118,36 +113,28 @@ Melalui platform ini:
 
 ### 3. Modul Manajemen Lapangan (Admin Tempat)
 
-**Penanggung Jawab:** Justin Timothy Wirawan
+**Penanggung Jawab:** Msy. Aulya Salsabila Putri
 
 **Models:**
 
 * Lapangan
 
-  * penyedia (Fk : UserProfile)
+  * id lapangan
   * nama
+  * deskripsi
   * kategori
   * lokasi
   * harga_per_jam
-  * fasilitas
   * foto
   * jam_buka
   * jam_tutup
-  * rating
-
-* JadwalLapangan
-
-  * lapangan (Fk : Lapangan)
-  * hari
-  * jam
-  * status (tersedia / tidak)
 
 **Views:**
 
 * lapangan_create_view() : form tambah lapangan
 * lapangan_edit_view() : ubah/update data lapangan
 * lapangan_delete_view() : hapus lapangan
-* lapangan_list_owner_view() : menampilkan daftar lapangan milik penyedia
+* lapangan_list_view() : menampilkan daftar lapangan milik penyedia
 
 **Templates:**
 
@@ -157,90 +144,117 @@ Melalui platform ini:
 
 **AJAX:**
 
-* Update status ketersediaan lapangan tanpa reload halaman
+* CRUD lapangan tanpa reload halaman
 
 **Filter Pengguna:**
 
 * Hanya penyedia lapangan yang dapat mengakses modul ini
----
-
-### 4. Modul Social Invite & Komunitas
-
-**Penanggung Jawab:** *Msy. Aulya Salsabila Putri
-
-**Models:**
-
-* Join Permainan
-
-  * pengirim (Fk : UserProfile)
-  * penerima (Fk : UserProfile)
-  * booking (Fk : Booking, nullable)
-  * status (pending, accepted, declined)
-
-* Message
-
-  * pengirim (Fk : UserProfile)
-  * isi_pesan
-  * timestamp
-
-**Views:**
-
-* online_users_view() : menampilkan daftar user yang sedang online
-* send_invite_view() : mengirim undangan bermain
-* private_chat_view() → menampilkan ruang obrolan dan daftar pesan
-
-**Templates:**
-
-* online_users.html
-* chat_room.html
-  Desain interaktif dengan layout grid dan include untuk komponen seperti sidebar dan daftar user
-
-**AJAX:**
-
-* Mengirim dan menerima pesan tanpa reload
-* Update status online user
-
-**Filter Pengguna:**
-
-* Hanya user login yang dapat melihat dan mengirim undangan
 
 ---
 
-### 5. Modul Dashboard & Deployment Monitoring
+### 4. Modul Artikel Olahraga
 
 **Penanggung Jawab:** Khayra Tazkiya
 
 **Models:**
 
-* SystemLog
+* News
 
-  * user
-  * action
-  * detail
+  * id berita
+  * title
+  * content
+  * kategori
+  * thumbnail
   * created_at
-  * level (INFO, WARNING, ERROR)
 
 **Views:**
 
-* admin_dashboard_view() : menampilkan total user, booking, lapangan, dan log sistem
-* owner_dashboard_view() : menampilkan statistik booking dan pendapatan penyedia
-* user_dashboard_view() : menampilkan ringkasan aktivitas user
+* news_create_view() : form tambah berita
+* news_edit_view() : ubah/update data berita
+* news_delete_view() : hapus berita
+* news_list_view() : menampilkan daftar berita
 
 **Templates:**
 
-* dashboard_admin.html
-* dashboard_owner.html
-* dashboard_user.html
+* berita_form.html
+* berita_list_owner.html
+* berita_detail.html
 
 **AJAX:**
 
-* Refresh data log dan grafik tanpa reload halaman
+* CRUD news olahraga tanpa reload halaman
 
 **Filter Pengguna:**
 
-* Admin: melihat log sistem & status server
-* Penyedia: melihat performa lapangan & statistik pendapatan
-* User: melihat aktivitas pribadi & histori booking
+* Hanya penyedia lapangan yang dapat mengakses modul ini dan buat form dalam modal.
+* Bisa dilihat oleh user
+
+---
+
+### 5. Modul Iklan
+
+**Penanggung Jawab:** Msy. Aulya Salsabila Putri
+
+**Models:**
+
+* Iklan
+
+  * host
+  * lapangan
+  * date
+  * banner
+
+**Views:**
+
+* iklan_create_view() : form tambah iklan
+* iklan_edit_view() : ubah/update data iklan
+* iklan_delete_view() : hapus iklan
+* iklan_list_view() : menampilkan daftar iklan
+
+**Templates:**
+
+* iklan_form.html
+* iklan_list_owner.html
+
+**AJAX:**
+
+* CRUD iklan tanpa reload halaman dan modal
+
+**Filter Pengguna:**
+
+* Hanya penyedia lapangan yang dapat mengakses modul ini
+
+---
+
+### 6. Modul Wishlist
+
+**Penanggung Jawab:** Rafa Rally Soelistiono
+
+**Models:**
+
+* Wishlist
+
+  * user
+  * lapangan
+  * added_on
+
+**Views:**
+
+* wishlist_create_view() : tambah wishlist
+* wishlist_delete_view() : hapus wishlist
+* wishlist_list_view() : menampilkan daftar wishlist user
+
+**Templates:**
+
+* wishlist.html
+
+**AJAX:**
+
+* CRUD wishlist tanpa reload halaman
+
+**Filter Pengguna:**
+
+* Hanya user yang dapat mengakses modul ini
 
 ---
 
@@ -251,7 +265,7 @@ Dataset awal diambil dari beberapa sumber publik untuk kategori **lapangan olahr
 * **Kategori utama produk:** lapangan olahraga : futsal, basket, tenis, padel, badminton
 * **Sumber dataset awal:**
 
-  * Data hasil scrapping website oleh internal kelompok untuk nama lapangan, jam booking, harga, jadwal, dan fasilitas lapangan.
+  * **tautan dataset :** [link dataset](https://opendata.jabarprov.go.id/id/dataset/jumlah-fasilitaslapangan-olahraga-berdasarkan-kategori-dan-desakelurahan-di-jawa-barat)
 
 
 ---
@@ -262,13 +276,13 @@ Dataset awal diambil dari beberapa sumber publik untuk kategori **lapangan olahr
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | **User (Pemain)**             | Dapat mencari lapangan, melakukan booking, mengundang pengguna lain, serta melihat riwayat pemesanan.        |
 | **Penyedia Lapangan (Owner)** | Dapat menambahkan dan mengelola lapangan, mengatur jadwal, serta melihat laporan pemesanan.                  |
-| **Admin**                     | Mengelola seluruh data aplikasi (user, penyedia, sistem log). |
+
 
 ---
 
 ## 🌐 **Tautan Deployment & Desain**
 
-* **Tautan Deployment (PWS):** [link pws](https://courtify.cs.ui.ac.id)
+* **Tautan Deployment (PWS):** [link pws](https://justin-timothy-courtify.pbp.cs.ui.ac.id/)
 * **Link Desain (Figma):** [link figma](https://www.figma.com/design)
 
 ---
