@@ -113,7 +113,7 @@ Melalui platform ini:
 
 ### 3. Modul Manajemen Lapangan (Admin Tempat)
 
-**Penanggung Jawab:** Msy. Aulya Salsabila Putri
+**Penanggung Jawab:** Justin Timothy Wirawan
 
 **Models:**
 
