@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'authentication',
-    'manajemen_lapangan',
+    'lapangan',
     'booking_lapangan',
     'main',
 
