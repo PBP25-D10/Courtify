@@ -113,7 +113,7 @@ Melalui platform ini:
 
 ### 3. Modul Manajemen Lapangan (Admin Tempat)
 
-**Penanggung Jawab:** Msy. Aulya Salsabila Putri
+**Penanggung Jawab:** Justin Timothy Wirawan
 
 **Models:**
 
@@ -283,7 +283,7 @@ Dataset awal diambil dari beberapa sumber publik untuk kategori **lapangan olahr
 ## 🌐 **Tautan Deployment & Desain**
 
 * **Tautan Deployment (PWS):** [link pws](https://justin-timothy-courtify.pbp.cs.ui.ac.id/)
-* **Link Desain (Figma):** [link figma](https://www.figma.com/design)
+* **Link Desain (Figma):** [link figma](https://www.figma.com/design/WFXPpXYAMJKiQBmJfbklMn/PBP-COURTIFY?node-id=0-1&t=oJticVyhsjIw0hyG-1)
 
 ---
 
