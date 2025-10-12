@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+</head>
+<body>
+    <h2>Registrasi Akun Baru</h2>
+    <form id="register-form">
+        {% csrf_token %}
+        <input type="text" id="username" placeholder="Username" required><br>
+        <input type="email" id="email" placeholder="Email" required><br>
+        <input type="password" id="password" placeholder="Password" required><br>
+        
+        <label for="role">Daftar sebagai:</label>
+        <select id="role" name="role" required>
+            <option value="user">Pengguna (Booking Lapangan)</option>
+            <option value="penyedia">Penyedia (Manajemen Lapangan)</option>
+        </select>
+        <br>
+        <button type="submit">Register</button>
+    </form>
+    <div id="message" style="color: red;"></div>
+    <p>Sudah punya akun? <a href="{% url 'authentication:login_page' %}">Login di sini</a></p>
+
+    <script>
+        document.getElementById('register-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // **Ambil nilai dari dropdown peran**
+            const role = document.getElementById('role').value; 
+            
+            const messageDiv = document.getElementById('message');
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            try {
+                const response = await fetch("{% url 'authentication:api_register' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    // **Sertakan 'role' dalam data yang dikirim**
+                    body: JSON.stringify({ username, email, password, role }) 
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    messageDiv.style.color = 'green';
+                    messageDiv.innerText = result.message;
+                    setTimeout(() => {
+                        window.location.href = "{% url 'authentication:login_page' %}";
+                    }, 2000);
+                } else {
+                    messageDiv.style.color = 'red';
+                    messageDiv.innerText = result.message;
+                }
+            } catch (error) {
+                messageDiv.innerText = 'Terjadi kesalahan pada jaringan.';
+            }
+        });
+    </script>
+</body>
+</html>
