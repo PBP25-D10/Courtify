@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h2>Selamat Datang, <span id="user-greeting"></span>!</h2>
+    <p>Anda berhasil login.</p>
+    <button id="logout-button">Logout</button>
+
+    <script>
+        // **Membaca Cookie menggunakan JavaScript**
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const userFirstname = getCookie('user_firstname');
+        if (userFirstname) {
+            document.getElementById('user-greeting').innerText = userFirstname;
+        } else {
+            document.getElementById('user-greeting').innerText = "Pengguna";
+        }
+        
+        // **Handle Logout dengan AJAX**
+        document.getElementById('logout-button').addEventListener('click', async function() {
+            // Kita butuh CSRF token untuk request POST
+            const csrftoken = getCookie('csrftoken'); 
+
+            try {
+                const response = await fetch("{% url 'authentication:api_logout' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    window.location.href = result.redirect_url;
+                } else {
+                    alert('Logout gagal: ' + result.message);
+                }
+            } catch (error) {
+                alert('Terjadi kesalahan jaringan saat logout.');
+            }
+        });
+    </script>
+</body>
+</html>

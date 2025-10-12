@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Courtify</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; }
+        .container { max-width: 600px; margin: auto; }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            color: white;
+            background-color: #007bff;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Welcome to Courtify!</h1>
+        <p>Your one-stop solution for booking sports venues.</p>
+        
+        <div>
+            <a href="{% url 'authentication:login_page' %}" class="btn">Login</a>
+            <a href="{% url 'authentication:register_page' %}" class="btn">Register</a>
+        </div>
+    </div>
+
+</body>
+</html>

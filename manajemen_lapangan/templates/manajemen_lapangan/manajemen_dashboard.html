@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Penyedia</title>
+</head>
+<body>
+    <h2>Selamat Datang, <span id="user-greeting">Penyedia</span>!</h2>
+    <p>Dari sini, Anda bisa mengelola semua lapangan Anda.</p>
+    
+    <ul>
+        <li><a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}">Lihat Daftar Lapangan Saya</a></li>
+        <li><a href="{% url 'manajemen_lapangan:lapangan_create' %}">Tambah Lapangan Baru</a></li>
+    </ul>
+
+    <button id="logout-button">Logout</button>
+
+    <script>
+        // **Membaca Cookie menggunakan JavaScript**
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Menampilkan nama dari cookie 'user_firstname'
+        const userFirstname = getCookie('user_firstname');
+        if (userFirstname) {
+            document.getElementById('user-greeting').innerText = userFirstname;
+        }
+        
+        // **Handle Logout dengan AJAX**
+        document.getElementById('logout-button').addEventListener('click', async function() {
+            const csrftoken = getCookie('csrftoken'); 
+
+            try {
+                // PERHATIKAN: URL sudah diperbaiki ke namespace 'accounts'
+                const response = await fetch("{% url 'authentication:api_logout' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    window.location.href = result.redirect_url;
+                } else {
+                    alert('Logout gagal: ' + result.message);
+                }
+            } catch (error) {
+                alert('Terjadi kesalahan jaringan saat logout.');
+            }
+        });
+    </script>
+</body>
+</html>
