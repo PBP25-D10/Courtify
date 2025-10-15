@@ -1,0 +1,100 @@
+<h2 class="text-xl font-bold mb-4">Riwayat Booking</h2>
+
+<div id="booking-list" class="space-y-4">
+  {% for booking in bookings %}
+  <!-- gunakan fallback kalau booking.id tidak tersedia -->
+  <div
+    class="booking-card border rounded-lg p-4 shadow-sm hover:shadow-md transition"
+    id="booking-{{ booking.id|default:forloop.counter }}"
+    data-booking-id="{{ booking.id|default:forloop.counter }}"
+  >
+    <p><strong>Nama Pemesan:</strong> {{ booking.nama_pemesan }}</p>
+    <p><strong>Lapangan:</strong> {{ booking.nama_lapangan }}</p>
+    <p><strong>Tanggal:</strong> {{ booking.tanggal }}</p>
+    <p><strong>Jam:</strong> {{ booking.jam_mulai }} - {{ booking.jam_selesai }}</p>
+    <p><strong>Total Harga:</strong> Rp{{ booking.total_harga }}</p>
+    <p>
+      <strong>Status:</strong>
+      <span class="{% if booking.status == 'pending' %}text-yellow-600{% elif booking.status == 'confirmed' %}text-green-600{% else %}text-red-600{% endif %}">
+        {{ booking.status|title }}
+      </span>
+    </p>
+
+    {% if booking.status != 'cancelled' %}
+    <!-- tombol punya data-booking-id, bukan mengandalkan booking.id di JS -->
+    <button class="mt-2 cancel-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+            data-booking-id="{{ booking.id|default:forloop.counter }}">
+      Batalkan
+    </button>
+    {% endif %}
+  </div>
+  {% empty %}
+  <p>Tidak ada booking saat ini.</p>
+  {% endfor %}
+</div>
+
+<script>
+/* Ambil CSRF token dari cookie (standard Django) */
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+/* Event delegation: tangani klik tombol Batalkan */
+document.getElementById('booking-list').addEventListener('click', async function(e) {
+  const btn = e.target.closest('.cancel-btn');
+  if (!btn) return;
+
+  const id = btn.dataset.bookingId;
+  const confirmCancel = confirm("Yakin ingin membatalkan booking ini?");
+  if (!confirmCancel) return;
+
+  try {
+    const response = await fetch(`/booking/${id}/cancel/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrftoken,
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert(data.message || 'Booking dibatalkan.');
+      // Update tampilan: ubah status dan hilangkan tombol
+      const card = document.getElementById(`booking-${id}`);
+      if (card) {
+        const statusSpan = card.querySelector('span');
+        if (statusSpan) {
+          statusSpan.textContent = 'Cancelled';
+          statusSpan.className = 'text-red-600';
+        }
+        const button = card.querySelector('.cancel-btn');
+        if (button) button.remove();
+      } else {
+        // fallback kalau card tidak ditemukan
+        btn.remove();
+      }
+    } else {
+      // tampilkan pesan error yang diberikan server (jika ada)
+      alert("Gagal membatalkan booking: " + (data.error || JSON.stringify(data)));
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Terjadi kesalahan saat menghubungi server.");
+  }
+});
+</script>
