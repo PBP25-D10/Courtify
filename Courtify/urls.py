@@ -24,7 +24,7 @@ urlpatterns = [
     # URL untuk autentikasi (login, register, profil)
     path('auth/', include('authentication.urls')),
     # URL untuk manajemen lapangan (khusus penyedia)
-    path('manajemen/', include('manajemen_lapangan.urls')),
+    path('manajemen/', include('lapangan.urls')),
     # URL untuk booking
     path('booking/', include('booking_lapangan.urls')),
     # URL untuk fitur utama (artikel, wishlist, iklan)

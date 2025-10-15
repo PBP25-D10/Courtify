@@ -1,8 +1,11 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, render
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 
 from django.shortcuts import render, redirect
+
+from main.forms import IklanForm
+from main.models import Iklan
 
 def landing_page_view(request):
     if request.user.is_authenticated:
@@ -39,17 +42,45 @@ def news_delete_view(request, id):
 
 # Views untuk Iklan
 def iklan_list_view(request):
-    return HttpResponse("Daftar semua iklan")
+    iklans = Iklan.objects.all()
+    return render(request, 'iklan_list_owner.html', {'iklans': iklans})
 
 def iklan_create_view(request):
-    return HttpResponse("Form tambah iklan (modal)")
-# ... view edit & delete iklan
+    if request.method == 'POST':
+        form = IklanForm(request.POST)
+        if form.is_valid():
+            iklan_entry = form.save(commit = False)
+            iklan_entry.user = request.user
+            iklan_entry.save()
+            return JsonResponse({'message': 'Iklan dibuat!'})
+        else:
+            return JsonResponse({'errors': form.errors}, status=400)
+    else:
+        form = IklanForm()
+
+    return render(request, 'iklan_form.html', {'form': form})
 
 def iklan_edit_view(request, id):
-    pass # 'pass' 
+    iklans = get_object_or_404(Iklan, pk=id, host=request.user)
+    if request.method == 'POST':
+        form = IklanForm(request.POST, request.FILES, instance=iklans)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'message': 'Berhasil edit iklan!'})
+        else:
+            return JsonResponse({'errors': form.errors}, status=400)    
+    else:
+      form = IklanForm(instance=iklans)
+    return render(request, 'iklan_form.html', {'form': form})
 
 def iklan_delete_view(request, id):
-    pass # 'pass' 
+    iklan = get_object_or_404(Iklan, pk=id, host=request.user)
+    if request.method == 'POST':
+        iklan.delete()
+        return JsonResponse({'message': 'Berhasil menghapus iklan!'})
+    else:
+        return JsonResponse({'error': 'Error'}, status=400)
+
 
 # Views untuk Wishlist
 def wishlist_list_view(request):
