@@ -1,27 +1,58 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Register</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h2>Registrasi Akun Baru</h2>
-    <form id="register-form">
-        {% csrf_token %}
-        <input type="text" id="username" placeholder="Username" required><br>
-        <input type="email" id="email" placeholder="Email" required><br>
-        <input type="password" id="password" placeholder="Password" required><br>
-        
-        <label for="role">Daftar sebagai:</label>
-        <select id="role" name="role" required>
-            <option value="user">Pengguna (Booking Lapangan)</option>
-            <option value="penyedia">Penyedia (Manajemen Lapangan)</option>
-        </select>
-        <br>
-        <button type="submit">Register</button>
-    </form>
-    <div id="message" style="color: red;"></div>
-    <p>Sudah punya akun? <a href="{% url 'authentication:login_page' %}">Login di sini</a></p>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white shadow-xl rounded-2xl w-full max-w-md p-8">
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Buat Akun Baru</h2>
+
+        <form id="register-form" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <input type="text" id="username" placeholder="Username" required
+                    class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div>
+                <input type="email" id="email" placeholder="Email" required
+                    class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div>
+                <input type="password" id="password" placeholder="Password" required
+                    class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div>
+                <label for="role" class="block text-gray-700 mb-1 font-medium">Daftar sebagai</label>
+                <select id="role" name="role" required
+                    class="w-full border border-gray-300 rounded-lg p-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Pilih peran</option>
+                    <option value="user">Pengguna (Booking Lapangan)</option>
+                    <option value="penyedia">Penyedia (Manajemen Lapangan)</option>
+                </select>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition">
+                Daftar
+            </button>
+        </form>
+
+        <div id="message" class="text-center text-sm mt-4"></div>
+
+        <p class="text-center text-sm text-gray-600 mt-6">
+            Sudah punya akun?
+            <a href="{% url 'authentication:login_page' %}" class="text-blue-600 hover:underline font-medium">
+                Login di sini
+            </a>
+        </p>
+    </div>
 
     <script>
         document.getElementById('register-form').addEventListener('submit', async function(event) {
@@ -30,10 +61,8 @@
             const username = document.getElementById('username').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
-            // **Ambil nilai dari dropdown peran**
-            const role = document.getElementById('role').value; 
-            
+            const role = document.getElementById('role').value;
+
             const messageDiv = document.getElementById('message');
             const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
@@ -44,24 +73,24 @@
                         'Content-Type': 'application/json',
                         'X-CSRFToken': csrftoken
                     },
-                    // **Sertakan 'role' dalam data yang dikirim**
-                    body: JSON.stringify({ username, email, password, role }) 
+                    body: JSON.stringify({ username, email, password, role })
                 });
 
                 const result = await response.json();
 
                 if (response.ok) {
                     messageDiv.style.color = 'green';
-                    messageDiv.innerText = result.message;
+                    messageDiv.innerText = result.message || 'Registrasi berhasil!';
                     setTimeout(() => {
                         window.location.href = "{% url 'authentication:login_page' %}";
-                    }, 2000);
+                    }, 1500);
                 } else {
                     messageDiv.style.color = 'red';
-                    messageDiv.innerText = result.message;
+                    messageDiv.innerText = result.message || 'Registrasi gagal.';
                 }
             } catch (error) {
-                messageDiv.innerText = 'Terjadi kesalahan pada jaringan.';
+                messageDiv.style.color = 'red';
+                messageDiv.innerText = 'Terjadi kesalahan jaringan.';
             }
         });
     </script>
