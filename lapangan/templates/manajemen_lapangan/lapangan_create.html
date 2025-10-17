@@ -1,0 +1,46 @@
+<!-- templates/manajemen_lapangan/lapangan_create.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{% if lapangan %}Edit Lapangan{% else %}Tambah Lapangan{% endif %}</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <label>Nama Lapangan:</label><br>
+    <input type="text" name="nama" value="{{ lapangan.nama|default:'' }}" required><br><br>
+
+    <label>Deskripsi:</label><br>
+    <textarea name="deskripsi" rows="3" required>{{ lapangan.deskripsi|default:'' }}</textarea><br><br>
+
+    <label>Kategori:</label><br>
+    <select name="kategori" required>
+        {% for value, label in kategori_choices %}
+            <option value="{{ value }}" {% if lapangan and lapangan.kategori == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select><br><br>
+
+
+    <label>Lokasi:</label><br>
+    <input type="text" name="lokasi" value="{{ lapangan.lokasi|default:'' }}" required><br><br>
+
+    <label>Harga per jam:</label><br>
+    <input type="number" name="harga_per_jam" value="{{ lapangan.harga_per_jam|default:'' }}" min="1" required><br><br>
+
+    <label>Foto:</label><br>
+    <input type="file" name="foto"><br>
+    {% if lapangan and lapangan.foto %}
+        <img src="{{ lapangan.foto.url }}" alt="Foto Lapangan" width="200"><br>
+    {% endif %}
+    <br>
+
+    <label>Jam Buka:</label><br>
+    <input type="time" name="jam_buka" value="{{ lapangan.jam_buka|default:'' }}" required><br><br>
+
+    <label>Jam Tutup:</label><br>
+    <input type="time" name="jam_tutup" value="{{ lapangan.jam_tutup|default:'' }}" required><br><br>
+
+    <button type="submit">{% if lapangan %}Update{% else %}Simpan{% endif %}</button>
+    <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}">Batal</a>
+</form>
+{% endblock %}

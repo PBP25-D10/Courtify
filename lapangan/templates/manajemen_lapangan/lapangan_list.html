@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Daftar Lapangan</h1>
+
+<a href="{% url 'manajemen_lapangan:lapangan_create' %}">+ Tambah Lapangan</a>
+<hr>
+
+{% if lapangan_list %}
+    <ul>
+        {% for lap in lapangan_list %}
+        <li>
+            <strong>{{ lap.nama }}</strong> ({{ lap.kategori }}) - {{ lap.lokasi }}  
+            <br>Harga: Rp {{ lap.harga_per_jam }}/jam  
+            <br>Jam buka: {{ lap.jam_buka }} | Jam tutup: {{ lap.jam_tutup }}
+            <br>
+            <a href="{% url 'manajemen_lapangan:lapangan_edit' lap.id_lapangan %}">Edit</a> |
+            <a href="{% url 'manajemen_lapangan:lapangan_delete' lap.id_lapangan %}">Hapus</a>
+        </li>
+        <hr>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Belum ada lapangan yang ditambahkan.</p>
+{% endif %}
+{% endblock %}

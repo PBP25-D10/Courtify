@@ -4,10 +4,39 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    {% block meta %} {% endblock meta %}
+    {% block meta %}{% endblock meta %}
+    <style>
+        nav {
+            background-color: #333;
+            padding: 10px;
+        }
+        nav a {
+            color: white;
+            margin: 0 15px;
+            text-decoration: none;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 
 <body>
-    {% block content %} {% endblock content %}
+    <nav>
+        <a href="{% url 'main:landing_page' %}">Home</a>
+        <a href="{% url 'booking:booking_list' %}">Booking</a>
+        <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}">Lapangan</a>
+
+
+        {% if user.is_authenticated %}
+            <span style="color:white; margin-left:20px;">Halo, {{ user.username }}!</span>
+            <a href="{% url 'authentication:logout' %}">Logout</a>
+        {% else %}
+            <a href="{% url 'authentication:login' %}" style="float:right;">Login</a>
+            <a href="{% url 'authentication:register' %}" style="float:right;">Register</a>
+        {% endif %}
+    </nav>
+
+    {% block content %}{% endblock content %}
 </body>
 </html>
