@@ -1,62 +1,60 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard</title>
-</head>
-<body>
-    <h2>Selamat Datang, <span id="user-greeting"></span>!</h2>
-    <p>Anda berhasil login.</p>
-    <button id="logout-button">Logout</button>
+{% extends 'base.html' %}
 
-    <script>
-        // **Membaca Cookie menggunakan JavaScript**
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
+{% block title %}Dashboard{% endblock title %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto mt-10 bg-white rounded-2xl shadow-md p-8 text-center">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">
+        Selamat Datang, <span id="user-greeting" class="text-blue-600"></span>!
+    </h2>
+    <p class="text-gray-600 mb-6">Anda berhasil login ke sistem Courtify.</p>
+
+    <button id="logout-button"
+        class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition font-medium">
+        Logout
+    </button>
+</div>
+
+<script>
+    // Ambil cookie berdasarkan nama
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
             }
-            return cookieValue;
         }
+        return cookieValue;
+    }
 
-        const userFirstname = getCookie('user_firstname');
-        if (userFirstname) {
-            document.getElementById('user-greeting').innerText = userFirstname;
-        } else {
-            document.getElementById('user-greeting').innerText = "Pengguna";
-        }
-        
-        // **Handle Logout dengan AJAX**
-        document.getElementById('logout-button').addEventListener('click', async function() {
-            // Kita butuh CSRF token untuk request POST
-            const csrftoken = getCookie('csrftoken'); 
+    // Tampilkan nama pengguna
+    const userFirstname = getCookie('user_firstname');
+    document.getElementById('user-greeting').innerText = userFirstname ? userFirstname : "Pengguna";
 
-            try {
-                const response = await fetch("{% url 'authentication:api_logout' %}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrftoken
-                    }
-                });
+    // Logout handler
+    document.getElementById('logout-button').addEventListener('click', async function() {
+        const csrftoken = getCookie('csrftoken');
 
-                const result = await response.json();
+        try {
+            const response = await fetch("{% url 'authentication:api_logout' %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrftoken }
+            });
 
-                if (response.ok) {
-                    window.location.href = result.redirect_url;
-                } else {
-                    alert('Logout gagal: ' + result.message);
-                }
-            } catch (error) {
-                alert('Terjadi kesalahan jaringan saat logout.');
+            const result = await response.json();
+            if (response.ok) {
+                window.location.href = result.redirect_url;
+            } else {
+                alert('Logout gagal: ' + result.message);
             }
-        });
-    </script>
-</body>
-</html>
+        } catch (error) {
+            alert('Terjadi kesalahan jaringan saat logout.');
+        }
+    });
+</script>
+{% endblock content %}
