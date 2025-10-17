@@ -1,67 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard Penyedia</title>
-</head>
-<body>
-    <h2>Selamat Datang, <span id="user-greeting">Penyedia</span>!</h2>
-    <p>Dari sini, Anda bisa mengelola semua lapangan Anda.</p>
-    
-    <ul>
-        <li><a href="{% url 'lapangan:lapangan_list_owner' %}">Lihat Daftar Lapangan Saya</a></li>
-        <li><a href="{% url 'lapangan:lapangan_create' %}">Tambah Lapangan Baru</a></li>
-    </ul>
+{% extends 'base.html' %}
 
-    <button id="logout-button">Logout</button>
+{% block content %}
+<h1>Dashboard Manajemen Lapangan</h1>
+<hr>
 
-    <script>
-        // **Membaca Cookie menggunakan JavaScript**
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
+<!-- Tombol tambah lapangan -->
+<p>
+    <a href="{% url 'manajemen_lapangan:lapangan_create' %}" style="background: #4CAF50; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none;">
+        + Tambah Lapangan
+    </a>
+</p>
 
-        // Menampilkan nama dari cookie 'user_firstname'
-        const userFirstname = getCookie('user_firstname');
-        if (userFirstname) {
-            document.getElementById('user-greeting').innerText = userFirstname;
-        }
-        
-        // **Handle Logout dengan AJAX**
-        document.getElementById('logout-button').addEventListener('click', async function() {
-            const csrftoken = getCookie('csrftoken'); 
-
-            try {
-                // PERHATIKAN: URL sudah diperbaiki ke namespace 'accounts'
-                const response = await fetch("{% url 'authentication:api_logout' %}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrftoken
-                    }
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    window.location.href = result.redirect_url;
-                } else {
-                    alert('Logout gagal: ' + result.message);
-                }
-            } catch (error) {
-                alert('Terjadi kesalahan jaringan saat logout.');
-            }
-        });
-    </script>
-</body>
-</html>
+<!-- Tabel daftar lapangan -->
+<table border="1" cellspacing="0" cellpadding="8" width="100%">
+    <thead style="background: #f2f2f2;">
+        <tr>
+            <th>No</th>
+            <th>Nama</th>
+            <th>Kategori</th>
+            <th>Lokasi</th>
+            <th>Harga per Jam</th>
+            <th>Jam Buka</th>
+            <th>Jam Tutup</th>
+            <th>Foto</th>
+            <th>Aksi</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if lapangan_list %}
+            {% for l in lapangan_list %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ l.nama }}</td>
+                    <td>{{ l.get_kategori_display }}</td>
+                    <td>{{ l.lokasi }}</td>
+                    <td>Rp {{ l.harga_per_jam }}</td>
+                    <td>{{ l.jam_buka }}</td>
+                    <td>{{ l.jam_tutup }}</td>
+                    <td>
+                        {% if l.foto %}
+                            <img src="{{ l.foto.url }}" alt="Foto {{ l.nama }}" width="80">
+                        {% else %}
+                            <em>Tidak ada foto</em>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'manajemen_lapangan:lapangan_edit' l.id_lapangan %}" style="color: blue;">Edit</a> |
+                        <a href="{% url 'manajemen_lapangan:lapangan_delete' l.id_lapangan %}" style="color: red;"
+                           onclick="return confirm('Yakin ingin menghapus lapangan ini?')">Hapus</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="9" style="text-align:center;">Belum ada data lapangan.</td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+{% endblock %}
