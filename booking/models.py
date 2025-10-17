@@ -1,4 +1,6 @@
 from django.db import models
+from lapangan.models import Lapangan
+from django.conf import settings
 
 class Booking(models.Model):
     STATUS_CHOICES = [
@@ -7,12 +9,21 @@ class Booking(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
-    # nanti ini akan dihubungkan ke model User dan Lapangan
-    # user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookings')
-    # lapangan = models.ForeignKey(Lapangan, on_delete=models.CASCADE, related_name='bookings')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='bookings',
+        null=True,   # tambahkan ini
+        blank=True   # tambahkan ini
+    )
 
-    nama_pemesan = models.CharField(max_length=100)   # sementara ganti user dengan nama manual
-    nama_lapangan = models.CharField(max_length=100)  # sementara ganti model Lapangan dengan string
+    lapangan = models.ForeignKey(
+        Lapangan,
+        on_delete=models.CASCADE,
+        related_name='bookings',
+        null=True,   # tambahkan ini
+        blank=True   # tambahkan ini
+    )
 
     tanggal = models.DateField()
     jam_mulai = models.TimeField()
@@ -22,4 +33,4 @@ class Booking(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.nama_pemesan} - {self.nama_lapangan} ({self.status})"
+        return f"{self.user} - {self.lapangan} ({self.status})"

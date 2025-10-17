@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Buat Booking Baru</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Simpan</button>
+</form>
+
+<a href="{% url 'booking:booking_list' %}">Kembali ke daftar</a>
+{% endblock content %}

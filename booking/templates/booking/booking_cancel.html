@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Batalkan Booking</h1>
+
+<p>Apakah kamu yakin ingin membatalkan booking untuk <b>{{ booking.lapangan }}</b> pada {{ booking.tanggal }}?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Ya, batalkan</button>
+</form>
+
+<a href="{% url 'booking:booking_list' %}">Batal</a>
+{% endblock content %}

@@ -13,7 +13,7 @@ def landing_page_view(request):
                 return redirect('manajemen_lapangan:manajemen_dashboard')
             elif role == 'user':
                 # UBAH INI: Arahkan ke dashboard booking
-                return redirect('booking_lapangan:booking_dashboard')
+                return redirect('booking:booking_dashboard')
             else:
                 return redirect('/admin/')
         except AttributeError:
