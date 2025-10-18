@@ -9,8 +9,8 @@ urlpatterns = [
     path('', views.dashboard_view, name='dashboard'),
     
     # URL untuk menampilkan form
-    path('login/', views.login_page_view, name='login_page'),
-    path('register/', views.register_page_view, name='register_page'),
+    path('login/', views.login_page_view, name='login'),
+    path('register/', views.register_page_view, name='register'),
     path('logout/', views.logout_page_view, name='logout'),
 
     # URL API untuk AJAX
