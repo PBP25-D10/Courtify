@@ -1,35 +1,63 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>Dashboard Booking Saya</h1>
-<hr>
+<div class="max-w-6xl mx-auto mt-10">
+  <h1 class="text-2xl font-bold mb-4">Dashboard Booking Saya</h1>
+  <hr class="mb-6 border-gray-300" />
 
-{% if bookings %}
-<table border="1" cellspacing="0" cellpadding="8">
-  <tr>
-    <th>Lapangan</th>
-    <th>Tanggal</th>
-    <th>Jam</th>
-    <th>Status</th>
-    <th>Aksi</th>
-  </tr>
-  {% for booking in bookings %}
-  <tr>
-    <td>{{ booking.lapangan.nama }}</td>
-    <td>{{ booking.tanggal }}</td>
-    <td>{{ booking.jam_mulai }} - {{ booking.jam_selesai }}</td>
-    <td>{{ booking.status }}</td>
-    <td>
-      {% if booking.status != 'cancelled' %}
-        <a href="{% url 'booking:booking_cancel' booking.pk %}">Batalkan</a>
-      {% endif %}
-    </td>
-  </tr>
-  {% endfor %}
-</table>
-{% else %}
-<p>Belum ada booking yang dibuat.</p>
-{% endif %}
+  {% if bookings %}
+  <div class="overflow-x-auto rounded-lg shadow">
+    <table class="min-w-full border border-gray-200 text-sm text-left">
+      <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+        <tr>
+          <th class="px-4 py-3">Lapangan</th>
+          <th class="px-4 py-3">Tanggal</th>
+          <th class="px-4 py-3">Jam</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3 text-center">Aksi</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {% for booking in bookings %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 font-medium text-gray-900">{{ booking.lapangan.nama }}</td>
+          <td class="px-4 py-3">{{ booking.tanggal }}</td>
+          <td class="px-4 py-3">{{ booking.jam_mulai }} - {{ booking.jam_selesai }}</td>
+          <td class="px-4 py-3">
+            {% if booking.status == 'pending' %}
+              <span class="text-orange-500 font-medium">Menunggu Konfirmasi</span>
+            {% elif booking.status == 'confirmed' %}
+              <span class="text-green-600 font-medium">Dikonfirmasi</span>
+            {% elif booking.status == 'cancelled' %}
+              <span class="text-red-500 font-medium">Dibatalkan</span>
+            {% else %}
+              {{ booking.status }}
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-center">
+            {% if booking.status != 'cancelled' %}
+              <a href="{% url 'booking:booking_cancel' booking.pk %}"
+                 onclick="return confirm('Yakin ingin membatalkan booking ini?')"
+                 class="text-red-600 hover:text-red-800 font-semibold">
+                 Batalkan
+              </a>
+            {% else %}
+              <em class="text-gray-400">-</em>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-gray-600">Belum ada booking yang dibuat.</p>
+  {% endif %}
 
-<br>
-<a href="{% url 'booking:booking_create' %}">+ Buat Booking Baru</a>
+  <div class="mt-6">
+    <a href="{% url 'booking:booking_create' %}"
+       class="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md shadow">
+       + Buat Booking Baru
+    </a>
+  </div>
+</div>
 {% endblock %}
