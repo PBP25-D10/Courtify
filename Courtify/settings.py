@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.urls import reverse_lazy
 # Load environment variables from .env file
 load_dotenv()
 
@@ -48,6 +49,9 @@ INSTALLED_APPS = [
     'main',
 
 ]
+
+LOGIN_URL = reverse_lazy('authentication:login')
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
