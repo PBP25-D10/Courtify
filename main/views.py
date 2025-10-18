@@ -18,7 +18,7 @@ def landing_page_view(request):
                 return redirect('/admin/')
         except AttributeError:
             # Handle jika user tidak punya UserProfile
-            return redirect('authentication:login_page') # Asumsi logout dan minta login lagi
+            return redirect('authentication:login') # Asumsi logout dan minta login lagi
     
     # Jika tidak login, tampilkan halaman landing publik
     return render(request, 'main/landing_page.html')
