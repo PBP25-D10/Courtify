@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-10">
+  <div class="max-w-6xl mx-auto px-4">
+    <h1 class="text-3xl font-bold text-gray-800 mb-8">🏟️ Pilih Lapangan untuk Booking</h1>
+
+    {% if lapangan_list %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for lap in lapangan_list %}
+      <div class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition">
+        {% if lap.foto %}
+          <img src="{{ lap.foto.url }}" alt="{{ lap.nama }}" class="w-full h-48 object-cover">
+        {% else %}
+          <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 italic">
+            Tidak ada foto
+          </div>
+        {% endif %}
+
+        <div class="p-5">
+          <h2 class="text-xl font-semibold text-gray-800 mb-1">{{ lap.nama }}</h2>
+          <p class="text-sm text-gray-500 mb-2">{{ lap.kategori }} • {{ lap.lokasi }}</p>
+          <p class="text-gray-700 font-medium">Rp {{ lap.harga_per_jam }} / jam</p>
+
+          <p class="text-sm text-gray-500 mt-2">
+            ⏰ {{ lap.jam_buka }} - {{ lap.jam_tutup }}
+          </p>
+
+          <div class="mt-4 flex justify-end">
+            <a href="{% url 'booking:booking_create' %}?lapangan_id={{ lap.id_lapangan }}"
+               class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
+              Pesan Sekarang
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white shadow rounded-xl p-8 text-center">
+      <p class="text-gray-600 text-lg">Belum ada lapangan yang tersedia.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

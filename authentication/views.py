@@ -104,3 +104,10 @@ def logout_api(request):
         return response
 
     return JsonResponse({'status': 'error', 'message': 'Metode tidak diizinkan.'}, status=405)
+
+def logout_page_view(request):
+    logout(request)
+    response = redirect('authentication:login_page')
+    response.delete_cookie('user_firstname')
+    return response
+

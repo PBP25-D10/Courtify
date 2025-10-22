@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-lg mx-auto mt-10 bg-white shadow-lg rounded-xl p-6">
+  <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Buat Booking Baru</h1>
+
+  <form id="bookingForm" class="space-y-5">
+    {% csrf_token %}
+
+    <!-- Lapangan -->
+    <div>
+      <label for="{{ form.lapangan.id_for_label }}" class="block text-gray-700 font-semibold mb-1">
+        {{ form.lapangan.label }}
+      </label>
+      {{ form.lapangan }}
+      <p class="text-red-500 text-sm mt-1 hidden" id="error-lapangan"></p>
+    </div>
+
+    <!-- Tanggal -->
+    <div>
+      <label for="{{ form.tanggal.id_for_label }}" class="block text-gray-700 font-semibold mb-1">
+        {{ form.tanggal.label }}
+      </label>
+      {{ form.tanggal }}
+      <p class="text-red-500 text-sm mt-1 hidden" id="error-tanggal"></p>
+    </div>
+
+    <!-- Jam Mulai -->
+    <div>
+      <label for="{{ form.jam_mulai.id_for_label }}" class="block text-gray-700 font-semibold mb-1">
+        Jam Mulai
+      </label>
+      {{ form.jam_mulai }}
+      <p class="text-red-500 text-sm mt-1 hidden" id="error-jam_mulai"></p>
+    </div>
+
+    <!-- Jam Selesai -->
+    <div>
+      <label for="{{ form.jam_selesai.id_for_label }}" class="block text-gray-700 font-semibold mb-1">
+        Jam Selesai
+      </label>
+      {{ form.jam_selesai }}
+      <p class="text-red-500 text-sm mt-1 hidden" id="error-jam_selesai"></p>
+    </div>
+
+    <!-- Total Harga -->
+    <div>
+      <label for="{{ form.total_harga.id_for_label }}" class="block text-gray-700 font-semibold mb-1">
+        Total Harga
+      </label>
+      {{ form.total_harga }}
+      <p class="text-red-500 text-sm mt-1 hidden" id="error-total_harga"></p>
+    </div>
+
+    <!-- Tombol -->
+    <button id="submitBtn" type="submit"
+      class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md transition">
+      Simpan Booking
+    </button>
+  </form>
+
+  <div class="mt-6 text-center">
+    <a href="{% url 'booking:booking_list' %}"
+       class="text-blue-600 hover:text-blue-800 font-medium transition">
+       ← Kembali ke Daftar Booking
+    </a>
+  </div>
+</div>
+
+<!-- ❌ Jangan pakai @apply di inline CSS -->
+<style>
+  input, select, textarea {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    transition: 0.2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #16a34a;
+    box-shadow: 0 0 0 2px #bbf7d0;
+  }
+</style>
+
+<!-- ✅ AJAX Script -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const form = document.getElementById("bookingForm");
+  const submitBtn = document.getElementById("submitBtn");
+  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  form.addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    // Reset error
+    document.querySelectorAll("p[id^='error-']").forEach(p => {
+      p.classList.add("hidden");
+      p.textContent = "";
+    });
+
+    // Tombol loading
+    submitBtn.disabled = true;
+    submitBtn.textContent = "⏳ Menyimpan...";
+
+    const formData = new FormData(form);
+
+    fetch("{% url 'booking:booking_create' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken,
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Booking berhasil dibuat!",
+          showConfirmButton: false,
+          timer: 1500
+        }).then(() => {
+          window.location.href = "{% url 'booking:booking_list' %}";
+        });
+      } else if (data.errors) {
+        for (const [field, messages] of Object.entries(data.errors)) {
+          const errEl = document.getElementById(`error-${field}`);
+          if (errEl) {
+            errEl.textContent = messages.join(", ");
+            errEl.classList.remove("hidden");
+          }
+        }
+      } else {
+        Swal.fire("Gagal!", "Terjadi kesalahan yang tidak diketahui.", "error");
+      }
+    })
+    .catch(() => {
+      Swal.fire("Error!", "Gagal mengirim data ke server.", "error");
+    })
+    .finally(() => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Simpan Booking";
+    });
+  });
+});
+</script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% endblock %}

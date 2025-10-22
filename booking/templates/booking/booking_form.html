@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-lg mx-auto mt-10 bg-white shadow-xl rounded-2xl p-8 border border-gray-100">
+  <h1 class="text-3xl font-bold text-blue-700 mb-6 text-center tracking-wide">
+    {% if form.instance.pk %}Edit Booking{% else %}Tambah Booking{% endif %}
+  </h1>
+
+  <form id="bookingForm" method="POST" action="" class="space-y-4">
+    {% csrf_token %}
+
+    {% for field in form %}
+      <div class="flex flex-col">
+        <label for="{{ field.id_for_label }}" class="font-semibold text-gray-700 mb-1">
+          {{ field.label }}
+        </label>
+        {{ field }}
+        {% if field.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ field.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+    
+    <div class="text-center mt-8">
+      <button id="submitBtn" type="submit"
+        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+        Simpan
+      </button>
+      <a href="{% url 'booking:booking_dashboard' %}"
+        class="ml-2 bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-md transition-all duration-200">
+        Batal
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+/* 🎨 Custom styling for Django form fields */
+form input,
+form select,
+form textarea {
+  border: 1px solid #d1d5db; /* gray-300 */
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  background-color: #f9fafb; /* gray-50 */
+}
+form input:focus,
+form select:focus,
+form textarea:focus {
+  border-color: #2563eb; /* blue-600 */
+  outline: none;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+/* 🌀 Loading spinner */
+.btn-loading::after {
+  content: "";
+  margin-left: 8px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("bookingForm");
+  const submitBtn = document.getElementById("submitBtn");
+  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.classList.add("btn-loading");
+
+    const formData = new FormData(form);
+    const actionUrl = form.getAttribute("action") || window.location.pathname;
+
+    fetch(actionUrl, {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRFToken": csrfToken,
+      },
+      body: formData,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("btn-loading");
+
+        if (data.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Berhasil!",
+            text: data.message || "Booking berhasil disimpan.",
+            confirmButtonColor: "#2563eb",
+          }).then(() => {
+            window.location.href = "{% url 'booking:booking_dashboard' %}";
+          });
+        } else {
+          let errorText = "";
+          for (let field in data.errors) {
+            errorText += `${field}: ${data.errors[field].join(", ")}\n`;
+          }
+          Swal.fire({
+            icon: "error",
+            title: "Gagal!",
+            text: errorText || "Terjadi kesalahan pada data.",
+          });
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("btn-loading");
+        Swal.fire({
+          icon: "error",
+          title: "Error!",
+          text: "Terjadi kesalahan di server.",
+        });
+      });
+  });
+});
+</script>
+{% endblock %}
