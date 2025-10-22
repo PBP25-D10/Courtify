@@ -33,11 +33,11 @@ FULL URL MAP
     /auth/logout/                → authentication:logout
 
 🏟️ LAPANGAN APP
-    /manajemen/                  → lapangan:lapangan_list
-    /manajemen/tambah/           → lapangan:lapangan_create
-    /manajemen/edit/<id>/        → lapangan:lapangan_edit
-    /manajemen/hapus/<id>/       → lapangan:lapangan_delete
-    /manajemen/dashboard/        → lapangan:dashboard
+    /lapangan/                  → lapangan:lapangan_list
+    /lapangan/tambah/           → lapangan:lapangan_create
+    /lapangan/edit/<id>/        → lapangan:lapangan_edit
+    /lapangan/hapus/<id>/       → lapangan:lapangan_delete
+    /lapangan/dashboard/        → lapangan:dashboard
 
 📅 BOOKING APP
     /booking/                    → booking:booking_list
@@ -63,7 +63,7 @@ urlpatterns = [
     path('auth/', include('authentication.urls')),
 
     # 🏟️ URL untuk manajemen lapangan (khusus penyedia)
-    path('manajemen/', include('lapangan.urls')),
+    path('lapangan/', include('lapangan.urls')),
 
     # 📅 URL untuk booking
     path('booking/', include('booking.urls')),
