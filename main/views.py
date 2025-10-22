@@ -42,15 +42,15 @@ def news_delete_view(request, id):
 
 # Views untuk Iklan
 def iklan_list_view(request):
-    iklans = Iklan.objects.all()
+    iklans = Iklan.objects.filter(host=request.user)
     return render(request, 'iklan_list_owner.html', {'iklans': iklans})
 
 def iklan_create_view(request):
     if request.method == 'POST':
-        form = IklanForm(request.POST)
+        form = IklanForm(request.POST, request.FILES)
         if form.is_valid():
             iklan_entry = form.save(commit = False)
-            iklan_entry.user = request.user
+            iklan_entry.host = request.user
             iklan_entry.save()
             return JsonResponse({'message': 'Iklan dibuat!'})
         else:
