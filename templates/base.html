@@ -9,33 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css">
 </head>
 
-<body class="flex flex-col min-h-screen bg-gray-50">
-
-  <!-- Navbar -->
-<nav class="bg-white shadow-sm sticky top-0 z-50">
-  <div class="container mx-auto flex items-center justify-between px-6 py-3 relative">
-
-    <!-- Left: Logo -->
-    <div class="flex items-center space-x-3">
-      <img src="{% static 'img/logo.png' %}" alt="Courtify" class="w-8 h-8">
-      <span class="text-xl font-semibold text-gray-800">Courtify</span>
-    </div>
-
-    <!-- Middle: Menu (centered absolutely) -->
-    <div class="absolute left-1/2 transform -translate-x-1/2">
-      <div class="hidden md:flex space-x-8 text-sm font-medium text-gray-700">
-        <a href="{% url 'main:landing_page' %}" class="hover:text-blue-500">Home</a>
-        <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-500">Lapangan</a>
-        <a href="{% url 'booking:booking_list' %}" class="hover:text-blue-500">Booking</a>
-      </div>
-    </div>
-
-  </div>
-</nav>
-
-
 <body class="bg-gray-100 min-h-screen flex flex-col">
-
     <!-- Navbar -->
     <nav class="bg-gray-900 text-white shadow-md">
         <div class="container mx-auto flex items-center justify-between px-6 py-3">
@@ -47,14 +21,13 @@
                 <a href="{% url 'booking:booking_list' %}" class="hover:text-blue-400 transition">Booking</a>
                 <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-400 transition">Lapangan</a>
                 <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
-                
             </div>
 
             <!-- Right: Auth Links -->
             <div class="flex items-center space-x-4">
                 {% if user.is_authenticated %}
                     <span class="text-gray-300">Halo, <span class="font-semibold">{{ user.username }}</span>!</span>
-                    <a href="{% url 'authentication:logout' %}" 
+                    <a href="{% url 'authentication:logout' %}"
                        class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm transition">
                        Logout
                     </a>
@@ -70,19 +43,32 @@
                 {% endif %}
             </div>
         </div>
+    </nav>
 
-        <p class="text-sm mb-2">Berlangganan buletin kami</p>
-        <div class="flex border border-gray-600 rounded overflow-hidden">
-          <input type="email" placeholder="Masukkan email anda" class="flex-grow bg-transparent px-3 py-2 text-sm outline-none text-white" />
-          <button class="bg-blue-600 px-4 hover:bg-blue-700"><i class="ri-arrow-right-line"></i></button>
+    <!-- Main Content -->
+    <main class="flex-grow">
+        {% block content %}
+        {% endblock content %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white">
+        <div class="container mx-auto px-6 py-6">
+            <!-- Newsletter Subscription -->
+            <div class="mb-4">
+                <p class="text-sm mb-2">Berlangganan buletin kami</p>
+                <div class="flex border border-gray-600 rounded overflow-hidden">
+                    <input type="email" placeholder="Masukkan email anda" class="flex-grow bg-transparent px-3 py-2 text-sm outline-none text-white" />
+                    <button class="bg-blue-600 px-4 hover:bg-blue-700"><i class="ri-arrow-right-line"></i></button>
+                </div>
+            </div>
+
+            <!-- Copyright -->
+            <div class="border-t border-gray-700 text-center py-4 text-xs text-gray-500">
+                © 2025 Courtify. All rights reserved. | Kebijakan Privasi | Peta Situs
+            </div>
         </div>
-      </div>
-    </div>
-
-    <div class="border-t border-gray-700 text-center py-4 text-xs text-gray-500">
-      © 2025 Courtify. All rights reserved. | Kebijakan Privasi | Peta Situs
-    </div>
-  </footer>
+    </footer>
 
 </body>
 </html>
