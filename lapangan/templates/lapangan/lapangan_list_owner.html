@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-10">
+    <div class="max-w-7xl mx-auto px-6">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Daftar Lapangan Saya</h1>
+                <p class="text-gray-600 mt-1">Kelola semua lapangan olahraga Anda</p>
+            </div>
+            <a href="{% url 'lapangan:lapangan_create' %}"
+               class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow transition flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Tambah Lapangan
+            </a>
+        </div>
+
+        <!-- Alert Message -->
+        <div id="alertMessage" class="hidden mb-4 p-4 rounded-lg"></div>
+
+        <!-- Filter & Search -->
+        <div class="bg-white shadow rounded-lg p-4 mb-6">
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <div class="flex-1">
+                    <input type="text" id="searchInput" placeholder="🔍 Cari nama atau lokasi lapangan..."
+                           onkeyup="searchTable()"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <select onchange="sortTable(this.value)" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Urutkan</option>
+                        <option value="name-asc">Nama (A-Z)</option>
+                        <option value="name-desc">Nama (Z-A)</option>
+                        <option value="price-low">Harga Terendah</option>
+                        <option value="price-high">Harga Tertinggi</option>
+                    </select>
+                </div>
+                <div>
+                    <select onchange="filterByCategory(this.value)" id="categoryFilter"
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Semua Kategori</option>
+                        <option value="Badminton">Badminton</option>
+                        <option value="Futsal">Futsal</option>
+                        <option value="Basketball">Basketball</option>
+                        <option value="Tennis">Tennis</option>
+                        <option value="Voli">Voli</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabel Lapangan -->
+        <div class="bg-white shadow-lg rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left border-collapse">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700">No</th>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700">Nama</th>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700">Kategori</th>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700">Lokasi</th>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700">Harga per Jam</th>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700">Jam Operasional</th>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700">Foto</th>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white" id="lapanganTableBody">
+                        {% if lapangan_list %}
+                            {% for l in lapangan_list %}
+                                <tr class="hover:bg-gray-50 transition" id="row-{{ l.id_lapangan }}" data-category="{{ l.get_kategori_display }}">
+                                    <td class="py-3 px-4 border-b text-gray-700">{{ forloop.counter }}</td>
+                                    <td class="py-3 px-4 border-b font-medium text-gray-800">{{ l.nama }}</td>
+                                    <td class="py-3 px-4 border-b text-gray-700">{{ l.get_kategori_display }}</td>
+                                    <td class="py-3 px-4 border-b text-gray-700">{{ l.lokasi }}</td>
+                                    <td class="py-3 px-4 border-b text-gray-700" data-price="{{ l.harga_per_jam }}">Rp {{ l.harga_per_jam|floatformat:0 }}</td>
+                                    <td class="py-3 px-4 border-b text-gray-700">{{ l.jam_buka|time:"H:i" }} - {{ l.jam_tutup|time:"H:i" }}</td>
+                                    <td class="py-3 px-4 border-b">
+                                        {% if l.foto %}
+                                            <img src="{{ l.foto.url }}" alt="Foto {{ l.nama }}" class="w-20 h-14 object-cover rounded-md border shadow-sm">
+                                        {% else %}
+                                            <span class="text-gray-400 italic text-sm">Tidak ada foto</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-3 px-4 border-b text-center">
+                                        <a href="{% url 'lapangan:lapangan_detail' l.id_lapangan %}"
+                                           class="text-green-600 hover:text-green-800 font-medium transition">Detail</a>
+                                        <span class="text-gray-400 mx-1">|</span>
+                                        <a href="{% url 'lapangan:lapangan_edit' l.id_lapangan %}"
+                                           class="text-blue-600 hover:text-blue-800 font-medium transition">Edit</a>
+                                        <span class="text-gray-400 mx-1">|</span>
+                                        <button 
+                                           data-id="{{ l.id_lapangan }}"
+                                           data-nama="{{ l.nama }}"
+                                           data-delete-url="{% url 'lapangan:lapangan_delete' l.id_lapangan %}"
+                                           onclick="deleteLapangan(this)"
+                                           class="text-red-600 hover:text-red-800 font-medium transition">
+                                           Hapus
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr id="emptyRow">
+                                <td colspan="8" class="text-center py-8 text-gray-500">
+                                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                    </svg>
+                                    <p class="font-semibold">Belum ada data lapangan</p>
+                                    <p class="text-sm mt-1">Klik tombol "Tambah Lapangan" untuk menambahkan lapangan pertama Anda</p>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.getElementById('alertMessage');
+    alertDiv.className = `mb-4 p-4 rounded-lg ${type === 'success' ? 'bg-green-100 border-l-4 border-green-500 text-green-700' : 'bg-red-100 border-l-4 border-red-500 text-red-700'}`;
+    alertDiv.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            <span>${message}</span>
+        </div>
+    `;
+    alertDiv.classList.remove('hidden');
+    setTimeout(() => alertDiv.classList.add('hidden'), 5000);
+}
+
+function deleteLapangan(button) {
+    const id = button.getAttribute('data-id');
+    const nama = button.getAttribute('data-nama');
+    const deleteUrl = button.getAttribute('data-delete-url');
+    
+    if (!confirm(`Yakin ingin menghapus lapangan "${nama}"?\n\nData yang dihapus tidak dapat dikembalikan.`)) {
+        return;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+    button.disabled = true;
+    button.textContent = 'Menghapus...';
+
+    fetch(deleteUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const row = document.getElementById(`row-${id}`);
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(-20px)';
+            row.style.transition = 'all 0.3s ease';
+            
+            setTimeout(() => {
+                row.remove();
+                updateRowNumbers();
+                showAlert(data.message, 'success');
+                
+                const tbody = document.getElementById('lapanganTableBody');
+                if (tbody.querySelectorAll('tr:not(#emptyRow)').length === 0) {
+                    tbody.innerHTML = `
+                        <tr id="emptyRow">
+                            <td colspan="8" class="text-center py-8 text-gray-500">
+                                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                </svg>
+                                <p class="font-semibold">Belum ada data lapangan</p>
+                                <p class="text-sm mt-1">Klik tombol "Tambah Lapangan" untuk menambahkan lapangan pertama Anda</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }, 300);
+        } else {
+            showAlert(data.message || 'Gagal menghapus lapangan!', 'error');
+            button.disabled = false;
+            button.textContent = 'Hapus';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Terjadi kesalahan saat menghapus lapangan!', 'error');
+        button.disabled = false;
+        button.textContent = 'Hapus';
+    });
+}
+
+function updateRowNumbers() {
+    const rows = document.querySelectorAll('#lapanganTableBody tr:not(#emptyRow)');
+    rows.forEach((row, index) => {
+        if (row.style.display !== 'none') {
+            row.querySelector('td:first-child').textContent = index + 1;
+        }
+    });
+}
+
+function searchTable() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const tbody = document.getElementById('lapanganTableBody');
+    const rows = tbody.getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        if (rows[i].id === 'emptyRow') continue;
+        
+        const namaCell = rows[i].getElementsByTagName('td')[1];
+        const lokasiCell = rows[i].getElementsByTagName('td')[3];
+        
+        if (namaCell && lokasiCell) {
+            const nama = namaCell.textContent || namaCell.innerText;
+            const lokasi = lokasiCell.textContent || lokasiCell.innerText;
+            
+            if (nama.toLowerCase().indexOf(filter) > -1 || lokasi.toLowerCase().indexOf(filter) > -1) {
+                rows[i].style.display = '';
+            } else {
+                rows[i].style.display = 'none';
+            }
+        }
+    }
+    updateRowNumbers();
+}
+
+function sortTable(sortBy) {
+    const tbody = document.getElementById('lapanganTableBody');
+    const rows = Array.from(tbody.querySelectorAll('tr:not(#emptyRow)'));
+    
+    rows.sort((a, b) => {
+        let aVal, bVal;
+        switch(sortBy) {
+            case 'name-asc':
+                aVal = a.cells[1].textContent.toLowerCase();
+                bVal = b.cells[1].textContent.toLowerCase();
+                return aVal.localeCompare(bVal);
+            case 'name-desc':
+                aVal = a.cells[1].textContent.toLowerCase();
+                bVal = b.cells[1].textContent.toLowerCase();
+                return bVal.localeCompare(aVal);
+            case 'price-low':
+                aVal = parseFloat(a.cells[4].getAttribute('data-price'));
+                bVal = parseFloat(b.cells[4].getAttribute('data-price'));
+                return aVal - bVal;
+            case 'price-high':
+                aVal = parseFloat(a.cells[4].getAttribute('data-price'));
+                bVal = parseFloat(b.cells[4].getAttribute('data-price'));
+                return bVal - aVal;
+            default:
+                return 0;
+        }
+    });
+    
+    rows.forEach(row => tbody.appendChild(row));
+    updateRowNumbers();
+}
+
+function filterByCategory(category) {
+    const tbody = document.getElementById('lapanganTableBody');
+    const rows = tbody.getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        if (rows[i].id === 'emptyRow') continue;
+        
+        const rowCategory = rows[i].getAttribute('data-category');
+        
+        if (category === '' || rowCategory === category) {
+            rows[i].style.display = '';
+        } else {
+            rows[i].style.display = 'none';
+        }
+    }
+    updateRowNumbers();
+}
+</script>
+
+{% endblock %}

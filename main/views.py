@@ -10,7 +10,7 @@ def landing_page_view(request):
             role = request.user.userprofile.role
             if role == 'penyedia':
                 # UBAH INI: Arahkan ke dashboard manajemen
-                return redirect('manajemen_lapangan:manajemen_dashboard')
+                return redirect('lapangan:lapangan_list_owner')
             elif role == 'user':
                 # UBAH INI: Arahkan ke dashboard booking
                 return redirect('booking:booking_dashboard')

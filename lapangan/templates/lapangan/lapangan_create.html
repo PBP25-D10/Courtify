@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="flex justify-center items-center min-h-screen bg-gray-100 py-8">
+    <div class="bg-white shadow-lg rounded-2xl p-8 w-full max-w-2xl">
+        <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">
+            {% if lapangan %}Edit Lapangan{% else %}Tambah Lapangan{% endif %}
+        </h1>
+
+        <!-- Alert untuk messages -->
+        <div id="form-alerts" class="mb-4"></div>
+
+        <form id="lapanganForm" method="POST" enctype="multipart/form-data" class="space-y-5">
+            {% csrf_token %}
+
+            <!-- Nama -->
+            <div>
+                <label class="block font-semibold text-gray-700 mb-1">Nama Lapangan <span class="text-red-500">*</span></label>
+                <input type="text" name="nama" id="id_nama" value="{{ lapangan.nama|default:'' }}" required
+                    class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <span class="text-red-500 text-sm field-error" data-field="nama"></span>
+            </div>
+
+            <!-- Deskripsi -->
+            <div>
+                <label class="block font-semibold text-gray-700 mb-1">Deskripsi <span class="text-red-500">*</span></label>
+                <textarea name="deskripsi" id="id_deskripsi" rows="3" required
+                    class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none">{{ lapangan.deskripsi|default:'' }}</textarea>
+                <span class="text-red-500 text-sm field-error" data-field="deskripsi"></span>
+            </div>
+
+            <!-- Kategori -->
+            <div>
+                <label class="block font-semibold text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label>
+                <select name="kategori" id="id_kategori" required
+                    class="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="">-- Pilih Kategori --</option>
+                    {{ form.kategori }}
+                </select>
+                <span class="text-red-500 text-sm field-error" data-field="kategori"></span>
+            </div>
+
+            <!-- Lokasi -->
+            <div>
+                <label class="block font-semibold text-gray-700 mb-1">Lokasi <span class="text-red-500">*</span></label>
+                <input type="text" name="lokasi" id="id_lokasi" value="{{ lapangan.lokasi|default:'' }}" required
+                    class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <span class="text-red-500 text-sm field-error" data-field="lokasi"></span>
+            </div>
+
+            <!-- Harga -->
+            <div>
+                <label class="block font-semibold text-gray-700 mb-1">Harga per Jam (Rp) <span class="text-red-500">*</span></label>
+                <input type="number" name="harga_per_jam" id="id_harga_per_jam" value="{{ lapangan.harga_per_jam|default:'' }}" min="1" required
+                    class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <span class="text-red-500 text-sm field-error" data-field="harga_per_jam"></span>
+            </div>
+
+            <!-- Foto -->
+            <div>
+                <label class="block font-semibold text-gray-700 mb-1">Foto</label>
+                <input type="file" name="foto" id="id_foto" accept="image/*"
+                    class="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none p-2">
+                <span class="text-red-500 text-sm field-error" data-field="foto"></span>
+                {% if lapangan and lapangan.foto %}
+                    <div id="current-photo" class="mt-3">
+                        <p class="text-sm text-gray-600 mb-2">Foto saat ini:</p>
+                        <img src="{{ lapangan.foto.url }}" alt="Foto Lapangan"
+                            class="rounded-lg shadow-md w-48 h-32 object-cover">
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Jam Operasional -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Jam Buka <span class="text-red-500">*</span></label>
+                    <input type="time" name="jam_buka" id="id_jam_buka" value="{{ lapangan.jam_buka|default:'' }}" required
+                        class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <span class="text-red-500 text-sm field-error" data-field="jam_buka"></span>
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Jam Tutup <span class="text-red-500">*</span></label>
+                    <input type="time" name="jam_tutup" id="id_jam_tutup" value="{{ lapangan.jam_tutup|default:'' }}" required
+                        class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <span class="text-red-500 text-sm field-error" data-field="jam_tutup"></span>
+                </div>
+            </div>
+
+            <!-- Tombol -->
+            <div class="flex justify-between items-center mt-6">
+                <a href="{% url 'lapangan:lapangan_list_owner' %}"
+                   class="px-5 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition">
+                    Batal
+                </a>
+                <button type="submit" id="submitBtn"
+                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
+                    {% if lapangan %}Update{% else %}Simpan{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('lapanganForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const alertContainer = document.getElementById('form-alerts');
+
+    function showAlert(message, type = 'success') {
+        const alertClass = type === 'success' ? 'bg-green-100 border-green-500 text-green-700' : 'bg-red-100 border-red-500 text-red-700';
+        alertContainer.innerHTML = `
+            <div class="${alertClass} border-l-4 p-4 rounded mb-4" role="alert">
+                <p class="font-bold">${type === 'success' ? 'Berhasil!' : 'Error!'}</p>
+                <p>${message}</p>
+            </div>
+        `;
+        
+        setTimeout(() => {
+            alertContainer.innerHTML = '';
+        }, 5000);
+    }
+
+    function clearErrors() {
+        document.querySelectorAll('.field-error').forEach(el => {
+            el.textContent = '';
+        });
+    }
+
+    function showErrors(errors) {
+        clearErrors();
+        for (const [field, messages] of Object.entries(errors)) {
+            const errorSpan = document.querySelector(`.field-error[data-field="${field}"]`);
+            if (errorSpan) {
+                errorSpan.textContent = messages.join(', ');
+            }
+        }
+    }
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        clearErrors();
+        
+        const formData = new FormData(form);
+        const submitBtnText = submitBtn.textContent;
+        
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Menyimpan...';
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showAlert(data.message, 'success');
+                setTimeout(() => {
+                    window.location.href = "{% url 'lapangan:lapangan_list_owner' %}";
+                }, 1500);
+            } else {
+                showAlert(data.message, 'error');
+                if (data.errors) {
+                    showErrors(data.errors);
+                }
+                submitBtn.disabled = false;
+                submitBtn.textContent = submitBtnText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Terjadi kesalahan saat mengirim data', 'error');
+            submitBtn.disabled = false;
+            submitBtn.textContent = submitBtnText;
+        });
+    });
+
+    const fotoInput = document.getElementById('id_foto');
+    if (fotoInput) {
+        fotoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const currentPhoto = document.getElementById('current-photo');
+                    if (currentPhoto) {
+                        currentPhoto.innerHTML = `
+                            <p class="text-sm text-gray-600 mb-2">Preview:</p>
+                            <img src="${e.target.result}" alt="Preview" 
+                                class="rounded-lg shadow-md w-48 h-32 object-cover">
+                        `;
+                    } else {
+                        const preview = document.createElement('div');
+                        preview.id = 'current-photo';
+                        preview.className = 'mt-3';
+                        preview.innerHTML = `
+                            <p class="text-sm text-gray-600 mb-2">Preview:</p>
+                            <img src="${e.target.result}" alt="Preview" 
+                                class="rounded-lg shadow-md w-48 h-32 object-cover">
+                        `;
+                        fotoInput.parentElement.appendChild(preview);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
