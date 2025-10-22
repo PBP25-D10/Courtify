@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'lapangan',
     'booking',
     'main',
+    'artikel',
+   
 
 ]
 

@@ -107,7 +107,7 @@ def logout_api(request):
 
 def logout_page_view(request):
     logout(request)
-    response = redirect('authentication:login_page')
+    response = redirect('authentication:login')
     response.delete_cookie('user_firstname')
     return response
 
