@@ -81,7 +81,6 @@ def iklan_delete_view(request, id):
     else:
         return JsonResponse({'error': 'Error'}, status=400)
 
-
 # Views untuk Wishlist
 def wishlist_list_view(request):
     return HttpResponse("Daftar wishlist user")
