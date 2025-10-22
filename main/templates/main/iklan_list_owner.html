@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block content %}
 <div class="min-h-screen bg-gray-100 py-10">
   <div class="max-w-6xl mx-auto px-4">
     <div class="flex justify-between items-center mb-8">
       <h1 class="text-3xl font-bold text-gray-800">Daftar Iklan</h1>
-      <a href="{% url 'iklan:iklan_create' %}"
+      <a href="{% url 'main:iklan_create' %}"
          class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold shadow transition">
-        Buat Iklan
+        + Buat Iklan
       </a>
     </div>
 

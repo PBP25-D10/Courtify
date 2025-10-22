@@ -6,7 +6,7 @@
     {% if form.instance.pk %}Edit Iklan{% else %}Buat Iklan{% endif %}
   </h1>
 
-  <form id="iklanForm" method="POST" action="" class="space-y-4">
+  <form id="iklanForm" method="POST" action="" enctype="multipart/form-data" class="space-y-4">
     {% csrf_token %}
 
     {% for field in form %}
@@ -26,7 +26,7 @@
         class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
         Simpan
       </button>
-      <a href="{% url 'main:landing_page' %}"
+      <a href="{% url 'main:iklan_list' %}"
         class="ml-2 bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-md transition-all duration-200">
         Batal
       </a>
@@ -57,7 +57,6 @@ form textarea:focus {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
 
-/* 🌀 Loading spinner */
 .btn-loading::after {
   content: "";
   margin-left: 8px;

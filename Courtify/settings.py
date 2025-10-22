@@ -52,8 +52,6 @@ INSTALLED_APPS = [
     'booking',
     'main',
     'artikel',
-   
-
 ]
 
 LOGIN_URL = reverse_lazy('authentication:login')

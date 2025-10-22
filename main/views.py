@@ -1,8 +1,7 @@
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
-
-from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 
 from main.forms import IklanForm
 from main.models import Iklan
@@ -13,11 +12,11 @@ def landing_page_view(request):
             role = request.user.userprofile.role
             if role == 'penyedia':
                 # UBAH INI: Arahkan ke dashboard manajemen
-                return redirect('manajemen_lapangan:manajemen_dashboard')
+                return render(request, 'main/landing_page.html')
             elif role == 'user':
                 # UBAH INI: Arahkan ke dashboard booking
-                return redirect('booking:booking_dashboard')
-            else:
+                return render(request, 'main/landing_page.html')
+            else:   
                 return redirect('/admin/')
         except AttributeError:
             # Handle jika user tidak punya UserProfile
@@ -43,11 +42,12 @@ def news_delete_view(request, id):
 # Views untuk Iklan
 def iklan_list_view(request):
     iklans = Iklan.objects.filter(host=request.user)
-    return render(request, 'iklan_list_owner.html', {'iklans': iklans})
+    return render(request, 'main/iklan_list_owner.html', {'iklans': iklans})
 
+@login_required
 def iklan_create_view(request):
     if request.method == 'POST':
-        form = IklanForm(request.POST, request.FILES)
+        form = IklanForm(request.POST or None, request.FILES or None, user=request.user)
         if form.is_valid():
             iklan_entry = form.save(commit = False)
             iklan_entry.host = request.user
@@ -58,8 +58,9 @@ def iklan_create_view(request):
     else:
         form = IklanForm()
 
-    return render(request, 'iklan_form.html', {'form': form})
+    return render(request, 'main/iklan_form.html', {'form': form})
 
+@login_required
 def iklan_edit_view(request, id):
     iklans = get_object_or_404(Iklan, pk=id, host=request.user)
     if request.method == 'POST':
@@ -71,8 +72,9 @@ def iklan_edit_view(request, id):
             return JsonResponse({'errors': form.errors}, status=400)    
     else:
       form = IklanForm(instance=iklans)
-    return render(request, 'iklan_form.html', {'form': form})
+    return render(request, 'main/iklan_form.html', {'form': form})
 
+@login_required
 def iklan_delete_view(request, id):
     iklan = get_object_or_404(Iklan, pk=id, host=request.user)
     if request.method == 'POST':
