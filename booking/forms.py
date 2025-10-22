@@ -24,3 +24,8 @@ class BookingForm(forms.ModelForm):
         queryset=Lapangan.objects.all(),
         label="Pilih Lapangan"
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ini opsional, tapi memastikan dropdown menampilkan nama
+        self.fields['lapangan'].label_from_instance = lambda obj: obj.nama
