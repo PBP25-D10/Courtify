@@ -9,6 +9,7 @@ class Iklan(models.Model):
         on_delete=models.CASCADE,
         related_name='iklans'
     )
+    
     lapangan = models.ForeignKey(
         Lapangan,
         on_delete=models.CASCADE,

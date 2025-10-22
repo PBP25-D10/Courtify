@@ -39,7 +39,7 @@
             </p>
 
             <div class="mt-4 flex justify-between">
-              <a href="{% url 'iklan:iklan_edit' iklan.id %}"
+              <a href="{% url 'main:iklan_edit' iklan.id %}"
                  class="bg-yellow-400 hover:bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold transition">
                 Edit
               </a>
@@ -86,7 +86,7 @@ function deleteIklan(id) {
     cancelButtonText: 'Batal'
   }).then((result) => {
     if (result.isConfirmed) {
-      fetch(`/iklan/delete/${id}/`, {
+      fetch("{% url 'main:iklan_delete' 0 %}".replace("0", id), {
         method: 'POST',
         headers: {
           'X-CSRFToken': getCSRFToken(),

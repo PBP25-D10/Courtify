@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", function () {
             text: data.message || "Iklan berhasil disimpan.",
             confirmButtonColor: "#2563eb",
           }).then(() => {
-            window.location.href = "{% url 'main:landing_page' %}";
+            window.location.href = "{% url 'main:iklan_list' %}";
           });
         } else {
           let errorText = "";

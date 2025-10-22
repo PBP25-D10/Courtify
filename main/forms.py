@@ -11,4 +11,4 @@ class IklanForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         if user is not None:
-            self.fields['lapangan'].queryset = Lapangan.objects.filter(host=user)
+            self.fields['lapangan'].queryset = Lapangan.objects.filter(owner=user)
