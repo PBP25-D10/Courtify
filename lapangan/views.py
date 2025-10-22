@@ -9,12 +9,22 @@ from .forms import LapanganForm
 
 @login_required
 @penyedia_required
-def lapangan_list_view(request):
+def manajemen_dashboard_view(request):
+    """Dashboard untuk manajemen lapangan"""
     lapangan_list = Lapangan.objects.filter(owner=request.user.userprofile).order_by('-id_lapangan')
     context = {
         'lapangan_list': lapangan_list
     }
-    return render(request, 'manajemen_lapangan/lapangan_list_owner.html', context)
+    return render(request, 'lapangan/manajemen_dashboard.html', context)
+
+@login_required
+@penyedia_required
+def lapangan_list_view(request):
+    lapangan_list = Lapangan.objects.filter(owner=request.user).order_by('-id_lapangan')
+    context = {
+        'lapangan_list': lapangan_list
+    }
+    return render(request, 'lapangan/lapangan_list_owner.html', context)
 
 @login_required
 @penyedia_required
@@ -23,7 +33,7 @@ def lapangan_detail_view(request, id_lapangan):
     context = {
         'lapangan': lapangan
     }
-    return render(request, 'manajemen_lapangan/lapangan_detail.html', context)
+    return render(request, 'lapangan/lapangan_detail.html', context)
 
 @login_required
 @penyedia_required
@@ -34,7 +44,7 @@ def lapangan_create_view(request):
         if form.is_valid():
             try:
                 lapangan = form.save(commit=False)
-                lapangan.owner = request.user.userprofile
+                lapangan.owner = request.user
                 lapangan.save()
                 
                 # Check bila AJAX
@@ -46,7 +56,7 @@ def lapangan_create_view(request):
                     })
                 
                 messages.success(request, 'Lapangan berhasil ditambahkan!')
-                return redirect('manajemen_lapangan:lapangan_list_owner')
+                return redirect('lapangan:lapangan_list_owner')
             
             except Exception as e:
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -75,7 +85,7 @@ def lapangan_create_view(request):
         'form': form,
         'title': 'Tambah Lapangan'
     }
-    return render(request, 'manajemen_lapangan/lapangan_form.html', context)
+    return render(request, 'lapangan/lapangan_form.html', context)
 
 @login_required
 @penyedia_required
@@ -96,7 +106,7 @@ def lapangan_edit_view(request, id_lapangan):
                     })
                 
                 messages.success(request, 'Lapangan berhasil diupdate!')
-                return redirect('manajemen_lapangan:lapangan_list_owner')
+                return redirect('lapangan:lapangan_list_owner')
             
             except Exception as e:
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -126,7 +136,7 @@ def lapangan_edit_view(request, id_lapangan):
         'lapangan': lapangan,
         'title': 'Edit Lapangan'
     }
-    return render(request, 'manajemen_lapangan/lapangan_form.html', context)
+    return render(request, 'lapangan/lapangan_form.html', context)
 
 @login_required
 @penyedia_required
@@ -145,7 +155,7 @@ def lapangan_delete_view(request, id_lapangan):
             })
         
         messages.success(request, f'Lapangan "{lapangan_nama}" berhasil dihapus!')
-        return redirect('manajemen_lapangan:lapangan_list_owner')
+        return redirect('lapangan:lapangan_list_owner')
     
     except Exception as e:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -154,7 +164,7 @@ def lapangan_delete_view(request, id_lapangan):
                 'message': f'Terjadi kesalahan: {str(e)}'
             }, status=400)
         messages.error(request, f'Terjadi kesalahan: {str(e)}')
-        return redirect('manajemen_lapangan:lapangan_list_owner')
+        return redirect('lapangan:lapangan_list_owner')
 
 @login_required
 @penyedia_required
