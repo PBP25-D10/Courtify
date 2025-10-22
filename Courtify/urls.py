@@ -68,8 +68,13 @@ urlpatterns = [
     # 📅 URL untuk booking
     path('booking/', include('booking.urls')),
 
+      # URL untuk artikel
+    path('artikel/', include(('artikel.urls', 'artikel'), namespace='artikel')),
+
     # 🏠 URL untuk fitur utama (artikel, wishlist, iklan)
     path('', include('main.urls')),
+
+  
 ]
 
 if settings.DEBUG:
