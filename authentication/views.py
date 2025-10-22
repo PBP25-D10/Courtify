@@ -78,7 +78,7 @@ def login_api(request):
             response = JsonResponse({
                 'status': 'success',
                 'message': 'Login berhasil!',
-                'redirect_url': '/'  # <-- Arahkan ke root URL!
+                'redirect_url': '/' 
             })
             
             # **Membuat Cookie Sederhana**
