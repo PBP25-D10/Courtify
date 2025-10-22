@@ -1,74 +1,46 @@
-  {% extends "base.html" %}
+{% extends 'base.html' %}
 
-  {% block content %}
-  <h1>Daftar Booking</h1>
-  <br><br><br>
-  <hr>
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-10">
+  <div class="max-w-6xl mx-auto px-4">
+    <h1 class="text-3xl font-bold text-gray-800 mb-8">🏟️ Pilih Lapangan untuk Booking</h1>
 
-  <!-- Tombol tambah booking -->
-  <p>
-      <a href="{% url 'booking:booking_create' %}"
-        style="background: #4CAF50; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none;">
-          + Tambah Booking
-      </a>
-  </p>
+    {% if lapangan_list %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for lap in lapangan_list %}
+      <div class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition">
+        {% if lap.foto %}
+          <img src="{{ lap.foto.url }}" alt="{{ lap.nama }}" class="w-full h-48 object-cover">
+        {% else %}
+          <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 italic">
+            Tidak ada foto
+          </div>
+        {% endif %}
 
-  <!-- Tabel daftar booking -->
-  <table border="1" cellpadding="8" cellspacing="0" width="100%">
-      <thead style="background: #f2f2f2;">
-          <tr>
-              <th>No</th>
-              <th>Lapangan</th>
-              <th>Tanggal</th>
-              <th>Jam</th>
-              <th>Status</th>
-              <th>Aksi</th>
-          </tr>
-      </thead>
-      <tbody>
-          {% if bookings %}
-              {% for booking in bookings %}
-              <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>{{ booking.lapangan.nama }}</td>
-                  <td>{{ booking.tanggal }}</td>
-                  <td>
-                      {% if booking.jam_mulai and booking.jam_selesai %}
-                          {{ booking.jam_mulai }} - {{ booking.jam_selesai }}
-                      {% else %}
-                          {{ booking.jam }}
-                      {% endif %}
-                  </td>
-                  <td>
-                      {% if booking.status == 'pending' %}
-                          <span style="color: orange;">Menunggu Konfirmasi</span>
-                      {% elif booking.status == 'confirmed' %}
-                          <span style="color: green;">Dikonfirmasi</span>
-                      {% elif booking.status == 'cancelled' %}
-                          <span style="color: red;">Dibatalkan</span>
-                      {% else %}
-                          {{ booking.status }}
-                      {% endif %}
-                  </td>
-                  <td>
-                      <a href="{% url 'booking:booking_update' booking.pk %}" style="color: blue;">Edit</a> |
-                      {% if booking.status != 'cancelled' %}
-                          <a href="{% url 'booking:booking_cancel' booking.pk %}"
-                            style="color: red;"
-                            onclick="return confirm('Yakin ingin membatalkan booking ini?')">
-                            Batalkan
-                          </a>
-                      {% else %}
-                          <em>-</em>
-                      {% endif %}
-                  </td>
-              </tr>
-              {% endfor %}
-          {% else %}
-              <tr>
-                  <td colspan="6" style="text-align: center;">Belum ada booking.</td>
-              </tr>
-          {% endif %}
-      </tbody>
-  </table>
-  {% endblock %}
+        <div class="p-5">
+          <h2 class="text-xl font-semibold text-gray-800 mb-1">{{ lap.nama }}</h2>
+          <p class="text-sm text-gray-500 mb-2">{{ lap.kategori }} • {{ lap.lokasi }}</p>
+          <p class="text-gray-700 font-medium">Rp {{ lap.harga_per_jam }} / jam</p>
+
+          <p class="text-sm text-gray-500 mt-2">
+            ⏰ {{ lap.jam_buka }} - {{ lap.jam_tutup }}
+          </p>
+
+          <div class="mt-4 flex justify-end">
+            <a href="{% url 'booking:booking_create' %}?lapangan_id={{ lap.id_lapangan }}"
+               class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
+              Pesan Sekarang
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white shadow rounded-xl p-8 text-center">
+      <p class="text-gray-600 text-lg">Belum ada lapangan yang tersedia.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
