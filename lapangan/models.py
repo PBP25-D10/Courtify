@@ -1,10 +1,18 @@
 from django.db import models
+from django.conf import settings
 from django.core.validators import MinValueValidator
 import os 
 import uuid
 # Create your models here.
 
 class Lapangan(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='lapangans',
+        null=True,    
+        blank=True
+    )
     id_lapangan = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nama = models.CharField(max_length=100)
     deskripsi = models.CharField(max_length=255)
