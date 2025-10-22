@@ -48,7 +48,7 @@
 
         <p class="text-center text-sm text-gray-600 mt-6">
             Sudah punya akun?
-            <a href="{% url 'authentication:login' %}" class="text-blue-600 hover:underline font-medium">
+            <a href="{% url 'authentication:login_page' %}" class="text-blue-600 hover:underline font-medium">
                 Login di sini
             </a>
         </p>
@@ -82,7 +82,7 @@
                     messageDiv.style.color = 'green';
                     messageDiv.innerText = result.message || 'Registrasi berhasil!';
                     setTimeout(() => {
-                        window.location.href = "{% url 'authentication:login' %}";
+                        window.location.href = "{% url 'authentication:login_page' %}";
                     }, 1500);
                 } else {
                     messageDiv.style.color = 'red';
