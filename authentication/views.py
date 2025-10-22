@@ -25,7 +25,7 @@ def register_page_view(request):
 def dashboard_view(request):
     """Halaman yang hanya bisa diakses setelah login."""
     if not request.user.is_authenticated:
-        return redirect('authentication:login_page')
+        return redirect('authentication:login')
     return render(request, 'authentication/dashboard.html')
 
 
@@ -96,7 +96,7 @@ def login_api(request):
 def logout_api(request):
     if request.method == 'POST':
         logout(request)
-        response = JsonResponse({'status': 'success', 'message': 'Logout berhasil.', 'redirect_url': reverse('authentication:login_page')})
+        response = JsonResponse({'status': 'success', 'message': 'Logout berhasil.', 'redirect_url': reverse('authentication:login')})
 
         # Hapus cookie yang kita buat
         response.delete_cookie('user_firstname')
@@ -107,7 +107,7 @@ def logout_api(request):
 
 def logout_page_view(request):
     logout(request)
-    response = redirect('authentication:login_page')
+    response = redirect('authentication:login')
     response.delete_cookie('user_firstname')
     return response
 
