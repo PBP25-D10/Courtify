@@ -2,12 +2,13 @@
 from django.urls import path
 from . import views
 
-app_name = 'manajemen_lapangan'
+app_name = 'lapangan'
 
 urlpatterns = [
-    path('', views.manajemen_dashboard_view, name='manajemen_dashboard'),
-    path('lapangan/', views.lapangan_list_view, name='lapangan_list_owner'),
-    path('lapangan/tambah/', views.lapangan_create_view, name='lapangan_create'),
-    path('lapangan/edit/<uuid:id_lapangan>/', views.lapangan_edit_view, name='lapangan_edit'),
-    path('lapangan/hapus/<uuid:id_lapangan>/', views.lapangan_delete_view, name='lapangan_delete'),
+    path('', views.lapangan_list_view, name='lapangan_list_owner'),
+    path('tambah/', views.lapangan_create_view, name='lapangan_create'),    
+    path('<uuid:id_lapangan>/', views.lapangan_detail_view, name='lapangan_detail'),
+    path('edit/<uuid:id_lapangan>/', views.lapangan_edit_view, name='lapangan_edit'),
+    path('hapus/<uuid:id_lapangan>/', views.lapangan_delete_view, name='lapangan_delete'),
+    path('json/<uuid:id_lapangan>/', views.lapangan_get_json, name='lapangan_get_json')
 ]
