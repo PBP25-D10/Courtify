@@ -1,67 +1,69 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard Penyedia</title>
-</head>
-<body>
-    <h2>Selamat Datang, <span id="user-greeting">Penyedia</span>!</h2>
-    <p>Dari sini, Anda bisa mengelola semua lapangan Anda.</p>
-    
-    <ul>
-        <li><a href="{% url 'lapangan:lapangan_list_owner' %}">Lihat Daftar Lapangan Saya</a></li>
-        <li><a href="{% url 'lapangan:lapangan_create' %}">Tambah Lapangan Baru</a></li>
-    </ul>
+{% extends 'base.html' %}
 
-    <button id="logout-button">Logout</button>
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-10">
+    <div class="max-w-7xl mx-auto px-6">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Dashboard Manajemen Lapangan</h1>
+            <a href="{% url 'manajemen_lapangan:lapangan_create' %}"
+               class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold shadow transition">
+                + Tambah Lapangan
+            </a>
+        </div>
 
-    <script>
-        // **Membaca Cookie menggunakan JavaScript**
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-
-        // Menampilkan nama dari cookie 'user_firstname'
-        const userFirstname = getCookie('user_firstname');
-        if (userFirstname) {
-            document.getElementById('user-greeting').innerText = userFirstname;
-        }
-        
-        // **Handle Logout dengan AJAX**
-        document.getElementById('logout-button').addEventListener('click', async function() {
-            const csrftoken = getCookie('csrftoken'); 
-
-            try {
-                // PERHATIKAN: URL sudah diperbaiki ke namespace 'accounts'
-                const response = await fetch("{% url 'authentication:api_logout' %}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrftoken
-                    }
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    window.location.href = result.redirect_url;
-                } else {
-                    alert('Logout gagal: ' + result.message);
-                }
-            } catch (error) {
-                alert('Terjadi kesalahan jaringan saat logout.');
-            }
-        });
-    </script>
-</body>
-</html>
+        <!-- Tabel Lapangan -->
+        <div class="bg-white shadow-lg rounded-2xl overflow-hidden">
+            <table class="min-w-full text-left border-collapse">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="py-3 px-4 border-b font-semibold text-gray-700">No</th>
+                        <th class="py-3 px-4 border-b font-semibold text-gray-700">Nama</th>
+                        <th class="py-3 px-4 border-b font-semibold text-gray-700">Kategori</th>
+                        <th class="py-3 px-4 border-b font-semibold text-gray-700">Lokasi</th>
+                        <th class="py-3 px-4 border-b font-semibold text-gray-700">Harga per Jam</th>
+                        <th class="py-3 px-4 border-b font-semibold text-gray-700">Jam Buka</th>
+                        <th class="py-3 px-4 border-b font-semibold text-gray-700">Jam Tutup</th>
+                        <th class="py-3 px-4 border-b font-semibold text-gray-700">Foto</th>
+                        <th class="py-3 px-4 border-b font-semibold text-gray-700 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white">
+                    {% if lapangan_list %}
+                        {% for l in lapangan_list %}
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="py-3 px-4 border-b text-gray-700">{{ forloop.counter }}</td>
+                                <td class="py-3 px-4 border-b font-medium text-gray-800">{{ l.nama }}</td>
+                                <td class="py-3 px-4 border-b text-gray-700">{{ l.get_kategori_display }}</td>
+                                <td class="py-3 px-4 border-b text-gray-700">{{ l.lokasi }}</td>
+                                <td class="py-3 px-4 border-b text-gray-700">Rp {{ l.harga_per_jam }}</td>
+                                <td class="py-3 px-4 border-b text-gray-700">{{ l.jam_buka }}</td>
+                                <td class="py-3 px-4 border-b text-gray-700">{{ l.jam_tutup }}</td>
+                                <td class="py-3 px-4 border-b">
+                                    {% if l.foto %}
+                                        <img src="{{ l.foto.url }}" alt="Foto {{ l.nama }}" class="w-20 h-14 object-cover rounded-md border">
+                                    {% else %}
+                                        <span class="text-gray-400 italic">Tidak ada foto</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-4 border-b text-center">
+                                    <a href="{% url 'manajemen_lapangan:lapangan_edit' l.id_lapangan %}"
+                                       class="text-blue-600 hover:text-blue-800 font-medium transition">Edit</a>
+                                    <span class="text-gray-400 mx-1">|</span>
+                                    <a href="{% url 'manajemen_lapangan:lapangan_delete' l.id_lapangan %}"
+                                       onclick="return confirm('Yakin ingin menghapus lapangan ini?')"
+                                       class="text-red-600 hover:text-red-800 font-medium transition">Hapus</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center py-6 text-gray-500">Belum ada data lapangan.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
