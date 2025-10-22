@@ -78,7 +78,7 @@ def login_api(request):
             response = JsonResponse({
                 'status': 'success',
                 'message': 'Login berhasil!',
-                'redirect_url': '/'  # <-- Arahkan ke root URL!
+                'redirect_url': '/' 
             })
             
             # **Membuat Cookie Sederhana**
@@ -107,7 +107,7 @@ def logout_api(request):
 
 def logout_page_view(request):
     logout(request)
-    response = redirect('authentication:login_page')
+    response = redirect('authentication:login')
     response.delete_cookie('user_firstname')
     return response
 

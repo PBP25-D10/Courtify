@@ -9,103 +9,66 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css">
 </head>
 
-<body class="flex flex-col min-h-screen bg-gray-50">
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <nav class="bg-gray-900 text-white shadow-md">
+        <div class="container mx-auto flex items-center justify-between px-6 py-3">
+            <!-- Left: Brand -->
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'main:landing_page' %}" class="text-xl font-semibold hover:text-blue-400 transition">
+                    Courtify
+                </a>
+                <a href="{% url 'booking:booking_list' %}" class="hover:text-blue-400 transition">Booking</a>
+                <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-400 transition">Lapangan</a>
+                <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
+            </div>
 
-  <!-- Navbar -->
-<nav class="bg-white shadow-sm sticky top-0 z-50">
-  <div class="container mx-auto flex items-center justify-between px-6 py-3 relative">
-
-    <!-- Left: Logo -->
-    <div class="flex items-center space-x-3">
-      <img src="{% static 'img/logo.png' %}" alt="Courtify" class="w-8 h-8">
-      <span class="text-xl font-semibold text-gray-800">Courtify</span>
-    </div>
-
-    <!-- Middle: Menu (centered absolutely) -->
-    <div class="absolute left-1/2 transform -translate-x-1/2">
-      <div class="hidden md:flex space-x-8 text-sm font-medium text-gray-700">
-        <a href="{% url 'main:landing_page' %}" class="hover:text-blue-500">Home</a>
-        <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-500">Lapangan</a>
-        <a href="{% url 'booking:booking_list' %}" class="hover:text-blue-500">Booking</a>
-      </div>
-    </div>
-
-  </div>
-</nav>
-
-
-  <!-- Main content -->
-  <main class="flex-grow container mx-auto p-6">
-    {% block content %}{% endblock content %}
-  </main>
-
-  <!-- Footer -->
-  <footer class="bg-gray-900 text-gray-300">
-    <div class="container mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-5 gap-8">
-      <!-- Kategori -->
-      <div>
-        <h3 class="font-semibold text-white mb-3">Kategori</h3>
-        <ul class="space-y-2 text-sm">
-          <li><a href="#" class="hover:text-white">Futsal</a></li>
-          <li><a href="#" class="hover:text-white">Basket</a></li>
-          <li><a href="#" class="hover:text-white">Badminton</a></li>
-          <li><a href="#" class="hover:text-white">Voli</a></li>
-          <li><a href="#" class="hover:text-white">Tenis</a></li>
-        </ul>
-      </div>
-
-      <!-- Dukungan -->
-      <div>
-        <h3 class="font-semibold text-white mb-3">Dukungan</h3>
-        <ul class="space-y-2 text-sm">
-          <li><a href="#" class="hover:text-white">Panduan Pengguna</a></li>
-          <li><a href="#" class="hover:text-white">FAQ</a></li>
-          <li><a href="#" class="hover:text-white">Pusat Bantuan</a></li>
-        </ul>
-      </div>
-
-      <!-- Layanan -->
-      <div>
-        <h3 class="font-semibold text-white mb-3">Layanan</h3>
-        <ul class="space-y-2 text-sm">
-          <li><a href="#" class="hover:text-white">Penyewaan Lapangan</a></li>
-          <li><a href="#" class="hover:text-white">Manajemen Jadwal</a></li>
-          <li><a href="#" class="hover:text-white">Membership</a></li>
-        </ul>
-      </div>
-
-      <!-- Tentang -->
-      <div>
-        <h3 class="font-semibold text-white mb-3">Tentang</h3>
-        <ul class="space-y-2 text-sm">
-          <li><a href="#" class="hover:text-white">Tentang Kami</a></li>
-          <li><a href="#" class="hover:text-white">Kebijakan Privasi</a></li>
-          <li><a href="#" class="hover:text-white">Kontak</a></li>
-        </ul>
-      </div>
-
-      <!-- Sosial Media -->
-      <div>
-        <h3 class="font-semibold text-white mb-3">Ikuti Kami</h3>
-        <div class="flex space-x-4 text-2xl mb-4">
-          <a href="#" class="hover:text-blue-500"><i class="ri-facebook-fill"></i></a>
-          <a href="#" class="hover:text-pink-500"><i class="ri-instagram-fill"></i></a>
-          <a href="#" class="hover:text-sky-500"><i class="ri-twitter-x-fill"></i></a>
-          <a href="#" class="hover:text-red-500"><i class="ri-youtube-fill"></i></a>
+            <!-- Right: Auth Links -->
+            <div class="flex items-center space-x-4">
+                {% if user.is_authenticated %}
+                    <span class="text-gray-300">Halo, <span class="font-semibold">{{ user.username }}</span>!</span>
+                    <a href="{% url 'authentication:logout' %}"
+                       class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm transition">
+                       Logout
+                    </a>
+                {% else %}
+                    <a href="{% url 'authentication:login' %}"
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition">
+                       Login
+                    </a>
+                    <a href="{% url 'authentication:register' %}"
+                       class="border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white px-3 py-1 rounded-lg text-sm transition">
+                       Register
+                    </a>
+                {% endif %}
+            </div>
         </div>
+    </nav>
 
-        <p class="text-sm mb-2">Berlangganan buletin kami</p>
-        <div class="flex border border-gray-600 rounded overflow-hidden">
-          <input type="email" placeholder="Masukkan email anda" class="flex-grow bg-transparent px-3 py-2 text-sm outline-none text-white" />
-          <button class="bg-blue-600 px-4 hover:bg-blue-700"><i class="ri-arrow-right-line"></i></button>
+    <!-- Main Content -->
+    <main class="flex-grow">
+        {% block content %}
+        {% endblock content %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white">
+        <div class="container mx-auto px-6 py-6">
+            <!-- Newsletter Subscription -->
+            <div class="mb-4">
+                <p class="text-sm mb-2">Berlangganan buletin kami</p>
+                <div class="flex border border-gray-600 rounded overflow-hidden">
+                    <input type="email" placeholder="Masukkan email anda" class="flex-grow bg-transparent px-3 py-2 text-sm outline-none text-white" />
+                    <button class="bg-blue-600 px-4 hover:bg-blue-700"><i class="ri-arrow-right-line"></i></button>
+                </div>
+            </div>
+
+            <!-- Copyright -->
+            <div class="border-t border-gray-700 text-center py-4 text-xs text-gray-500">
+                © 2025 Courtify. All rights reserved. | Kebijakan Privasi | Peta Situs
+            </div>
         </div>
-      </div>
-    </div>
-
-    <div class="border-t border-gray-700 text-center py-4 text-xs text-gray-500">
-      © 2025 Courtify. All rights reserved. | Kebijakan Privasi | Peta Situs
-    </div>
-  </footer>
+    </footer>
 
 </body>
 </html>
