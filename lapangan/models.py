@@ -24,3 +24,7 @@ class Lapangan(models.Model):
     foto = models.ImageField(upload_to="static/img/")
     jam_buka = models.TimeField()
     jam_tutup = models.TimeField()
+
+    
+    def __str__(self):
+        return self.nama 
