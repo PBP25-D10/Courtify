@@ -33,6 +33,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "justin-timothy-courtify.pbp.cs.ui.ac.id"]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://justin-timothy-courtify.pbp.cs.ui.ac.id', 'http://justin-timothy-courtify.pbp.cs.ui.ac.id'
+]
+
 
 # Application definition
 
@@ -47,6 +51,8 @@ INSTALLED_APPS = [
     'lapangan',
     'booking',
     'main',
+    'artikel',
+   
 
 ]
 

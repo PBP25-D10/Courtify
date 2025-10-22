@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-lg mx-auto mt-10 bg-white shadow-xl rounded-2xl p-8 border border-gray-100">
-  <h1 class="text-3xl font-bold text-blue-700 mb-6 text-center tracking-wide">
-    {% if form.instance.pk %}Edit Booking{% else %}Tambah Booking{% endif %}
+<div class="max-w-3xl mx-auto mt-14 bg-white shadow-2xl rounded-3xl p-10 border border-gray-100">
+  <h1 class="text-4xl font-extrabold text-blue-900 mb-10 text-center tracking-wide">
+    {% if form.instance.pk %}Edit Booking{% else %}Buat Booking{% endif %}
   </h1>
 
-  <form id="bookingForm" method="POST" action="" class="space-y-4">
+  <form id="bookingForm" method="POST" action="" class="space-y-6">
     {% csrf_token %}
 
     {% for field in form %}
       <div class="flex flex-col">
-        <label for="{{ field.id_for_label }}" class="font-semibold text-gray-700 mb-1">
+        <label for="{{ field.id_for_label }}" class="font-semibold text-gray-700 mb-2 text-lg">
           {{ field.label }}
         </label>
         {{ field }}
@@ -21,15 +21,15 @@
       </div>
     {% endfor %}
     
-    <div class="text-center mt-8">
-      <button id="submitBtn" type="submit"
-        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-        Simpan
-      </button>
+    <div class="text-center mt-10 flex justify-center gap-4">
       <a href="{% url 'booking:booking_dashboard' %}"
-        class="ml-2 bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-md transition-all duration-200">
+        class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg text-base shadow-md transition-all duration-300">
         Batal
       </a>
+      <button id="submitBtn" type="submit"
+        class="bg-blue-900 hover:bg-blue-950 text-white font-semibold px-6 py-2 rounded-lg text-base shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+        Simpan
+      </button>
     </div>
   </form>
 </div>
@@ -38,30 +38,31 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
-/* 🎨 Custom styling for Django form fields */
+/* ✨ Custom Styling for Form Fields */
 form input,
 form select,
 form textarea {
-  border: 1px solid #d1d5db; /* gray-300 */
-  border-radius: 0.5rem;
-  padding: 0.6rem 0.75rem;
-  font-size: 0.95rem;
-  transition: all 0.2s;
-  background-color: #f9fafb; /* gray-50 */
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  padding: 0.9rem 1rem;
+  font-size: 1.05rem;
+  transition: all 0.2s ease-in-out;
+  background-color: #f9fafb;
 }
 form input:focus,
 form select:focus,
 form textarea:focus {
-  border-color: #2563eb; /* blue-600 */
+  border-color: #1e40af; /* warna sama dengan footer */
   outline: none;
   background-color: #fff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.2);
 }
 
-/* 🌀 Loading spinner */
+/* 🌀 Loading Spinner for Submit Button */
 .btn-loading::after {
   content: "";
-  margin-left: 8px;
+  margin-left: 10px;
   width: 14px;
   height: 14px;
   border: 2px solid #fff;
@@ -71,7 +72,19 @@ form textarea:focus {
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 🧩 Responsive Padding for Mobile */
+@media (max-width: 768px) {
+  .max-w-3xl {
+    padding: 2rem;
+  }
+  h1 {
+    font-size: 2xl;
+  }
 }
 </style>
 
@@ -107,7 +120,7 @@ document.addEventListener("DOMContentLoaded", function () {
             icon: "success",
             title: "Berhasil!",
             text: data.message || "Booking berhasil disimpan.",
-            confirmButtonColor: "#2563eb",
+            confirmButtonColor: "#1e40af",
           }).then(() => {
             window.location.href = "{% url 'booking:booking_dashboard' %}";
           });
