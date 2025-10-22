@@ -58,7 +58,6 @@ def booking_create_view(request):
     return render(request, 'booking/booking_form.html', {'form': form})
 
 
-
 # ✏️ Update Booking
 @login_required
 def update_booking_view(request, pk):
