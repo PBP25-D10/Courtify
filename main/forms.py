@@ -5,7 +5,10 @@ from .models import Iklan
 class IklanForm(forms.ModelForm):
     class Meta:
         model = Iklan
-        fields = ["lapangan", "banner"]
+        fields = ["lapangan","judul", "deskripsi", "banner"]
+        widgets = {
+            'deskripsi': forms.Textarea(attrs={'rows': 3}),
+        }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
