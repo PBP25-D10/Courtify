@@ -1,6 +1,6 @@
 # booking/urls.py
 
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 app_name = 'booking'
@@ -12,5 +12,6 @@ urlpatterns = [
     path('update/<int:pk>/', views.update_booking_view, name='update_booking'),
     path('cancel/<int:pk>/', views.cancel_booking_view, name='cancel_booking'),
     path('my-bookings/', views.booking_user_list_view, name='booking_user_list'),
+    path('api/booked/<uuid:lapangan_id>/<str:tanggal>/', views.get_booked_hours, name='get_booked_hours'),
 
 ]

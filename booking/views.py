@@ -61,13 +61,9 @@ def booking_list_view(request):
     return render(request, 'booking/booking_list.html', {'lapangan_list': lapangan_list})
 
 
-
-
-
 @login_required
 def booking_create_view(request, id_lapangan=None):
     lapangan_terpilih = None
-
     if id_lapangan:
         lapangan_terpilih = get_object_or_404(Lapangan, id_lapangan=id_lapangan)
 
@@ -79,24 +75,31 @@ def booking_create_view(request, id_lapangan=None):
             if lapangan_terpilih:
                 booking.lapangan = lapangan_terpilih
             booking.save()
+
+            # ⬇️ TARO DI SINI (di dalam if form.is_valid())
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                # kalau request-nya AJAX
+                return JsonResponse({'success': True})
+            
+            # kalau bukan AJAX (misal user submit form biasa)
             messages.success(request, 'Booking berhasil dibuat!')
             return redirect('booking:booking_dashboard')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': form.errors})
+
     else:
         initial = {}
         if lapangan_terpilih:
             initial['lapangan'] = lapangan_terpilih
         form = BookingForm(initial=initial)
 
-    # Kirim range jam 0-23 ke template
     jam_range = list(range(24))
-
     return render(request, 'booking/booking_form.html', {
         'form': form,
         'lapangan_terpilih': lapangan_terpilih,
         'jam_range': jam_range
     })
-
-
 
 
 # ✏️ Update Booking
@@ -153,4 +156,24 @@ def booking_user_list_view(request):
     """Menampilkan semua booking milik user"""
     bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
     return render(request, 'booking/booking_user_list.html', {'bookings': bookings})
+
+
+def get_booked_hours(request, lapangan_id, tanggal):
+    bookings = Booking.objects.filter(
+        lapangan_id=lapangan_id,
+        tanggal=tanggal,
+        status__in=['pending', 'valid']  # kalau kamu mau hitung yang pending juga
+    )
+
+    jam_terpakai = []
+    for b in bookings:
+        jam_terpakai.extend(range(b.jam_mulai.hour, b.jam_selesai.hour))
+
+    # Hapus duplikat dan urutkan
+    jam_terpakai = sorted(set(jam_terpakai))
+
+    return JsonResponse({'jam_terpakai': jam_terpakai})
+
+
+
 
