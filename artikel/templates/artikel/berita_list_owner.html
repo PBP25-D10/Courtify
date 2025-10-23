@@ -16,40 +16,23 @@
     <strong>Peringatan:</strong> Hanya penyedia yang dapat mengelola berita.
   </div>
 
-  <!-- Modal Tambah/Edit -->
-  <div id="newsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
-      <div class="mt-3">
-        <h3 id="modalTitle" class="text-lg font-medium text-gray-900 mb-4">Tambah Berita Baru</h3>
-        <form id="newsForm" enctype="multipart/form-data" class="border border-gray-300 rounded-lg p-4 bg-gray-50">
-          {% csrf_token %}
-          <input type="hidden" id="newsId" name="news_id">
-          <div class="mb-4">
-            <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Judul</label>
-            {{ form.title }}
-          </div>
-          <div class="mb-4">
-            <label for="{{ form.content.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Konten</label>
-            {{ form.content }}
-          </div>
-          <div class="mb-4">
-            <label for="{{ form.kategori.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-            {{ form.kategori }}
-          </div>
-          <div class="mb-4">
-            <label for="{{ form.thumbnail.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Thumbnail</label>
-            {{ form.thumbnail }}
-          </div>
-          <div class="flex items-center justify-between">
-            <button type="button" id="closeModalBtn" class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300">
-              Batal
-            </button>
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
-              Simpan
-            </button>
-          </div>
-        </form>
-      </div>
+
+  <div id="newsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white shadow-lg rounded-xl p-8 w-full max-w-lg">
+      <h3 id="modalTitle" class="text-3xl font-bold text-center mb-6">Tambah Berita Baru</h3>
+      <form id="newsForm" enctype="multipart/form-data" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" id="newsId" name="news_id">
+        {{ form.as_p }}
+        <div class="flex items-center justify-between pt-4">
+          <button type="button" id="closeModalBtn" class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300">
+            Batal
+          </button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
+            Simpan
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -95,6 +78,11 @@
 </div>
 
 <script>
+  // URLs
+  const urlCreate = "{% url 'artikel:news_create' %}";
+  const urlUpdate = "{% url 'artikel:news_update' 0 %}";
+  const urlDelete = "{% url 'artikel:news_delete' 0 %}";
+
   // Modal functionality
   const modal = document.getElementById('newsModal');
   const deleteModal = document.getElementById('deleteModal');
@@ -133,6 +121,14 @@
     }
   });
 
+  // Close modal when pressing Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      modal.classList.add('hidden');
+      deleteModal.classList.add('hidden');
+    }
+  });
+
   deleteModal.addEventListener('click', (e) => {
     if (e.target === deleteModal) {
       deleteModal.classList.add('hidden');
@@ -163,7 +159,7 @@
     const formData = new FormData(form);
     const isEdit = newsIdInput.value !== '';
 
-    const url = isEdit ? `{% url "artikel:news_update" 0 %}`.replace('0', newsIdInput.value) : '{% url "artikel:news_create" %}';
+    const url = isEdit ? urlUpdate.replace('0', newsIdInput.value) : urlCreate;
 
     try {
       const response = await fetch(url, {
@@ -198,7 +194,7 @@
     if (!currentNewsId) return;
 
     try {
-      const response = await fetch(`{% url "artikel:news_delete" 0 %}`.replace('0', currentNewsId), {
+      const response = await fetch(urlDelete.replace('0', currentNewsId), {
         method: 'POST',
         headers: {
           'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
