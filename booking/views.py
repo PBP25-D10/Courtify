@@ -8,29 +8,59 @@ from .models import Booking
 from .models import Lapangan
 from .forms import BookingForm
 
+from django.db.models import Q
+
+
 # 🏠 Dashboard Booking
 @login_required
 def booking_dashboard_view(request):
-    """Menampilkan daftar booking milik user yang sedang login"""
-    bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
+    bookings = Booking.objects.filter(user=request.user).order_by('-created_at')[:5]
+    lapangan_list = Lapangan.objects.all().order_by('nama')[:5]
 
-    # Respons AJAX
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        data = list(bookings.values())
-        return JsonResponse({'bookings': data})
+    return render(request, 'booking/dashboard.html', {
+        'bookings': bookings,
+        'lapangan_list': lapangan_list
+    })
 
-    return render(request, 'booking/dashboard.html', {'bookings': bookings})
 
 
 # 📋 List Semua Booking (bisa untuk admin atau penyedia)
 @login_required
 def booking_list_view(request):
-    """Menampilkan daftar lapangan agar bisa dipilih untuk booking"""
     lapangan_list = Lapangan.objects.all().order_by('nama')
 
-    return render(request, 'booking/booking_list.html', {
-        'lapangan_list': lapangan_list
-    })
+    search = request.GET.get('search')
+    kategori = request.GET.get('kategori')
+    harga_min = request.GET.get('harga_min')
+    harga_max = request.GET.get('harga_max')
+
+    if search:
+        lapangan_list = lapangan_list.filter(
+            Q(nama__icontains=search) | Q(lokasi__icontains=search)
+        )
+    if kategori:
+        lapangan_list = lapangan_list.filter(kategori__icontains=kategori)
+    if harga_min:
+        lapangan_list = lapangan_list.filter(harga_per_jam__gte=harga_min)
+    if harga_max:
+        lapangan_list = lapangan_list.filter(harga_per_jam__lte=harga_max)
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        data = [{
+            'id_lapangan': lap.id_lapangan,
+            'nama': lap.nama,
+            'kategori': lap.kategori,
+            'lokasi': lap.lokasi,
+            'harga_per_jam': lap.harga_per_jam,
+            'jam_buka': str(lap.jam_buka),
+            'jam_tutup': str(lap.jam_tutup),
+            'foto_url': lap.foto.url if lap.foto else None,
+        } for lap in lapangan_list]
+        return JsonResponse({'lapangan_list': data})
+
+    return render(request, 'booking/booking_list.html', {'lapangan_list': lapangan_list})
+
+
 
 
 
@@ -116,3 +146,10 @@ def cancel_booking_view(request, pk):
 
     messages.warning(request, 'Booking telah dibatalkan.')
     return redirect('booking:booking_dashboard')
+
+@login_required
+def booking_user_list_view(request):
+    """Menampilkan semua booking milik user"""
+    bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'booking/booking_user_list.html', {'bookings': bookings})
+
