@@ -37,8 +37,8 @@
                                 <td class="py-3 px-4 border-b text-gray-700">{{ l.get_kategori_display }}</td>
                                 <td class="py-3 px-4 border-b text-gray-700">{{ l.lokasi }}</td>
                                 <td class="py-3 px-4 border-b text-gray-700">Rp {{ l.harga_per_jam }}</td>
-                                <td class="py-3 px-4 border-b text-gray-700">{{ l.jam_buka }}</td>
-                                <td class="py-3 px-4 border-b text-gray-700">{{ l.jam_tutup }}</td>
+                                <td class="py-3 px-4 border-b text-gray-700">{{ l.jam_buka|time:"H:00" }}</td>
+                                <td class="py-3 px-4 border-b text-gray-700">{{ l.jam_tutup|time:"H:00" }}</td>
                                 <td class="py-3 px-4 border-b">
                                     {% if l.foto %}
                                         <img src="{{ l.foto.url }}" alt="Foto {{ l.nama }}" class="w-20 h-14 object-cover rounded-md border">

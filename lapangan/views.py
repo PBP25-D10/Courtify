@@ -38,14 +38,37 @@ def lapangan_list_view(request):
 def lapangan_create_view(request):
     if request.method == 'POST':
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            form = LapanganForm(request.POST, request.FILES)
-            if form.is_valid():
-                lapangan = form.save(commit=False)
-                lapangan.owner = request.user
-                lapangan.save()
-                return JsonResponse({"status": "success", "message": "Lapangan berhasil ditambahkan", "lapangan": {"id": lapangan.id_lapangan, "nama": lapangan.nama, "kategori": lapangan.kategori, "lokasi": lapangan.lokasi, "foto_url": lapangan.foto.url if lapangan.foto else None}})
-            else:
-                return JsonResponse({"status": "error", "message": form.errors.as_json()})
+            try:
+                form = LapanganForm(request.POST, request.FILES)
+                if form.is_valid():
+                    lapangan = form.save(commit=False)
+                    lapangan.owner = request.user
+                    lapangan.save()
+                    return JsonResponse({
+                        "status": "success", 
+                        "message": "Lapangan berhasil ditambahkan", 
+                        "lapangan": {
+                            "id": str(lapangan.id_lapangan), 
+                            "nama": lapangan.nama, 
+                            "kategori": lapangan.kategori, 
+                            "lokasi": lapangan.lokasi, 
+                            "foto_url": lapangan.foto.url if lapangan.foto else None
+                        }
+                    })
+                else:
+                    error_messages = []
+                    for field, errors in form.errors.items():
+                        for error in errors:
+                            error_messages.append(f"{field}: {error}")
+                    return JsonResponse({
+                        "status": "error", 
+                        "message": "; ".join(error_messages)
+                    })
+            except Exception as e:
+                return JsonResponse({
+                    "status": "error", 
+                    "message": f"Terjadi kesalahan: {str(e)}"
+                }, status=500)
         else:
             form = LapanganForm(request.POST, request.FILES)
             if form.is_valid():
@@ -62,12 +85,36 @@ def lapangan_edit_view(request, id_lapangan):
     lapangan = get_object_or_404(Lapangan, pk=id_lapangan)
     if request.method == 'POST':
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            form = LapanganForm(request.POST, request.FILES, instance=lapangan)
-            if form.is_valid():
-                form.save()
-                return JsonResponse({"status": "success", "message": "Lapangan berhasil diperbarui", "lapangan": {"id": lapangan.id_lapangan, "nama": lapangan.nama, "kategori": lapangan.kategori, "lokasi": lapangan.lokasi, "foto_url": lapangan.foto.url if lapangan.foto else None}})
-            else:
-                return JsonResponse({"status": "error", "message": form.errors.as_json()})
+            try:
+                form = LapanganForm(request.POST, request.FILES, instance=lapangan)
+                if form.is_valid():
+                    form.save()
+                    return JsonResponse({
+                        "status": "success", 
+                        "message": "Lapangan berhasil diperbarui", 
+                        "lapangan": {
+                            "id": str(lapangan.id_lapangan), 
+                            "nama": lapangan.nama, 
+                            "kategori": lapangan.kategori, 
+                            "lokasi": lapangan.lokasi, 
+                            "foto_url": lapangan.foto.url if lapangan.foto else None
+                        }
+                    })
+                else:
+                    # Convert form errors to readable format
+                    error_messages = []
+                    for field, errors in form.errors.items():
+                        for error in errors:
+                            error_messages.append(f"{field}: {error}")
+                    return JsonResponse({
+                        "status": "error", 
+                        "message": "; ".join(error_messages)
+                    })
+            except Exception as e:
+                return JsonResponse({
+                    "status": "error", 
+                    "message": f"Terjadi kesalahan: {str(e)}"
+                }, status=500)
         else:
             form = LapanganForm(request.POST, request.FILES, instance=lapangan)
             if form.is_valid():
