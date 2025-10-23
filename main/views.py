@@ -7,7 +7,7 @@ from main.forms import IklanForm
 from main.models import Iklan
 
 def landing_page_view(request):
-    iklan_list = Iklan.objects.all()
+    iklan_list = Iklan.objects.all()[:10]
     if request.user.is_authenticated:
         try:
             role = request.user.userprofile.role
