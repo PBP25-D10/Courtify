@@ -60,17 +60,18 @@ class BookingViewsTest(TestCase):
     
     def test_booking_create_view_get_with_lapangan(self):
         self.client.login(username='testuser', password='testpass123')
-        url = f"{reverse('booking:booking_create')}?lapangan_id={self.lapangan.id}"
+        url = f"{reverse('booking:booking_create')}?lapangan_id={self.lapangan.id_lapangan}"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
     
     def test_booking_create_view_post_valid(self):
         self.client.login(username='testuser', password='testpass123')
         form_data = {
-            'lapangan': self.lapangan.id,
+            'lapangan': self.lapangan.id_lapangan,
             'tanggal': '2024-12-31',
             'jam_mulai': '10:00',
             'jam_selesai': '12:00',
+            'total_harga': 100000,
             'status': 'pending'
         }
         response = self.client.post(reverse('booking:booking_create'), form_data)
@@ -95,7 +96,8 @@ class BookingViewsTest(TestCase):
             lapangan=self.lapangan,
             tanggal='2024-12-31',
             jam_mulai='10:00',
-            jam_selesai='12:00'
+            jam_selesai='12:00',
+            total_harga=100000
         )
         response = self.client.get(reverse('booking:update_booking', args=[booking.pk]))
         self.assertEqual(response.status_code, 200)
@@ -107,13 +109,15 @@ class BookingViewsTest(TestCase):
             lapangan=self.lapangan,
             tanggal='2024-12-31',
             jam_mulai='10:00',
-            jam_selesai='12:00'
+            jam_selesai='12:00',
+            total_harga=100000
         )
         form_data = {
-            'lapangan': self.lapangan.id,
+            'lapangan': self.lapangan.id_lapangan,
             'tanggal': '2024-12-31',
             'jam_mulai': '14:00',
             'jam_selesai': '16:00',
+            'total_harga': 100000,
             'status': 'confirmed'
         }
         response = self.client.post(reverse('booking:update_booking', args=[booking.pk]), form_data)
@@ -126,13 +130,15 @@ class BookingViewsTest(TestCase):
             lapangan=self.lapangan,
             tanggal='2024-12-31',
             jam_mulai='10:00',
-            jam_selesai='12:00'
+            jam_selesai='12:00',
+            total_harga=100000
         )
         form_data = {
-            'lapangan': self.lapangan.id,
+            'lapangan': self.lapangan.id_lapangan,
             'tanggal': '2024-12-31',
             'jam_mulai': '14:00',
             'jam_selesai': '16:00',
+            'total_harga': 100000,
             'status': 'confirmed'
         }
         response = self.client.post(
@@ -151,7 +157,8 @@ class BookingViewsTest(TestCase):
             lapangan=self.lapangan,
             tanggal='2024-12-31',
             jam_mulai='10:00',
-            jam_selesai='12:00'
+            jam_selesai='12:00',
+            total_harga=100000
         )
         response = self.client.post(reverse('booking:cancel_booking', args=[booking.pk]))
         self.assertEqual(response.status_code, 302)
@@ -165,7 +172,8 @@ class BookingViewsTest(TestCase):
             lapangan=self.lapangan,
             tanggal='2024-12-31',
             jam_mulai='10:00',
-            jam_selesai='12:00'
+            jam_selesai='12:00',
+            total_harga=100000
         )
         response = self.client.post(
             reverse('booking:cancel_booking', args=[booking.pk]),
@@ -183,7 +191,8 @@ class BookingViewsTest(TestCase):
             lapangan=self.lapangan,
             tanggal='2024-12-31',
             jam_mulai='10:00',
-            jam_selesai='12:00'
+            jam_selesai='12:00',
+            total_harga=100000
         )
         response = self.client.get(reverse('booking:update_booking', args=[booking.pk]))
         self.assertEqual(response.status_code, 404)

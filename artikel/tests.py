@@ -48,10 +48,10 @@ class ArtikelViewsTest(TestCase):
         form_data = {
             'title': 'Test News',
             'content': 'Test content',
-            'category': 'olahraga'
+            'kategori': 'Futsal'
         }
         image_file = self._make_image_file()
-        response = self.client.post(reverse('artikel:news_create'), {**form_data, 'image': image_file})
+        response = self.client.post(reverse('artikel:news_create'), {**form_data, 'thumbnail': image_file})
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertTrue(data['success'])
@@ -74,7 +74,7 @@ class ArtikelViewsTest(TestCase):
         form_data = {
             'title': 'Test News',
             'content': 'Test content',
-            'category': 'olahraga'
+            'kategori': 'Futsal'
         }
         response = self.client.post(reverse('artikel:news_create'), form_data)
         self.assertEqual(response.status_code, 200)
@@ -88,7 +88,7 @@ class ArtikelViewsTest(TestCase):
         form_data = {
             'title': 'Test News',
             'content': 'Test content',
-            'category': 'olahraga'
+            'kategori': 'Futsal'
         }
         response = self.client.post(reverse('artikel:news_create'), form_data)
         self.assertEqual(response.status_code, 200)
@@ -100,15 +100,17 @@ class ArtikelViewsTest(TestCase):
         news = News.objects.create(
             title='Test News',
             content='Test content',
-            category='olahraga',
-            author=self.penyedia
+            kategori='Futsal',
+            author=self.penyedia,
+            thumbnail=self._make_image_file()
         )
         form_data = {
             'title': 'Updated News',
             'content': 'Updated content',
-            'category': 'olahraga'
+            'kategori': 'Futsal'
         }
-        response = self.client.post(reverse('artikel:news_update', args=[news.pk]), form_data)
+        image_file = self._make_image_file()
+        response = self.client.post(reverse('artikel:news_update', args=[news.pk]), {**form_data, 'thumbnail': image_file})
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertTrue(data['success'])
@@ -120,15 +122,17 @@ class ArtikelViewsTest(TestCase):
         news = News.objects.create(
             title='Test News',
             content='Test content',
-            category='olahraga',
-            author=self.penyedia
+            kategori='Futsal',
+            author=self.penyedia,
+            thumbnail=self._make_image_file()
         )
         form_data = {
             'title': 'Updated News',
             'content': 'Updated content',
-            'category': 'olahraga'
+            'kategori': 'Futsal'
         }
-        response = self.client.post(reverse('artikel:news_update', args=[news.pk]), form_data)
+        image_file = self._make_image_file()
+        response = self.client.post(reverse('artikel:news_update', args=[news.pk]), {**form_data, 'thumbnail': image_file})
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertFalse(data['success'])
@@ -138,22 +142,24 @@ class ArtikelViewsTest(TestCase):
         news = News.objects.create(
             title='Test News',
             content='Test content',
-            category='olahraga',
-            author=self.penyedia
+            kategori='Futsal',
+            author=self.penyedia,
+            thumbnail=self._make_image_file()
         )
         response = self.client.post(reverse('artikel:news_delete', args=[news.pk]))
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertTrue(data['success'])
-        self.assertFalse(News.objects.filter(id=news.pk).exists())
+        self.assertFalse(News.objects.filter(id_berita=news.id_berita).exists())
     
     def test_news_delete_view_wrong_owner(self):
         self.client.login(username='testuser', password='testpass123')
         news = News.objects.create(
             title='Test News',
             content='Test content',
-            category='olahraga',
-            author=self.penyedia
+            kategori='Futsal',
+            author=self.penyedia,
+            thumbnail=self._make_image_file()
         )
         response = self.client.post(reverse('artikel:news_delete', args=[news.pk]))
         self.assertEqual(response.status_code, 200)
@@ -169,8 +175,9 @@ class ArtikelViewsTest(TestCase):
         news = News.objects.create(
             title='Test News',
             content='Test content',
-            category='olahraga',
-            author=self.penyedia
+            kategori='Futsal',
+            author=self.penyedia,
+            thumbnail=self._make_image_file()
         )
         response = self.client.get(reverse('artikel:news_detail', args=[news.pk]))
         self.assertEqual(response.status_code, 200)

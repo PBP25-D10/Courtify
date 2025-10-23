@@ -8,6 +8,7 @@ from PIL import Image
 from main.models import Iklan
 from main.forms import IklanForm
 from authentication.models import UserProfile
+from lapangan.models import Lapangan
 
 
 class MainViewsTest(TestCase):
@@ -52,12 +53,18 @@ class MainViewsTest(TestCase):
     
     def test_iklan_create_view_post_valid(self):
         self.client.login(username='penyedia', password='testpass123')
+        lapangan = Lapangan.objects.create(
+            nama='Lapangan Test',
+            deskripsi='Test deskripsi',
+            kategori='futsal',
+            lokasi='Jl. Test',
+            harga_per_jam=50000,
+            jam_buka='08:00',
+            jam_tutup='22:00',
+            owner=self.penyedia
+        )
         form_data = {
-            'title': 'Test Iklan',
-            'description': 'Test description',
-            'price': 100000,
-            'start_date': '2024-01-01',
-            'end_date': '2024-12-31'
+            'lapangan': lapangan.id_lapangan
         }
         image_file = self._make_image_file()
         response = self.client.post(reverse('main:iklan_create'), {**form_data, 'banner': image_file})
@@ -68,9 +75,7 @@ class MainViewsTest(TestCase):
     def test_iklan_create_view_post_invalid(self):
         self.client.login(username='penyedia', password='testpass123')
         form_data = {
-            'title': '',
-            'description': 'Test description',
-            'price': 100000
+            'lapangan': ''
         }
         response = self.client.post(reverse('main:iklan_create'), form_data)
         self.assertEqual(response.status_code, 400)
@@ -79,10 +84,18 @@ class MainViewsTest(TestCase):
     
     def test_iklan_edit_view_get(self):
         self.client.login(username='penyedia', password='testpass123')
+        lapangan = Lapangan.objects.create(
+            nama='Lapangan Test',
+            deskripsi='Test deskripsi',
+            kategori='futsal',
+            lokasi='Jl. Test',
+            harga_per_jam=50000,
+            jam_buka='08:00',
+            jam_tutup='22:00',
+            owner=self.penyedia
+        )
         iklan = Iklan.objects.create(
-            title='Test Iklan',
-            description='Test description',
-            price=100000,
+            lapangan=lapangan,
             host=self.penyedia
         )
         response = self.client.get(reverse('main:iklan_edit', args=[iklan.id]))
@@ -90,28 +103,43 @@ class MainViewsTest(TestCase):
     
     def test_iklan_edit_view_post_valid(self):
         self.client.login(username='penyedia', password='testpass123')
+        lapangan = Lapangan.objects.create(
+            nama='Lapangan Test',
+            deskripsi='Test deskripsi',
+            kategori='futsal',
+            lokasi='Jl. Test',
+            harga_per_jam=50000,
+            jam_buka='08:00',
+            jam_tutup='22:00',
+            owner=self.penyedia
+        )
         iklan = Iklan.objects.create(
-            title='Test Iklan',
-            description='Test description',
-            price=100000,
+            lapangan=lapangan,
             host=self.penyedia
         )
         form_data = {
-            'title': 'Updated Iklan',
-            'description': 'Updated description',
-            'price': 150000
+            'lapangan': lapangan.id_lapangan
         }
-        response = self.client.post(reverse('main:iklan_edit', args=[iklan.id]), form_data)
+        image_file = self._make_image_file()
+        response = self.client.post(reverse('main:iklan_edit', args=[iklan.id]), {**form_data, 'banner': image_file})
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertTrue(data['success'])
     
     def test_iklan_delete_view_post(self):
         self.client.login(username='penyedia', password='testpass123')
+        lapangan = Lapangan.objects.create(
+            nama='Lapangan Test',
+            deskripsi='Test deskripsi',
+            kategori='futsal',
+            lokasi='Jl. Test',
+            harga_per_jam=50000,
+            jam_buka='08:00',
+            jam_tutup='22:00',
+            owner=self.penyedia
+        )
         iklan = Iklan.objects.create(
-            title='Test Iklan',
-            description='Test description',
-            price=100000,
+            lapangan=lapangan,
             host=self.penyedia
         )
         response = self.client.post(reverse('main:iklan_delete', args=[iklan.id]))
@@ -122,16 +150,25 @@ class MainViewsTest(TestCase):
     
     def test_iklan_delete_view_get(self):
         self.client.login(username='penyedia', password='testpass123')
+        lapangan = Lapangan.objects.create(
+            nama='Lapangan Test',
+            deskripsi='Test deskripsi',
+            kategori='futsal',
+            lokasi='Jl. Test',
+            harga_per_jam=50000,
+            jam_buka='08:00',
+            jam_tutup='22:00',
+            owner=self.penyedia
+        )
         iklan = Iklan.objects.create(
-            title='Test Iklan',
-            description='Test description',
-            price=100000,
+            lapangan=lapangan,
             host=self.penyedia
         )
         response = self.client.get(reverse('main:iklan_delete', args=[iklan.id]))
         self.assertEqual(response.status_code, 400)
     
     def test_news_list_view(self):
+        self.client.login(username='penyedia', password='testpass123')
         response = self.client.get(reverse('main:news_list'))
         self.assertEqual(response.status_code, 200)
     
