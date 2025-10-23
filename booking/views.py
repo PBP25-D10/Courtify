@@ -34,11 +34,13 @@ def booking_list_view(request):
 
 
 
-# ➕ Buat Booking Baru
 @login_required
 def booking_create_view(request):
-    """Membuat booking baru (bisa dengan lapangan yang sudah dipilih)"""
     lapangan_id = request.GET.get('lapangan_id')
+    lapangan_terpilih = None
+
+    if lapangan_id:
+        lapangan_terpilih = get_object_or_404(Lapangan, id_lapangan=lapangan_id)
 
     if request.method == 'POST':
         form = BookingForm(request.POST)
@@ -49,13 +51,21 @@ def booking_create_view(request):
             messages.success(request, 'Booking berhasil dibuat!')
             return redirect('booking:booking_dashboard')
     else:
-        # kalau user datang dari tombol 'Pesan', isi otomatis lapangan
-        if lapangan_id:
-            form = BookingForm(initial={'lapangan': lapangan_id})
-        else:
-            form = BookingForm()
+        initial = {}
+        if lapangan_terpilih:
+            initial['lapangan'] = lapangan_terpilih.id_lapangan
+        form = BookingForm(initial=initial)
 
-    return render(request, 'booking/booking_form.html', {'form': form})
+    # Kirim range jam 0-23 ke template
+    jam_range = list(range(24))
+
+    return render(request, 'booking/booking_form.html', {
+        'form': form,
+        'lapangan_terpilih': lapangan_terpilih,
+        'jam_range': jam_range
+    })
+
+
 
 
 # ✏️ Update Booking

@@ -1,152 +1,97 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto mt-14 bg-white shadow-2xl rounded-3xl p-10 border border-gray-100">
-  <h1 class="text-4xl font-extrabold text-blue-900 mb-10 text-center tracking-wide">
-    {% if form.instance.pk %}Edit Booking{% else %}Buat Booking{% endif %}
-  </h1>
+<div class="max-w-lg mx-auto mt-10 bg-white shadow-lg rounded-xl p-6">
+  <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Buat Booking Baru</h1>
 
-  <form id="bookingForm" method="POST" action="" class="space-y-6">
+  {% if lapangan_terpilih %}
+  <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+    <h2 class="text-lg font-semibold text-green-800">Lapangan yang Dipesan:</h2>
+    <p class="text-gray-700 mt-1 font-medium">{{ lapangan_terpilih.nama }}</p>
+    <p class="text-gray-600 text-sm">Harga per jam: <strong>Rp {{ lapangan_terpilih.harga_per_jam }}</strong></p>
+  </div>
+  {% endif %}
+
+  <form id="bookingForm" class="space-y-5" method="post">
     {% csrf_token %}
 
-    {% for field in form %}
-      <div class="flex flex-col">
-        <label for="{{ field.id_for_label }}" class="font-semibold text-gray-700 mb-2 text-lg">
-          {{ field.label }}
-        </label>
-        {{ field }}
-        {% if field.errors %}
-          <p class="text-red-500 text-sm mt-1">{{ field.errors|join:", " }}</p>
-        {% endif %}
-      </div>
-    {% endfor %}
-    
-    <div class="text-center mt-10 flex justify-center gap-4">
-      <a href="{% url 'booking:booking_dashboard' %}"
-        class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg text-base shadow-md transition-all duration-300">
-        Batal
-      </a>
-      <button id="submitBtn" type="submit"
-        class="bg-blue-900 hover:bg-blue-950 text-white font-semibold px-6 py-2 rounded-lg text-base shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-        Simpan
-      </button>
+    <!-- Hidden Lapangan -->
+    <input type="hidden" id="id_lapangan" name="lapangan" value="{{ lapangan_terpilih.id_lapangan }}"
+           data-harga="{{ lapangan_terpilih.harga_per_jam }}">
+
+    <!-- Tanggal -->
+    <div class="flex flex-col">
+      <label for="id_tanggal" class="block text-gray-700 font-semibold mb-1">Tanggal</label>
+      <input type="date" name="tanggal" id="id_tanggal" required
+             class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-300">
     </div>
+
+    <!-- Jam Mulai -->
+    <div class="flex flex-col">
+      <label for="id_jam_mulai" class="block text-gray-700 font-semibold mb-1">Jam Mulai</label>
+      <select name="jam_mulai" id="id_jam_mulai" required
+              class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-300">
+        {% for i in jam_range %}
+          <option value="{{ i }}">{{ i }}:00</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Jam Selesai -->
+    <div class="flex flex-col">
+      <label for="id_jam_selesai" class="block text-gray-700 font-semibold mb-1">Jam Selesai</label>
+      <select name="jam_selesai" id="id_jam_selesai" required
+              class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-300">
+        {% for i in jam_range %}
+          <option value="{{ i }}">{{ i }}:00</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Total Harga -->
+    <div class="flex flex-col">
+      <label for="id_total_harga" class="block text-gray-700 font-semibold mb-1">Total Harga</label>
+      <input type="text" name="total_harga" id="id_total_harga" readonly
+             class="border border-gray-300 rounded-md px-3 py-2 bg-gray-100 cursor-not-allowed">
+      <p class="text-sm text-gray-500 mt-1">Otomatis dihitung berdasarkan durasi sewa.</p>
+    </div>
+
+    <button type="submit"
+      class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md transition">
+      Simpan Booking
+    </button>
   </form>
 </div>
 
-<!-- SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<style>
-/* ✨ Custom Styling for Form Fields */
-form input,
-form select,
-form textarea {
-  width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 0.75rem;
-  padding: 0.9rem 1rem;
-  font-size: 1.05rem;
-  transition: all 0.2s ease-in-out;
-  background-color: #f9fafb;
-}
-form input:focus,
-form select:focus,
-form textarea:focus {
-  border-color: #1e40af; /* warna sama dengan footer */
-  outline: none;
-  background-color: #fff;
-  box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.2);
-}
-
-/* 🌀 Loading Spinner for Submit Button */
-.btn-loading::after {
-  content: "";
-  margin-left: 10px;
-  width: 14px;
-  height: 14px;
-  border: 2px solid #fff;
-  border-top-color: transparent;
-  border-radius: 50%;
-  display: inline-block;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* 🧩 Responsive Padding for Mobile */
-@media (max-width: 768px) {
-  .max-w-3xl {
-    padding: 2rem;
-  }
-  h1 {
-    font-size: 2xl;
-  }
-}
-</style>
-
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const form = document.getElementById("bookingForm");
-  const submitBtn = document.getElementById("submitBtn");
-  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+document.addEventListener("DOMContentLoaded", function() {
+  const jamMulai = document.getElementById("id_jam_mulai");
+  const jamSelesai = document.getElementById("id_jam_selesai");
+  const totalHargaInput = document.getElementById("id_total_harga");
+  const lapanganHidden = document.getElementById("id_lapangan");
 
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
-    submitBtn.disabled = true;
-    submitBtn.classList.add("btn-loading");
+  function hitungTotal() {
+    const mulai = parseInt(jamMulai.value);
+    const selesai = parseInt(jamSelesai.value);
+    if (isNaN(mulai) || isNaN(selesai)) {
+      totalHargaInput.value = "";
+      return;
+    }
 
-    const formData = new FormData(form);
-    const actionUrl = form.getAttribute("action") || window.location.pathname;
+    const durasi = selesai - mulai;
+    if (durasi <= 0) {
+      totalHargaInput.value = "Jam tidak valid";
+      return;
+    }
 
-    fetch(actionUrl, {
-      method: "POST",
-      headers: {
-        "X-Requested-With": "XMLHttpRequest",
-        "X-CSRFToken": csrfToken,
-      },
-      body: formData,
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        submitBtn.disabled = false;
-        submitBtn.classList.remove("btn-loading");
+    const hargaPerJam = parseInt(lapanganHidden.dataset.harga);
+    totalHargaInput.value = durasi * hargaPerJam;
+  }
 
-        if (data.success) {
-          Swal.fire({
-            icon: "success",
-            title: "Berhasil!",
-            text: data.message || "Booking berhasil disimpan.",
-            confirmButtonColor: "#1e40af",
-          }).then(() => {
-            window.location.href = "{% url 'booking:booking_dashboard' %}";
-          });
-        } else {
-          let errorText = "";
-          for (let field in data.errors) {
-            errorText += `${field}: ${data.errors[field].join(", ")}\n`;
-          }
-          Swal.fire({
-            icon: "error",
-            title: "Gagal!",
-            text: errorText || "Terjadi kesalahan pada data.",
-          });
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        submitBtn.disabled = false;
-        submitBtn.classList.remove("btn-loading");
-        Swal.fire({
-          icon: "error",
-          title: "Error!",
-          text: "Terjadi kesalahan di server.",
-        });
-      });
-  });
+  [jamMulai, jamSelesai].forEach(el => el.addEventListener("change", hitungTotal));
 });
 </script>
+
+<!-- ✅ SweetAlert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% endblock %}
