@@ -1,4 +1,3 @@
-# manajemen_lapangan/urls.py
 from django.urls import path
 from . import views
 

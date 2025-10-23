@@ -35,12 +35,12 @@ class LapanganForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
                 'type': 'time',
                 'step': '3600'
-            }),
+            }, format='%H:%M'),
             'jam_tutup': forms.TimeInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
                 'type': 'time',
                 'step': '3600'
-            }),
+            }, format='%H:%M'),
         }
         labels = {
             'nama': 'Nama Lapangan',
