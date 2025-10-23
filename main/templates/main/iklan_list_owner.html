@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-10">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-800">Daftar Iklan</h1>
+      <a href="{% url 'main:iklan_create' %}"
+         class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold shadow transition">
+        + Buat Iklan
+      </a>
+    </div>
+
+    {% if iklan_list %}
+      <!-- Grid Kartu Iklan -->
+      <div id="iklanContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for iklan in iklan_list %}
+        <div id="iklan-{{ iklan.id }}" 
+             class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition">
+
+          {% if iklan.banner %}
+            <img src="{{ iklan.banner.url }}" alt="Iklan {{ iklan.lapangan.nama }}"
+                 class="w-full h-48 object-cover">
+          {% else %}
+            <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 italic">
+              Tidak ada banner
+            </div>
+          {% endif %}
+
+          <div class="p-5">
+            <h2 class="text-xl font-semibold text-gray-800 mb-1">
+              {{ iklan.lapangan.nama }}
+            </h2>
+            <p class="text-sm text-gray-500 mb-2">
+              {{ iklan.date|date:"d M Y" }}
+            </p>
+            <p class="text-gray-700">
+              Oleh: <span class="font-semibold">{{ iklan.host.username }}</span>
+            </p>
+
+            <div class="mt-4 flex justify-between">
+              <a href="{% url 'main:iklan_edit' iklan.id %}"
+                 class="bg-yellow-400 hover:bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold transition">
+                Edit
+              </a>
+              <button 
+                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition"
+                onclick="deleteIklan({{ iklan.id }})">
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="bg-white shadow rounded-xl p-8 text-center">
+        <p class="text-gray-600 text-lg">Belum ada iklan yang ditambahkan.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+function getCSRFToken() {
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'csrftoken') return decodeURIComponent(value);
+  }
+  return null;
+}
+
+function deleteIklan(id) {
+  Swal.fire({
+    title: 'Yakin ingin menghapus?',
+    text: 'Data iklan ini akan dihapus permanen.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#e11d48',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Ya, hapus!',
+    cancelButtonText: 'Batal'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      fetch("{% url 'main:iklan_delete' 0 %}".replace("0", id), {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCSRFToken(),
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.message) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: data.message,
+            confirmButtonColor: '#2563eb'
+          });
+
+          // hapus kartu dari halaman
+          const card = document.getElementById(`iklan-${id}`);
+          if (card) card.remove();
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: data.error || 'Terjadi kesalahan.'
+          });
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: 'Gagal menghapus data dari server.'
+        });
+      });
+    }
+  });
+}
+</script>
+{% endblock %}

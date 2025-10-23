@@ -73,8 +73,6 @@ urlpatterns = [
 
     # 🏠 URL untuk fitur utama (artikel, wishlist, iklan)
     path('', include('main.urls')),
-
-  
 ]
 
 if settings.DEBUG:
