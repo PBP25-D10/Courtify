@@ -2,29 +2,138 @@
 {% block content %}
 <div class="min-h-screen bg-gray-100 flex items-center justify-center">
   <div class="bg-white shadow-lg rounded-xl p-8 w-full max-w-lg">
-    <h1 class="text-3xl font-bold text-center mb-6">{% if form.instance.pk %}Tambah Lapangan{% else %}Buat Lapangan Baru{% endif %}</h1>
+    <h1 class="text-3xl font-bold text-center mb-6">
+      Buat Lapangan
+    </h1>
+    
     <form id="lapanganForm" method="POST" enctype="multipart/form-data" class="space-y-4">
-      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-      {{ form.as_p }}
-      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold">{% if form.instance.pk %}Create{% else %}Simpan{% endif %}</button>
+      {% csrf_token %}
+      
+      {% for field in form %}
+        <div>
+          <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+            {{ field.label }}
+          </label>
+          {{ field }}
+          <p class="text-red-500 text-sm mt-1 hidden" id="error-{{ field.name }}"></p>
+        </div>
+      {% endfor %}
+      
+      <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition">
+        Create Lapangan
+      </button>
     </form>
+    
+    <div class="mt-4 text-center">
+      <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" 
+         class="text-blue-600 hover:text-blue-800 font-medium transition">
+        ← Kembali ke Daftar Lapangan
+      </a>
+    </div>
   </div>
 </div>
+
+<div id="toastModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+  <div id="modalOverlay" class="absolute inset-0 bg-black/40"></div>
+
+  <div class="relative bg-white rounded-lg shadow-lg w-full max-w-md z-10">
+    <div class="px-6 py-4 border-b">
+      <h3 id="modalTitle" class="text-lg font-semibold">Title</h3>
+    </div>
+    <div class="px-6 py-4">
+      <p id="modalMessage" class="text-sm"></p>
+    </div>
+    <div class="px-6 py-4 border-t flex justify-end gap-2">
+      <button id="modalClose" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">Tutup</button>
+    </div>
+  </div>
+</div>
+
 <script>
-document.getElementById('lapanganForm').addEventListener('submit', function(e){
-  e.preventDefault();
-  var formData = new FormData(this);
-  fetch(window.location.href, {
-    method: 'POST',
-    headers: {"X-Requested-With": "XMLHttpRequest"},
-    body: formData
-  }).then(response => response.json()).then(data => {
-    if(data.status === 'success'){
-      window.location.href = "{% url 'manajemen_lapangan:lapangan_list_owner' %}";
-    } else {
-      window.alert(data.message);
-    }
-  }).catch(err => {window.alert(err);});
+document.addEventListener("DOMContentLoaded", function() {
+  const form = document.getElementById('lapanganForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  const toastModal = document.getElementById('toastModal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalMessage = document.getElementById('modalMessage');
+  const modalClose = document.getElementById('modalClose');
+  const modalOverlay = document.getElementById('modalOverlay');
+
+  function showModal(title, message) {
+    modalTitle.textContent = title;
+    modalMessage.textContent = message;
+    toastModal.classList.remove('hidden');
+    toastModal.classList.add('flex');
+    modalClose.focus();
+  }
+
+  function hideModal() {
+    toastModal.classList.remove('flex');
+    toastModal.classList.add('hidden');
+  }
+
+  modalClose.addEventListener('click', hideModal);
+  modalOverlay.addEventListener('click', hideModal);
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    document.querySelectorAll("p[id^='error-']").forEach(p => {
+      p.classList.add("hidden");
+      p.textContent = "";
+    });
+
+    submitBtn.disabled = true;
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = "⏳ Menyimpan...";
+
+    const formData = new FormData(form);
+
+    fetch(window.location.href, {
+      method: 'POST',
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRFToken": csrfToken
+      },
+      body: formData
+    })
+    .then(response => response.json().catch(() => ({ status: 'error', message: 'Server tidak mengembalikan JSON.' })))
+    .then(data => {
+      if (data.status === 'success') {
+        showModal('Berhasil!', data.message || 'Lapangan berhasil disimpan!');
+        setTimeout(() => {
+          window.location.href = "{% url 'manajemen_lapangan:lapangan_list_owner' %}";
+        }, 1200);
+      } else if (data.errors) {
+        for (const [field, messages] of Object.entries(data.errors)) {
+          const errEl = document.getElementById(`error-${field}`);
+          if (errEl) {
+            errEl.textContent = Array.isArray(messages) ? messages.join(", ") : messages;
+            errEl.classList.remove("hidden");
+          }
+        }
+
+        if (data.message) {
+          showModal('Error', data.message);
+        } else {
+          showModal('Error Validasi', 'Silakan periksa input Anda.');
+        }
+      } else {
+        showModal('Gagal', data.message || 'Terjadi kesalahan yang tidak diketahui.');
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      showModal('Error!', 'Gagal mengirim data ke server.');
+    })
+    .finally(() => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    });
+  });
 });
 </script>
+
 {% endblock %}

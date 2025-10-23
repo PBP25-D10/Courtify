@@ -16,7 +16,6 @@ from authentication.models import UserProfile
 
 
 class LapanganModelTest(TestCase):
-    """Test cases for Lapangan model"""
     
     def setUp(self):
         self.user = User.objects.create_user(
@@ -27,7 +26,6 @@ class LapanganModelTest(TestCase):
         UserProfile.objects.create(user=self.user, role='penyedia')
     
     def test_lapangan_creation(self):
-        """Test creating a lapangan instance"""
         lapangan = Lapangan.objects.create(
             owner=self.user,
             nama='Lapangan Futsal ABC',
@@ -47,7 +45,6 @@ class LapanganModelTest(TestCase):
         self.assertIsInstance(lapangan.id_lapangan, uuid.UUID)
         
     def test_lapangan_str_representation(self):
-        """Test string representation of lapangan"""
         lapangan = Lapangan.objects.create(
             owner=self.user,
             nama='Lapangan Basket XYZ',
@@ -62,7 +59,6 @@ class LapanganModelTest(TestCase):
         self.assertEqual(str(lapangan), 'Lapangan Basket XYZ')
         
     def test_lapangan_without_owner(self):
-        """Test creating lapangan without owner"""
         lapangan = Lapangan.objects.create(
             nama='Lapangan Umum',
             deskripsi='Lapangan untuk umum',
@@ -77,7 +73,6 @@ class LapanganModelTest(TestCase):
         self.assertEqual(lapangan.nama, 'Lapangan Umum')
         
     def test_lapangan_kategori_choices(self):
-        """Test lapangan kategori choices"""
         valid_categories = ['futsal', 'basket', 'badminton', 'tenis', 'voli', 'lainnya']
         
         for kategori in valid_categories:
@@ -94,7 +89,6 @@ class LapanganModelTest(TestCase):
 
 
 class LapanganFormTest(TestCase):
-    """Test cases for LapanganForm"""
     
     def setUp(self):
         self.user = User.objects.create_user(
@@ -105,7 +99,6 @@ class LapanganFormTest(TestCase):
         UserProfile.objects.create(user=self.user, role='penyedia')
     
     def _make_image_file(self, name="test.png"):
-        """Helper to create test image file"""
         buffer = BytesIO()
         image = Image.new("RGB", (1, 1), color=(255, 0, 0))
         image.save(buffer, format="PNG")
@@ -113,7 +106,6 @@ class LapanganFormTest(TestCase):
         return SimpleUploadedFile(name, buffer.read(), content_type="image/png")
         
     def test_valid_form(self):
-        """Test form with valid data"""
         form_data = {
             'nama': 'Lapangan Test',
             'deskripsi': 'Deskripsi lapangan test',
@@ -128,7 +120,6 @@ class LapanganFormTest(TestCase):
         self.assertTrue(form.is_valid())
         
     def test_invalid_jam_tutup_before_jam_buka(self):
-        """Test form validation when jam_tutup is before jam_buka"""
         form_data = {
             'nama': 'Lapangan Test',
             'deskripsi': 'Deskripsi lapangan test',
@@ -144,7 +135,6 @@ class LapanganFormTest(TestCase):
         self.assertIn('Jam tutup harus lebih besar dari jam buka.', str(form.errors))
         
     def test_form_fields_required(self):
-        """Test that required fields are properly validated"""
         form = LapanganForm(data={})
         self.assertFalse(form.is_valid())
         
@@ -154,7 +144,6 @@ class LapanganFormTest(TestCase):
 
 
 class LapanganViewsTest(TestCase):
-    """Test cases for Lapangan views"""
     
     def setUp(self):
         self.client = Client()
@@ -172,7 +161,6 @@ class LapanganViewsTest(TestCase):
         UserProfile.objects.create(user=self.other_user, role='penyedia')
     
     def _make_image_file(self, name="test.png"):
-        """Helper to create test image file"""
         buffer = BytesIO()
         image = Image.new("RGB", (1, 1), color=(255, 0, 0))
         image.save(buffer, format="PNG")
@@ -180,7 +168,6 @@ class LapanganViewsTest(TestCase):
         return SimpleUploadedFile(name, buffer.read(), content_type="image/png")
     
     def _create_test_lapangan(self):
-        """Helper to create test lapangan"""
         image_file = self._make_image_file("seed.png")
         form = LapanganForm(data={
             'nama': 'Lapangan Test',
@@ -198,18 +185,15 @@ class LapanganViewsTest(TestCase):
         return lapangan
         
     def test_manajemen_dashboard_view_authenticated(self):
-        """Test manajemen dashboard view for authenticated user"""
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('manajemen_lapangan:manajemen_dashboard'))
         self.assertEqual(response.status_code, 200)
         
     def test_manajemen_dashboard_view_unauthenticated(self):
-        """Test manajemen dashboard view for unauthenticated user"""
         response = self.client.get(reverse('manajemen_lapangan:manajemen_dashboard'))
         self.assertIn(response.status_code, [302, 403])
         
     def test_lapangan_list_view_ajax(self):
-        """Test lapangan list view with AJAX request"""
         self.client.login(username='testuser', password='testpass123')
         lapangan = self._create_test_lapangan()
         
@@ -225,14 +209,12 @@ class LapanganViewsTest(TestCase):
         self.assertEqual(data['lapangan_list'][0]['nama'], 'Lapangan Test')
         
     def test_lapangan_create_view_get(self):
-        """Test lapangan create view GET request"""
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('manajemen_lapangan:lapangan_create'))
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.context['form'], LapanganForm)
         
     def test_lapangan_create_view_post_valid(self):
-        """Test lapangan create view POST with valid data"""
         self.client.login(username='testuser', password='testpass123')
         form_data = {
             'nama': 'Lapangan Baru',
@@ -251,7 +233,6 @@ class LapanganViewsTest(TestCase):
         self.assertEqual(new_lapangan.owner, self.user)
         
     def test_lapangan_create_view_post_ajax_valid(self):
-        """Test lapangan create view POST with AJAX and valid data"""
         self.client.login(username='testuser', password='testpass123')
         form_data = {
             'nama': 'Lapangan AJAX',
@@ -275,7 +256,6 @@ class LapanganViewsTest(TestCase):
         self.assertIn('lapangan', data)
         
     def test_lapangan_edit_view_get(self):
-        """Test lapangan edit view GET request"""
         self.client.login(username='testuser', password='testpass123')
         lapangan = self._create_test_lapangan()
         
@@ -286,7 +266,6 @@ class LapanganViewsTest(TestCase):
         self.assertIsInstance(response.context['form'], LapanganForm)
         
     def test_lapangan_edit_view_post_valid(self):
-        """Test lapangan edit view POST with valid data"""
         self.client.login(username='testuser', password='testpass123')
         lapangan = self._create_test_lapangan()
         
@@ -311,7 +290,6 @@ class LapanganViewsTest(TestCase):
         self.assertEqual(updated_lapangan.kategori, 'voli')
         
     def test_lapangan_delete_view_post_ajax_success(self):
-        """Test lapangan delete view POST with AJAX for owner"""
         self.client.login(username='testuser', password='testpass123')
         lapangan = self._create_test_lapangan()
         
@@ -329,7 +307,6 @@ class LapanganViewsTest(TestCase):
         self.assertFalse(Lapangan.objects.filter(id_lapangan=lapangan.id_lapangan).exists())
         
     def test_lapangan_delete_view_post_ajax_unauthorized(self):
-        """Test lapangan delete view POST with AJAX for non-owner"""
         self.client.login(username='otheruser', password='otherpass123')
         lapangan = self._create_test_lapangan()
         
@@ -346,7 +323,6 @@ class LapanganViewsTest(TestCase):
         self.assertTrue(Lapangan.objects.filter(id_lapangan=lapangan.id_lapangan).exists())
         
     def test_lapangan_create_view_post_ajax_invalid(self):
-        """Test lapangan create view POST with AJAX and invalid data"""
         self.client.login(username='testuser', password='testpass123')
         form_data = {
             'nama': '',  

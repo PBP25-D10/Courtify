@@ -1,4 +1,3 @@
-# manajemen_lapangan/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from authentication.decorators import penyedia_required
@@ -10,14 +9,59 @@ from .forms import LapanganForm
 
 @penyedia_required
 def manajemen_dashboard_view(request):
+    kategori = request.GET.get('kategori', '')
+    lokasi = request.GET.get('lokasi', '')
+    harga_min = request.GET.get('harga_min', '')
+    harga_max = request.GET.get('harga_max', '')
+    
     lapangan_list = Lapangan.objects.filter(owner=request.user)
-    return render(request, 'manajemen_lapangan/manajemen_dashboard.html', {'lapangan_list': lapangan_list})
+    
+    if kategori:
+        lapangan_list = lapangan_list.filter(kategori=kategori)
+    if lokasi:
+        lapangan_list = lapangan_list.filter(lokasi__icontains=lokasi)
+    if harga_min:
+        try:
+            lapangan_list = lapangan_list.filter(harga_per_jam__gte=int(harga_min))
+        except ValueError:
+            pass
+    if harga_max:
+        try:
+            lapangan_list = lapangan_list.filter(harga_per_jam__lte=int(harga_max))
+        except ValueError:
+            pass
+    
+    return render(request, 'manajemen_lapangan/manajemen_dashboard.html', {
+        'lapangan_list': lapangan_list,
+        'kategori_choices': Lapangan._meta.get_field('kategori').choices
+    })
 
 
 @penyedia_required
 def lapangan_list_view(request):
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        kategori = request.GET.get('kategori', '')
+        lokasi = request.GET.get('lokasi', '')
+        harga_min = request.GET.get('harga_min', '')
+        harga_max = request.GET.get('harga_max', '')
+        
         lapangan_list = Lapangan.objects.filter(owner=request.user)
+        
+        if kategori:
+            lapangan_list = lapangan_list.filter(kategori=kategori)
+        if lokasi:
+            lapangan_list = lapangan_list.filter(lokasi__icontains=lokasi)
+        if harga_min:
+            try:
+                lapangan_list = lapangan_list.filter(harga_per_jam__gte=int(harga_min))
+            except ValueError:
+                pass
+        if harga_max:
+            try:
+                lapangan_list = lapangan_list.filter(harga_per_jam__lte=int(harga_max))
+            except ValueError:
+                pass
+        
         data = []
         for lapangan in lapangan_list:
             data.append({
@@ -101,7 +145,6 @@ def lapangan_edit_view(request, id_lapangan):
                         }
                     })
                 else:
-                    # Convert form errors to readable format
                     error_messages = []
                     for field, errors in form.errors.items():
                         for error in errors:
