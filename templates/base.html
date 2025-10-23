@@ -69,7 +69,10 @@
                 <a href="{% url 'booking:booking_list' %}" class="hover:text-blue-400 transition">Booking</a>
                 <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-400 transition">Lapangan</a>
                 <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
-                <a href="{% url 'main:iklan_list' %}" class="hover:text-blue-400 transition">Iklan</a>
+            </div>
+
+            <!-- Right: Auth Links -->
+            <div class="flex items-center space-x-4">
                 {% if user.is_authenticated %}
                     <span class="text-gray-400 text-sm">Halo, {{ user.username }}</span>
                     <a href="{% url 'authentication:logout' %}" class="bg-red-600 hover:bg-red-700 text-white text-center py-1 rounded-lg text-sm transition">
@@ -109,6 +112,7 @@
             </div>
             <div class="border-t border-gray-700 text-center py-4 text-xs text-gray-500">
                 © 2025 Courtify. All rights reserved. | Kebijakan Privasi | Peta Situs
+                
             </div>
         </div>
     </footer>
