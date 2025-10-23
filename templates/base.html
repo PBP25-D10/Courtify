@@ -11,111 +11,14 @@
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
     <!-- Navbar -->
-    <nav class="bg-gray-900 text-white shadow-md fixed w-full top-0 z-50">
-    <nav class="bg-gray-900 text-white shadow-md fixed w-full top-0 z-50">
+    <nav class="bg-gray-900 text-white shadow-md">
         <div class="container mx-auto flex items-center justify-between px-6 py-3">
             <!-- Left: Brand -->
             <div class="flex items-center space-x-4">
                 <a href="{% url 'main:landing_page' %}" class="text-xl font-semibold hover:text-blue-400 transition">
                     Courtify
                 </a>
-            </div>
-
-            <!-- Desktop Menu -->
-            <div class="hidden md:flex items-center space-x-6">
-                <a href="{% url 'booking:booking_list' %}" class="relative hover:text-blue-400 transition">
-                    Booking
-                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-blue-400 transition-all duration-300 hover:w-full"></span>
-                </a>
-                <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="relative hover:text-blue-400 transition">
-                    Lapangan
-                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-blue-400 transition-all duration-300 hover:w-full"></span>
-                </a>
-                <a href="{% url 'artikel:news_list' %}" class="relative hover:text-blue-400 transition">
-                    Artikel
-                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-blue-400 transition-all duration-300 hover:w-full"></span>
-                </a>
-                <a href="{% url 'main:iklan_list' %}" class="relative hover:text-blue-400 transition">
-                    Iklan
-                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-blue-400 transition-all duration-300 hover:w-full"></span>
-                </a>
-            </div>
-
-            <!-- Right: Auth Links (Desktop) -->
-            <div class="hidden md:flex items-center space-x-4">
-                {% if user.is_authenticated %}
-                    <span class="text-gray-300">Halo, <span class="font-semibold">{{ user.username }}</span>!</span>
-                    <a href="{% url 'authentication:logout' %}" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm transition">
-                        Logout
-                    </a>
-                {% else %}
-                    <a href="{% url 'authentication:login' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition">
-                        Login
-                    </a>
-                    <a href="{% url 'authentication:register' %}" class="border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white px-3 py-1 rounded-lg text-sm transition">
-                        Register
-                    </a>
-                {% endif %}
-            </div>
-
-            <!-- Hamburger Button (Mobile) -->
-            <button id="menu-btn" class="md:hidden text-white focus:outline-none text-2xl">
-                <i class="ri-menu-line"></i>
-            </button>
-        </div>
-
-        <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden bg-gray-800 border-t border-gray-700">
-            <div class="flex flex-col space-y-2 py-3 px-4">
-            </div>
-
-            <!-- Desktop Menu -->
-            <div class="hidden md:flex items-center space-x-6">
-                <a href="{% url 'booking:booking_list' %}" class="relative hover:text-blue-400 transition">
-                    Booking
-                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-blue-400 transition-all duration-300 hover:w-full"></span>
-                </a>
-                <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="relative hover:text-blue-400 transition">
-                    Lapangan
-                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-blue-400 transition-all duration-300 hover:w-full"></span>
-                </a>
-                <a href="{% url 'artikel:news_list' %}" class="relative hover:text-blue-400 transition">
-                    Artikel
-                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-blue-400 transition-all duration-300 hover:w-full"></span>
-                </a>
-                <a href="{% url 'main:iklan_list' %}" class="relative hover:text-blue-400 transition">
-                    Iklan
-                    <span class="absolute left-0 -bottom-1 w-0 h-[2px] bg-blue-400 transition-all duration-300 hover:w-full"></span>
-                </a>
-            </div>
-
-            <!-- Right: Auth Links (Desktop) -->
-            <div class="hidden md:flex items-center space-x-4">
-                {% if user.is_authenticated %}
-                    <span class="text-gray-300">Halo, <span class="font-semibold">{{ user.username }}</span>!</span>
-                    <a href="{% url 'authentication:logout' %}" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm transition">
-                        Logout
-                    </a>
-                {% else %}
-                    <a href="{% url 'authentication:login' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition">
-                        Login
-                    </a>
-                    <a href="{% url 'authentication:register' %}" class="border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white px-3 py-1 rounded-lg text-sm transition">
-                        Register
-                    </a>
-                {% endif %}
-            </div>
-
-            <!-- Hamburger Button (Mobile) -->
-            <button id="menu-btn" class="md:hidden text-white focus:outline-none text-2xl">
-                <i class="ri-menu-line"></i>
-            </button>
-        </div>
-
-        <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden bg-gray-800 border-t border-gray-700">
-            <div class="flex flex-col space-y-2 py-3 px-4">
-                <a href="{% url 'booking:booking_list' %}" class="hover:text-blue-400 transition">Booking</a>
+                <a href="{% url 'booking:booking_dashboard' %}" class="hover:text-blue-400 transition">Booking</a>
                 <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-400 transition">Lapangan</a>
                 <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
                 <a href="{% url 'main:iklan_list' %}" class="hover:text-blue-400 transition">Iklan</a>
