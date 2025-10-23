@@ -56,7 +56,6 @@ def lapangan_create_view(request):
                         }
                     })
                 else:
-                    # Convert form errors to readable format
                     error_messages = []
                     for field, errors in form.errors.items():
                         for error in errors:

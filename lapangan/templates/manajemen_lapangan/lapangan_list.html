@@ -43,7 +43,7 @@ function loadLapangan(){
     <h2 class="text-xl font-semibold text-gray-800 mb-1">${lap.nama}</h2>
     <p class="text-sm text-gray-500 mb-2">${lap.kategori} • ${lap.lokasi}</p>
     <p class="text-gray-700 font-medium">Rp ${lap.harga_per_jam} / jam</p>
-    <p class="text-sm text-gray-500 mt-2">⏰ ${lap.jam_buka} - ${lap.jam_tutup}</p>
+    <p class="text-sm text-gray-500 mt-2">⏰ ${lap.jam_buka.split(':')[0]}:00 - ${lap.jam_tutup.split(':')[0]}:00</p>
     <div class="mt-4 flex justify-between">
       <button onclick="editLapangan('${lap.id}')" class="bg-yellow-400 hover:bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold transition">Edit</button>
       <button onclick="deleteLapangan('${lap.id}')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition">Hapus</button>
