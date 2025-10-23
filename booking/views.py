@@ -65,25 +65,26 @@ def booking_list_view(request):
 
 
 @login_required
-def booking_create_view(request):
-    lapangan_id = request.GET.get('lapangan_id')
+def booking_create_view(request, id_lapangan=None):
     lapangan_terpilih = None
 
-    if lapangan_id:
-        lapangan_terpilih = get_object_or_404(Lapangan, id_lapangan=lapangan_id)
+    if id_lapangan:
+        lapangan_terpilih = get_object_or_404(Lapangan, id_lapangan=id_lapangan)
 
     if request.method == 'POST':
         form = BookingForm(request.POST)
         if form.is_valid():
             booking = form.save(commit=False)
             booking.user = request.user
+            if lapangan_terpilih:
+                booking.lapangan = lapangan_terpilih
             booking.save()
             messages.success(request, 'Booking berhasil dibuat!')
             return redirect('booking:booking_dashboard')
     else:
         initial = {}
         if lapangan_terpilih:
-            initial['lapangan'] = lapangan_terpilih.id_lapangan
+            initial['lapangan'] = lapangan_terpilih
         form = BookingForm(initial=initial)
 
     # Kirim range jam 0-23 ke template

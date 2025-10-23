@@ -11,7 +11,7 @@
         <div id="carousel" class="flex transition-transform duration-700 ease-in-out">
             {% for iklan in iklan_list|slice:":10" %}
             <a href="{% url 'booking:booking_create' iklan.lapangan.id_lapangan %}" 
-               class="w-full flex-shrink-0 flex bg-white hover:bg-gray-50 transition-all duration-300 rounded-xl overflow-hidden">
+               class="w-full flex-shrink-0 flex bg-gray-50 hover:bg-gray-100 transition-all duration-300 rounded-xl overflow-hidden border border-gray-300 shadow-sm">
                 <!-- Banner -->
                 <div class="w-1/3">
                     <img src="{% if iklan.banner %}{{ iklan.banner.url }}{% else %}{{ iklan.lapangan.foto.url }}{% endif %}" 
@@ -22,9 +22,6 @@
                 <div class="w-2/3 p-6 flex flex-col justify-center">
                     <h2 class="text-2xl font-semibold text-blue-700 mb-2">{{ iklan.judul }}</h2>
                     <p class="text-gray-600 line-clamp-3">{{ iklan.deskripsi }}</p>
-                    <p class="mt-4 text-sm text-gray-500">
-                        Lapangan: <span class="font-medium">{{ iklan.lapangan.nama }}</span>
-                    </p>
                 </div>
             </a>
             {% empty %}
