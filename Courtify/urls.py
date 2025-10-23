@@ -75,5 +75,11 @@ urlpatterns = [
     path('', include('main.urls')),
 ]
 
+# Serve media files in both development and production
+# In production, you should configure your web server (nginx/apache) to serve media files directly
+# But this ensures media files work in both environments
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # Additional static files serving for development
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

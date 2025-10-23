@@ -2,7 +2,6 @@
 
 {% block content %}
 <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-<!-- Delete Confirmation Modal -->
 <div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center">
     <div class="bg-white p-8 rounded-lg shadow-xl">
         <h2 class="text-xl font-bold mb-4">Konfirmasi Hapus</h2>
@@ -15,7 +14,6 @@
 </div>
 <div class="min-h-screen bg-gray-100 py-10">
     <div class="max-w-6xl mx-auto px-4">
-        <!-- Judul dan Tombol Tambah -->
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800">Daftar Lapangan</h1>
             <a href="{% url 'manajemen_lapangan:lapangan_create' %}"
@@ -24,18 +22,79 @@
             </a>
         </div>
 
-        <!-- Grid Kartu Lapangan -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Filter Lapangan</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+                    <select id="filterKategori" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Semua Kategori</option>
+                        <option value="futsal">Futsal</option>
+                        <option value="basket">Basket</option>
+                        <option value="badminton">Badminton</option>
+                        <option value="tenis">Tenis</option>
+                        <option value="voli">Voli</option>
+                        <option value="lainnya">Lainnya</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Lokasi</label>
+                    <input type="text" id="filterLokasi" placeholder="Cari lokasi..." 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Harga Min</label>
+                    <input type="number" id="filterHargaMin" placeholder="Min harga..." 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Harga Max</label>
+                    <input type="number" id="filterHargaMax" placeholder="Max harga..." 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-4">
+                <button id="applyFilter" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+                    Terapkan Filter
+                </button>
+                <button id="clearFilter" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold transition">
+                    Reset Filter
+                </button>
+            </div>
+        </div>
+
         <div id="message-container" class="p-4 text-center text-green-600"></div>
             <div id="lapangan-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Content will be loaded via AJAX -->
             </div>
     </div>
 </div>
 <script>
-function loadLapangan(){
-  fetch(window.location.href, {headers: {"X-Requested-With": "XMLHttpRequest"}}).then(response => response.json()).then(data => {
+function loadLapangan(filters = {}){
+  let url = window.location.href;
+  const params = new URLSearchParams();
+
+  if (filters.kategori) params.append('kategori', filters.kategori);
+  if (filters.lokasi) params.append('lokasi', filters.lokasi);
+  if (filters.harga_min) params.append('harga_min', filters.harga_min);
+  if (filters.harga_max) params.append('harga_max', filters.harga_max);
+
+  if (params.toString()) {
+    url += '?' + params.toString();
+  }
+
+  fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}}).then(response => response.json()).then(data => {
     const container = document.getElementById("lapangan-container");
     container.innerHTML = "";
+
+    if (data.lapangan_list.length === 0) {
+      container.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Tidak ada lapangan yang sesuai dengan filter.</div>';
+      return;
+    }
+
     data.lapangan_list.forEach(lap => {
       let card = `<div class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition">
   ${lap.foto_url ? `<img src="${lap.foto_url}" alt="${lap.nama}" class="w-full h-48 object-cover">` : `<div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 italic">Tidak ada foto</div>`}
@@ -43,7 +102,7 @@ function loadLapangan(){
     <h2 class="text-xl font-semibold text-gray-800 mb-1">${lap.nama}</h2>
     <p class="text-sm text-gray-500 mb-2">${lap.kategori} • ${lap.lokasi}</p>
     <p class="text-gray-700 font-medium">Rp ${lap.harga_per_jam} / jam</p>
-    <p class="text-sm text-gray-500 mt-2">⏰ ${lap.jam_buka.split(':')[0]}:00 - ${lap.jam_tutup.split(':')[0]}:00</p>
+    <p class="text-sm text-gray-500 mt-2">⏰ ${lap.jam_buka.substring(0, 5)} - ${lap.jam_tutup.substring(0, 5)}</p>
     <div class="mt-4 flex justify-between">
       <button onclick="editLapangan('${lap.id}')" class="bg-yellow-400 hover:bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold transition">Edit</button>
       <button onclick="deleteLapangan('${lap.id}')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition">Hapus</button>
@@ -110,6 +169,26 @@ document.getElementById('confirmDelete').addEventListener('click', function() {
 });
 
 document.getElementById('cancelDelete').addEventListener('click', hideDeleteModal);
+
+// Filter functionality
+document.getElementById('applyFilter').addEventListener('click', function() {
+    const filters = {
+        kategori: document.getElementById('filterKategori').value,
+        lokasi: document.getElementById('filterLokasi').value,
+        harga_min: document.getElementById('filterHargaMin').value,
+        harga_max: document.getElementById('filterHargaMax').value
+    };
+    loadLapangan(filters);
+});
+
+document.getElementById('clearFilter').addEventListener('click', function() {
+    document.getElementById('filterKategori').value = '';
+    document.getElementById('filterLokasi').value = '';
+    document.getElementById('filterHargaMin').value = '';
+    document.getElementById('filterHargaMax').value = '';
+    loadLapangan();
+});
+
 function editLapangan(id){
   window.location.href = `/manajemen/lapangan/edit/${id}/`;
 }
