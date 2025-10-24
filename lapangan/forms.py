@@ -66,7 +66,6 @@ class LapanganForm(forms.ModelForm):
         jam_tutup = cleaned_data.get('jam_tutup')
 
         if jam_buka and jam_tutup:
-            if jam_tutup <= jam_buka:
-                raise forms.ValidationError('Jam tutup harus lebih besar dari jam buka.')
-
+            jam_buka_hour = int(jam_buka.split(':')[0])
+            jam_tutup_hour = int(jam_tutup.split(':')[0])
         return cleaned_data
