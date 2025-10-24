@@ -72,6 +72,14 @@
           <p class="text-sm text-gray-500 mt-2">⏰ {{ lap.jam_buka }} - {{ lap.jam_tutup }}</p>
 
           <div class="mt-4 flex justify-between items-center">
+            <a href="{% url 'wishlist:wishlist_add' lap.id_lapangan %}"
+              class="text-red-500 hover:text-red-600 transition"
+              title="Tambah ke Wishlist">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" class="w-7 h-7">
+                <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 18.343l-6.828-6.829a4 4 0 010-5.656z"/>
+              </svg>
+            </a>
+
             <a href="{% url 'booking:booking_create' % lap.id_lapangan }"
                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
               Pesan Sekarang
@@ -81,8 +89,6 @@
       </div>
       {% endfor %}
     </div>
-  </div>
-</div>
 
 <!-- ⚡ SCRIPT -->
 <script>
@@ -119,9 +125,9 @@ function loadLapangan(filters = {}) {
             <p class="text-gray-700 font-medium">Rp ${lap.harga_per_jam} / jam</p>
             <p class="text-sm text-gray-500 mt-2">⏰ ${lap.jam_buka.substring(0,5)} - ${lap.jam_tutup.substring(0,5)}</p>
             <div class="mt-4 flex justify-between items-center">
-              <a href="/wishlist/add/${lap.iklan_id}/"
+              <a href="/wishlist/add/${lap.id_lapangan}/"
                  class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
-                Add to Wishlist
+                ❤️ Tambah Wishlist
               </a>
               <a href="/booking/create/${lap.id_lapangan}/"
                  class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">

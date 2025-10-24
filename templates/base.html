@@ -25,7 +25,7 @@
                 <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-400 transition">Lapangan</a>
                 <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
                 {% if user.is_authenticated and user.userprofile.role == "user" %}
-                <a href="{% url 'wishlist:wishlist' %}" class="hover:text-blue-400 transition">Wishlist</a>
+                <a href="{% url 'wishlist:wishlist_list' %}" class="hover:text-blue-400 transition">Wishlist</a>
                 {% endif %}
                 {% if user.is_authenticated and user.userprofile.role == "penyedia" %}
                 <a href="{% url 'main:iklan_list' %}" class="hover:text-blue-400 transition">Iklan</a>
