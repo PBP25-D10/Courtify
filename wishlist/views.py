@@ -2,6 +2,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib import messages
+from django.utils import timezone
+from datetime import timedelta
+from django.db import models
 from lapangan.models import Lapangan
 from .models import Wishlist
 
@@ -9,7 +12,26 @@ from .models import Wishlist
 def wishlist_list_view(request):
     """Halaman wishlist user"""
     wishlists = Wishlist.objects.filter(user=request.user).select_related('lapangan')
-    return render(request, 'wishlist/wishlist_list.html', {'wishlists': wishlists})
+    search_query = request.GET.get('q', '')
+    kategori_filter = request.GET.get('kategori', '')
+
+    # Filter berdasarkan pencarian (nama lapangan)
+    if search_query:
+        wishlists = wishlists.filter(
+            models.Q(lapangan__nama__icontains=search_query)
+        )
+
+    # Filter berdasarkan kategori
+    if kategori_filter:
+        wishlists = wishlists.filter(
+            models.Q(lapangan__kategori__iexact=kategori_filter)
+        )
+
+    return render(request, 'wishlist/wishlist_list.html', {
+        'wishlists': wishlists,
+        'search_query': search_query,
+        'selected_kategori': kategori_filter
+    })
 
 
 @login_required
