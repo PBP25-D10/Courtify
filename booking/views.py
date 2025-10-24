@@ -55,6 +55,7 @@ def booking_list_view(request):
             'jam_buka': str(lap.jam_buka),
             'jam_tutup': str(lap.jam_tutup),
             'foto_url': lap.foto.url if lap.foto else None,
+            'iklan_id': lap.iklan_set.first().id if lap.iklan_set.exists() else None,
         } for lap in lapangan_list]
         return JsonResponse({'lapangan_list': data})
 

@@ -59,20 +59,11 @@ from django.views.static import serve
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
-    # 🔐 URL untuk autentikasi (login, register, profil)
     path('auth/', include('authentication.urls')),
-
-    # 🏟️ URL untuk manajemen lapangan (khusus penyedia)
     path('manajemen/', include('lapangan.urls')),
-
-    # 📅 URL untuk booking
     path('booking/', include('booking.urls')),
-
-      # URL untuk artikel
+    path('wishlist/', include('wishlist.urls')),
     path('artikel/', include(('artikel.urls', 'artikel'), namespace='artikel')),
-
-    # 🏠 URL untuk fitur utama (artikel, wishlist, iklan)
     path('', include('main.urls')),
 
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
