@@ -154,8 +154,11 @@ USE_TZ = True
 # URL to serve static files
 STATIC_URL = "/static/"
 
-# Directory for collected static files during deployment
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
 
 # Media files (uploads)
 MEDIA_URL = "/media/"
