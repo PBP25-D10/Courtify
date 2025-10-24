@@ -11,7 +11,7 @@ from .forms import BookingForm
 from django.db.models import Q
 
 
-# 🏠 Dashboard Booking
+# Dashboard Booking
 @login_required
 def booking_dashboard_view(request):
     bookings = Booking.objects.filter(user=request.user).order_by('-created_at')[:5]
@@ -24,7 +24,7 @@ def booking_dashboard_view(request):
 
 
 
-# 📋 List Semua Booking (bisa untuk admin atau penyedia)
+# List Semua Booking (bisa untuk admin atau penyedia)
 @login_required
 def booking_list_view(request):
     lapangan_list = Lapangan.objects.all().order_by('nama')
@@ -77,7 +77,7 @@ def booking_create_view(request, id_lapangan=None):
                 booking.lapangan = lapangan_terpilih
             booking.save()
 
-            # ⬇️ TARO DI SINI (di dalam if form.is_valid())
+            # TARO DI SINI (di dalam if form.is_valid())
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 # kalau request-nya AJAX
                 return JsonResponse({'success': True})
@@ -103,7 +103,7 @@ def booking_create_view(request, id_lapangan=None):
     })
 
 
-# ✏️ Update Booking
+# Update Booking
 @login_required
 def update_booking_view(request, pk):
     """Mengedit booking tertentu"""
@@ -134,7 +134,7 @@ def update_booking_view(request, pk):
     return render(request, 'booking/booking_form.html', {'form': form})
 
 
-# ❌ Batalkan Booking
+# Batalkan Booking
 @login_required
 def cancel_booking_view(request, pk):
     """Membatalkan booking"""

@@ -17,7 +17,7 @@
           <th class="px-5 py-3">Lapangan</th>
           <th class="px-5 py-3">Tanggal</th>
           <th class="px-5 py-3">Jam</th>
-          <th class="px-5 py-3">Total Harga</th>  <!-- ✅ Tambahan -->
+          <th class="px-5 py-3">Total Harga</th>  
           <th class="px-5 py-3">Status</th>
           <th class="px-5 py-3 text-center">Aksi</th>
         </tr>
@@ -29,7 +29,7 @@
           <td class="px-5 py-3">{{ booking.tanggal }}</td>
           <td class="px-5 py-3">{{ booking.jam_mulai }} - {{ booking.jam_selesai }}</td>
 
-          <!-- ✅ Total Harga -->
+          <!-- Total Harga -->
           <td class="px-5 py-3 text-gray-800 font-semibold">
             Rp {{ booking.total_harga|floatformat:0 }}
           </td>
@@ -133,7 +133,7 @@
   <div id="alertBox" class="hidden mt-6 p-3 rounded-md text-center"></div>
 </div>
 
-<!-- ⚡ AJAX Cancel Script -->
+<!-- AJAX Cancel Script -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const alertBox = document.getElementById('alertBox');

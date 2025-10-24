@@ -27,7 +27,6 @@ class BookingForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['lapangan'].label_from_instance = lambda obj: obj.nama
 
-        # Tambahkan atribut HTML 'data-harga' untuk setiap opsi
         choices = []
         for lap in self.fields['lapangan'].queryset:
             choices.append((lap.id_lapangan, f"{lap.nama} - Rp{lap.harga_per_jam:,}"))
