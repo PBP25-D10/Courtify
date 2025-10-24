@@ -24,17 +24,17 @@
 
         <!-- Desktop Menu -->
         <div class="hidden md:flex items-center space-x-6">
-          <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
-
           {% if user.is_authenticated and user.userprofile.role == "penyedia" %}
             <a href="{% url 'manajemen_lapangan:manajemen_dashboard' %}" class="hover:text-blue-400 transition">Dashboard</a>
             <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-400 transition">Lapangan</a>
             <a href="{% url 'main:iklan_list' %}" class="hover:text-blue-400 transition">Iklan</a>
+            <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
           {% endif %}
 
           {% if user.is_authenticated and user.userprofile.role == "user" %}
             <a href="{% url 'wishlist:wishlist_list' %}" class="hover:text-blue-400 transition">Wishlist</a>
             <a href="{% url 'booking:booking_dashboard' %}" class="hover:text-blue-400 transition">Booking</a>
+            <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
           {% endif %}
         </div>
 
@@ -76,17 +76,17 @@
       <!-- Mobile Menu -->
       <div id="mobile-menu" class="md:hidden hidden mt-4 pb-4 border-t border-gray-700 pt-4">
         <div class="flex flex-col space-y-3">
-          <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
-
           {% if user.is_authenticated and user.userprofile.role == "penyedia" %}
             <a href="{% url 'manajemen_lapangan:manajemen_dashboard' %}" class="hover:text-blue-400 transition">Dashboard</a>
             <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-400 transition">Lapangan</a>
             <a href="{% url 'main:iklan_list' %}" class="hover:text-blue-400 transition">Iklan</a>
+            <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
           {% endif %}
 
           {% if user.is_authenticated and user.userprofile.role == "user" %}
             <a href="{% url 'wishlist:wishlist_list' %}" class="hover:text-blue-400 transition">Wishlist</a>
             <a href="{% url 'booking:booking_dashboard' %}" class="hover:text-blue-400 transition">Booking</a>
+            <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
           {% endif %}
 
           <!-- Auth Section -->
