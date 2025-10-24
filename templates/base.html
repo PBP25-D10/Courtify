@@ -12,44 +12,94 @@
 <body class="bg-gray-100 min-h-screen flex flex-col">
     <!-- Navbar -->
     <nav class="bg-gray-900 text-white shadow-md">
-        <div class="container mx-auto flex items-center justify-between px-6 py-3">
-            <!-- Left: Brand -->
-            <div class="flex items-center space-x-4">
-                <a href="{% url 'main:landing_page' %}" class="text-xl font-semibold hover:text-blue-400 transition">
-                    Courtify
-                </a>
-                <a href="{% url 'booking:booking_dashboard' %}" class="hover:text-blue-400 transition">Booking</a>
-                {% if user.is_authenticated and user.userprofile.role == "penyedia" %}
-                <a href="{% url 'manajemen_lapangan:manajemen_dashboard' %}" class="hover:text-blue-400 transition">Dashboard</a>
-                {% endif %}
-                <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-400 transition">Lapangan</a>
-                <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
-                {% if user.is_authenticated and user.userprofile.role == "user" %}
-                <a href="{% url 'wishlist:wishlist' %}" class="hover:text-blue-400 transition">Wishlist</a>
-                {% endif %}
-                {% if user.is_authenticated and user.userprofile.role == "penyedia" %}
-                <a href="{% url 'main:iklan_list' %}" class="hover:text-blue-400 transition">Iklan</a>
-                {% endif %}
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex items-center justify-between">
+                <!-- Left: Brand -->
+                <div class="flex items-center">
+                    <a href="{% url 'main:landing_page' %}" class="text-xl font-semibold hover:text-blue-400 transition">
+                        Courtify
+                    </a>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="{% url 'booking:booking_dashboard' %}" class="hover:text-blue-400 transition">Booking</a>
+                    <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
+                    {% if user.is_authenticated and user.userprofile.role == "penyedia" %}
+                    <a href="{% url 'manajemen_lapangan:manajemen_dashboard' %}" class="hover:text-blue-400 transition">Dashboard</a>
+                    <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-400 transition">Lapangan</a>
+                    <a href="{% url 'main:iklan_list' %}" class="hover:text-blue-400 transition">Iklan</a>
+                    {% endif %}
+                    {% if user.is_authenticated and user.userprofile.role == "user" %}
+                    <a href="{% url 'wishlist:wishlist_list' %}" class="hover:text-blue-400 transition">Wishlist</a>
+                    {% endif %}
+                </div>
+
+                <!-- Desktop Auth Links -->
+                <div class="hidden md:flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                        <span class="text-gray-300">Halo, <span class="font-semibold">{{ user.username }}</span>!</span>
+                        <a href="{% url 'authentication:logout' %}"
+                           class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm transition">
+                           Logout
+                        </a>
+                    {% else %}
+                        <a href="{% url 'authentication:login' %}"
+                           class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition">
+                           Login
+                        </a>
+                        <a href="{% url 'authentication:register' %}"
+                           class="border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white px-3 py-1 rounded-lg text-sm transition">
+                           Register
+                        </a>
+                    {% endif %}
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-white hover:text-blue-400 focus:outline-none focus:text-blue-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            <!-- Right: Auth Links -->
-            <div class="flex items-center space-x-4">
-                {% if user.is_authenticated %}
-                    <span class="text-gray-300">Halo, <span class="font-semibold">{{ user.username }}</span>!</span>
-                    <a href="{% url 'authentication:logout' %}"
-                       class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm transition">
-                       Logout
-                    </a>
-                {% else %}
-                    <a href="{% url 'authentication:login' %}"
-                       class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition">
-                       Login
-                    </a>
-                    <a href="{% url 'authentication:register' %}"
-                       class="border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white px-3 py-1 rounded-lg text-sm transition">
-                       Register
-                    </a>
-                {% endif %}
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="md:hidden hidden mt-4 pb-4 border-t border-gray-700 pt-4">
+                <div class="flex flex-col space-y-3">
+                    <a href="{% url 'booking:booking_dashboard' %}" class="hover:text-blue-400 transition">Booking</a>
+                    <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
+                    {% if user.is_authenticated and user.userprofile.role == "penyedia" %}
+                    <a href="{% url 'manajemen_lapangan:manajemen_dashboard' %}" class="hover:text-blue-400 transition">Dashboard</a>
+                    <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-400 transition">Lapangan</a>
+                    <a href="{% url 'main:iklan_list' %}" class="hover:text-blue-400 transition">Iklan</a>
+                    {% endif %}
+                    {% if user.is_authenticated and user.userprofile.role == "user" %}
+                    <a href="{% url 'wishlist:wishlist_list' %}" class="hover:text-blue-400 transition">Wishlist</a>
+                    {% endif %}
+
+                    <div class="border-t border-gray-700 pt-3 mt-3">
+                        {% if user.is_authenticated %}
+                            <span class="text-gray-300 block mb-2">Halo, <span class="font-semibold">{{ user.username }}</span>!</span>
+                            <a href="{% url 'authentication:logout' %}"
+                               class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition inline-block">
+                               Logout
+                            </a>
+                        {% else %}
+                            <div class="flex flex-col space-y-2">
+                                <a href="{% url 'authentication:login' %}"
+                                   class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm transition text-center">
+                                   Login
+                                </a>
+                                <a href="{% url 'authentication:register' %}"
+                                   class="border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-lg text-sm transition text-center">
+                                   Register
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -78,6 +128,14 @@
             </div>
         </div>
     </footer>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
 
 </body>
 </html>

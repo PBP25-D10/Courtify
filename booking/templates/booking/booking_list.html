@@ -53,8 +53,8 @@
         </button>
       </div>
     </div>
-
-    <!-- 📦 LAPANGAN LIST -->
+    
+    {% if lapangan_list %}
     <div id="lapangan-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {% for lap in lapangan_list %}
       <div class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition">
@@ -66,21 +66,21 @@
           </div>
         {% endif %}
         <div class="p-5">
-          <h2 class="text-xl font-semibold text-gray-800 mb-1">{{ lap.nama }}</h2>
+          <h3 class="text-lg font-semibold text-gray-800 mb-1">{{ lap.nama }}</h3>
           <p class="text-sm text-gray-500 mb-2">{{ lap.kategori }} • {{ lap.lokasi }}</p>
           <p class="text-gray-700 font-medium">Rp {{ lap.harga_per_jam }} / jam</p>
           <p class="text-sm text-gray-500 mt-2">⏰ {{ lap.jam_buka }} - {{ lap.jam_tutup }}</p>
-
           <div class="mt-4 flex justify-between items-center">
-            <!-- ✅ Diperbaiki: Tambahkan tombol Add to Wishlist -->
-            <a href="{% url 'wishlist:add_to_wishlist' lap.iklan_set.first.id %}"
-               class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
-              Add to Wishlist
-            </a>
-
-            <!-- ✅ Diperbaiki: Syntax url Django yang benar -->
+            <button onclick="toggleWishlist('{{ lap.id_lapangan }}', this)"
+              class="wishlist-btn text-gray-400 hover:text-red-500 transition duration-300"
+              title="Tambah ke Wishlist"
+              data-lapangan-id="{{ lap.id_lapangan }}">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-7 h-7">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+              </svg>
+            </button>
             <a href="{% url 'booking:booking_create' lap.id_lapangan %}"
-               class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
               Pesan Sekarang
             </a>
           </div>
@@ -88,10 +88,14 @@
       </div>
       {% endfor %}
     </div>
-  </div>
-</div>
+    {% else %}
+    <p class="text-gray-600 text-center mt-8">Belum ada lapangan yang tersedia.</p>
+    {% endif %}
 
-<!-- ⚡ SCRIPT -->
+    <!-- Hidden CSRF token for AJAX -->
+    {% csrf_token %}
+
+<!-- SCRIPT -->
 <script>
 function loadLapangan(filters = {}) {
   let url = window.location.pathname;
@@ -126,10 +130,14 @@ function loadLapangan(filters = {}) {
             <p class="text-gray-700 font-medium">Rp ${lap.harga_per_jam} / jam</p>
             <p class="text-sm text-gray-500 mt-2">⏰ ${lap.jam_buka.substring(0,5)} - ${lap.jam_tutup.substring(0,5)}</p>
             <div class="mt-4 flex justify-between items-center">
-              <a href="/wishlist/add/${lap.iklan_id}/"
-                 class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
-                Add to Wishlist
-              </a>
+              <button onclick="toggleWishlist('${lap.id_lapangan}', this)"
+                class="wishlist-btn text-gray-400 hover:text-red-500 transition duration-300"
+                title="Tambah ke Wishlist"
+                data-lapangan-id="${lap.id_lapangan}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-7 h-7">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+              </button>
               <a href="/booking/create/${lap.id_lapangan}/"
                  class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
                 Pesan Sekarang
@@ -171,6 +179,76 @@ document.getElementById("filterSearch").addEventListener("keypress", function(e)
 
 document.addEventListener("DOMContentLoaded", function() {
   loadLapangan();
+
+  // Wishlist toggle functionality for dynamic content
+  window.toggleWishlist = async function(lapanganId, button) {
+    try {
+      const response = await fetch(`/wishlist/add/${lapanganId}/`, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update the heart icon based on 'added' flag
+        const svg = button.querySelector('svg');
+
+        if (data.added) {
+          // Added to wishlist - fill the heart
+          svg.setAttribute('fill', 'currentColor');
+          svg.setAttribute('stroke', 'none');
+          button.classList.remove('text-gray-400');
+          button.classList.add('text-red-500');
+          alert('Ditambahkan ke wishlist!');
+        } else {
+          // Removed from wishlist - change to outline
+          svg.setAttribute('fill', 'none');
+          svg.setAttribute('stroke', 'currentColor');
+          button.classList.remove('text-red-500');
+          button.classList.add('text-gray-400');
+          alert('Dihapus dari wishlist.');
+        }
+      } else {
+        alert(data.message || 'Gagal memperbarui wishlist.');
+      }
+    } catch (error) {
+      alert('Terjadi kesalahan koneksi ke server.');
+    }
+  };
+
+  // Initialize wishlist states for dynamic content
+  function initializeWishlistStates() {
+    document.querySelectorAll('.wishlist-btn').forEach(async (btn) => {
+      const lapanganId = btn.dataset.lapanganId;
+      try {
+        const response = await fetch(`/wishlist/check/${lapanganId}/`, {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.in_wishlist) {
+            const svg = btn.querySelector('svg');
+            svg.setAttribute('fill', 'currentColor');
+            svg.setAttribute('stroke', 'none');
+            btn.classList.remove('text-gray-400');
+            btn.classList.add('text-red-500');
+          }
+        }
+      } catch (error) {
+        // Ignore errors during initialization
+      }
+    });
+  }
+
+  // Initialize after loading lapangan
+  initializeWishlistStates();
 });
 </script>
 {% endblock %}
