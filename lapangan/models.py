@@ -28,7 +28,7 @@ class Lapangan(models.Model):
     )
     lokasi = models.CharField(max_length=200)
     harga_per_jam = models.PositiveIntegerField(validators=[MinValueValidator(1)])
-    foto = models.ImageField(upload_to="static/img/", blank=True, null=True)
+    foto = models.ImageField(upload_to="img/", blank=True, null=True)
     jam_buka = models.TimeField()
     jam_tutup = models.TimeField()
 

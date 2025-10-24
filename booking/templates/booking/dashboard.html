@@ -97,13 +97,14 @@
         <p class="text-gray-700 font-medium">Rp {{ lap.harga_per_jam }} / jam</p>
         <p class="text-sm text-gray-500 mt-2">⏰ {{ lap.jam_buka }} - {{ lap.jam_tutup }}</p>
         <div class="mt-4 flex justify-between items-center">
-          <a href="{% url 'wishlist:wishlist_add' lap.id_lapangan %}"
-            class="text-red-500 hover:text-red-600 transition"
-            title="Tambah ke Wishlist">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" class="w-7 h-7">
-              <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 18.343l-6.828-6.829a4 4 0 010-5.656z"/>
+          <button onclick="toggleWishlist('{{ lap.id_lapangan }}', this)"
+            class="wishlist-btn text-gray-400 hover:text-red-500 transition duration-300"
+            title="Tambah ke Wishlist"
+            data-lapangan-id="{{ lap.id_lapangan }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-7 h-7">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
             </svg>
-          </a>
+          </button>
           <a href="{% url 'booking:booking_create' lap.id_lapangan %}"
              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
             Pesan Sekarang
@@ -178,6 +179,75 @@ document.addEventListener('DOMContentLoaded', function () {
         showAlert('Terjadi kesalahan koneksi ke server.', false);
       }
     });
+  });
+
+  // Wishlist toggle functionality
+  async function toggleWishlist(lapanganId, button) {
+    try {
+      const response = await fetch(`/wishlist/add/${lapanganId}/`, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Toggle the heart icon
+        const svg = button.querySelector('svg');
+        const isFilled = svg.getAttribute('fill') !== 'none';
+
+        if (isFilled) {
+          // Remove from wishlist - change to outline
+          svg.setAttribute('fill', 'none');
+          svg.setAttribute('stroke', 'currentColor');
+          button.classList.remove('text-red-500');
+          button.classList.add('text-gray-400');
+          showAlert('Dihapus dari wishlist.', true);
+        } else {
+          // Add to wishlist - fill the heart
+          svg.setAttribute('fill', 'currentColor');
+          svg.setAttribute('stroke', 'none');
+          button.classList.remove('text-gray-400');
+          button.classList.add('text-red-500');
+          showAlert('Ditambahkan ke wishlist!', true);
+        }
+      } else {
+        showAlert(data.message || 'Gagal memperbarui wishlist.', false);
+      }
+    } catch (error) {
+      showAlert('Terjadi kesalahan koneksi ke server.', false);
+    }
+  }
+
+  // Make toggleWishlist global
+  window.toggleWishlist = toggleWishlist;
+
+  // Initialize wishlist states on page load
+  document.querySelectorAll('.wishlist-btn').forEach(async (btn) => {
+    const lapanganId = btn.dataset.lapanganId;
+    try {
+      const response = await fetch(`/wishlist/check/${lapanganId}/`, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.in_wishlist) {
+          const svg = btn.querySelector('svg');
+          svg.setAttribute('fill', 'currentColor');
+          svg.setAttribute('stroke', 'none');
+          btn.classList.remove('text-gray-400');
+          btn.classList.add('text-red-500');
+        }
+      }
+    } catch (error) {
+      // Ignore errors during initialization
+    }
   });
 });
 </script>

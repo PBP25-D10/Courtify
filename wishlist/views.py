@@ -14,17 +14,30 @@ def wishlist_list_view(request):
 
 @login_required
 def wishlist_add_view(request, lapangan_id):
-    """Menambahkan lapangan ke wishlist"""
+    """Toggle lapangan in wishlist (add if not exists, remove if exists)"""
     lapangan = get_object_or_404(Lapangan, id_lapangan=lapangan_id)
-    wishlist, created = Wishlist.objects.get_or_create(user=request.user, lapangan=lapangan)
+    wishlist_item = Wishlist.objects.filter(user=request.user, lapangan=lapangan).first()
 
-    if created:
-        messages.success(request, f"{lapangan.nama} ditambahkan ke wishlist!")
+    if wishlist_item:
+        # Remove from wishlist
+        wishlist_item.delete()
+        success = True
+        message = f"{lapangan.nama} dihapus dari wishlist."
+        added = False
     else:
-        messages.info(request, f"{lapangan.nama} sudah ada di wishlist.")
+        # Add to wishlist
+        Wishlist.objects.create(user=request.user, lapangan=lapangan)
+        success = True
+        message = f"{lapangan.nama} ditambahkan ke wishlist!"
+        added = True
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({'success': created})
+        return JsonResponse({'success': success, 'message': message, 'added': added})
+
+    if added:
+        messages.success(request, message)
+    else:
+        messages.info(request, message)
 
     return redirect('wishlist:wishlist_list')
 
@@ -40,3 +53,11 @@ def wishlist_delete_view(request, wishlist_id):
         return JsonResponse({'success': True})
 
     return redirect('wishlist:wishlist_list')
+
+@login_required
+def wishlist_check_view(request, lapangan_id):
+    """Check if lapangan is in user's wishlist"""
+    lapangan = get_object_or_404(Lapangan, id_lapangan=lapangan_id)
+    in_wishlist = Wishlist.objects.filter(user=request.user, lapangan=lapangan).exists()
+
+    return JsonResponse({'in_wishlist': in_wishlist})
