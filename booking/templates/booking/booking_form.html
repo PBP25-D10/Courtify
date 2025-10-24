@@ -26,7 +26,7 @@
       data-harga="{{ lapangan_terpilih.harga_per_jam }}"
     >
 
-    <!-- 📅 Tanggal -->
+    <!-- Tanggal -->
     <div class="flex flex-col">
       <label for="id_tanggal" class="block text-gray-700 font-semibold mb-1">Tanggal</label>
       <input
@@ -38,7 +38,7 @@
       >
     </div>
 
-    <!-- 🕐 Jam Mulai -->
+    <!-- Jam Mulai -->
     <div class="flex flex-col">
       <label for="id_jam_mulai" class="block text-gray-700 font-semibold mb-1">Jam Mulai</label>
       <select
@@ -50,7 +50,7 @@
       </select>
     </div>
 
-    <!-- 🕑 Jam Selesai -->
+    <!-- Jam Selesai -->
     <div class="flex flex-col">
       <label for="id_jam_selesai" class="block text-gray-700 font-semibold mb-1">Jam Selesai</label>
       <select
@@ -62,7 +62,7 @@
       </select>
     </div>
 
-    <!-- 💰 Total Harga -->
+    <!-- Total Harga -->
     <div class="flex flex-col">
       <label for="id_total_harga" class="block text-gray-700 font-semibold mb-1">Total Harga</label>
       <input
@@ -107,7 +107,7 @@
   </div>
 </div>
 
-<!-- ✅ SCRIPT -->
+<!-- SCRIPT -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   const tanggalInput = document.getElementById("id_tanggal");
@@ -116,14 +116,14 @@ document.addEventListener("DOMContentLoaded", function() {
   const totalHargaInput = document.getElementById("id_total_harga");
   const lapanganHidden = document.getElementById("id_lapangan");
 
-  // ========== 1️⃣ BATAS TANGGAL ==========
+  // ========== BATAS TANGGAL ==========
   const today = new Date();
   const yyyy = today.getFullYear();
   const mm = String(today.getMonth() + 1).padStart(2, "0");
   const dd = String(today.getDate()).padStart(2, "0");
   tanggalInput.min = `${yyyy}-${mm}-${dd}`;
 
-  // ========== 2️⃣ BATAS JAM ==========
+  // ========== BATAS JAM ==========
   const jamBuka = "{{ lapangan_terpilih.jam_buka|time:'H' }}";
   const jamTutup = "{{ lapangan_terpilih.jam_tutup|time:'H' }}";
 
@@ -145,7 +145,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
   isiJamSelect();
 
-  // ========== 3️⃣ HITUNG TOTAL ==========
+  // ========== HITUNG TOTAL ==========
   function hitungTotal() {
     const mulai = parseInt(jamMulai.value.split(":")[0]);
     const selesai = parseInt(jamSelesai.value.split(":")[0]);
