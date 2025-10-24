@@ -1,3 +1,5 @@
+from datetime import timedelta
+from django.utils import timezone
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
@@ -43,7 +45,28 @@ def news_delete_view(request, id):
 # Views untuk Iklan
 def iklan_list_view(request):
     iklans = Iklan.objects.filter(host=request.user).select_related('lapangan')
-    return render(request, 'main/iklan_list_owner.html', {'iklan_list': iklans})
+    search_query = request.GET.get('q', '')  
+    date_filter = request.GET.get('date_filter', '')  
+
+    # Filter berdasarkan pencarian (judul atau nama lapangan)
+    if search_query:
+        iklans = iklans.filter(lapangan__nama__icontains=search_query) | iklans.filter(judul__icontains=search_query)
+
+    # Filter berdasarkan tanggal post
+    if date_filter == 'today':
+        iklans = iklans.filter(date__date=timezone.now().date())
+    elif date_filter == 'week':
+        week_ago = timezone.now() - timedelta(days=7)
+        iklans = iklans.filter(date__gte=week_ago)
+    elif date_filter == 'older':
+        week_ago = timezone.now() - timedelta(days=7)
+        iklans = iklans.filter(date__lt=week_ago)
+
+    return render(request, 'main/iklan_list_owner.html', {
+        'iklan_list': iklans,
+        'search_query': search_query,
+        'selected_filter': date_filter
+    })
 
 @login_required
 def iklan_create_view(request):

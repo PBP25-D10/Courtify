@@ -11,6 +11,35 @@
       </a>
     </div>
 
+    <!-- Filter & Search -->
+    <form method="get" class="bg-white rounded-xl shadow p-6 mb-6 flex flex-wrap gap-4 items-end">
+      <div class="flex-1">
+        <label for="q" class="block text-sm font-medium text-gray-700">Cari Iklan</label>
+        <input type="text" id="q" name="q" placeholder="Cari judul atau nama lapangan..."
+               value="{{ search_query }}" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2">
+      </div>
+
+      <div>
+        <label for="date_filter" class="block text-sm font-medium text-gray-700">Filter Waktu</label>
+        <select id="date_filter" name="date_filter" class="mt-1 border border-gray-300 rounded-lg px-3 py-2">
+          <option value="">Semua</option>
+          <option value="today" {% if selected_filter == 'today' %}selected{% endif %}>Hari ini</option>
+          <option value="week" {% if selected_filter == 'week' %}selected{% endif %}>Minggu terakhir</option>
+          <option value="older" {% if selected_filter == 'older' %}selected{% endif %}>Lebih lama</option>
+        </select>
+      </div>
+
+      <button type="submit"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+        Terapkan
+      </button>
+
+      <a href="{% url 'main:iklan_list' %}"
+         class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold transition">
+        Reset
+      </a>
+    </form>
+
     {% if iklan_list %}
       <!-- Grid Kartu Iklan -->
       <div id="iklanContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
