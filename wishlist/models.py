@@ -11,7 +11,8 @@ class Wishlist(models.Model):
     lapangan = models.ForeignKey(
         Lapangan,
         on_delete=models.CASCADE,
-        related_name='wishlists'
+        related_name='wishlists',
+        to_field='id_lapangan'
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
