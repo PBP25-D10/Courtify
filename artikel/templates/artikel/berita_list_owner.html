@@ -135,10 +135,12 @@
         <p class="text-gray-600 mt-2 line-clamp-3">{{ news.content|truncatechars:120 }}</p>
         <div class="mt-3 flex justify-between items-center">
           <a href="{% url 'artikel:news_detail' news.id_berita %}" class="text-blue-600 font-medium">Baca Selengkapnya →</a>
+          {% if news.author == user %}
           <div class="flex space-x-2">
             <button onclick="openEditModal({{ news.id_berita }}, '{{ news.title|escapejs }}', '{{ news.content|escapejs }}', '{{ news.kategori }}')" class="text-yellow-600 hover:text-yellow-800 font-medium text-sm">✏️ Edit</button>
             <button onclick="openDeleteModal({{ news.id_berita }}, '{{ news.title|escapejs }}')" class="text-red-600 hover:text-red-800 font-medium text-sm">🗑️ Hapus</button>
           </div>
+          {% endif %}
         </div>
       </div>
     </div>
