@@ -2,7 +2,36 @@
 {% load static %}
 {% block content %}
 <div class="max-w-6xl mx-auto py-10">
-  <h1 class="text-3xl font-bold mb-8 text-center">🏟️ Berita & Artikel Olahraga</h1>
+  <h1 class="text-3xl font-bold mb-8 text-center">Berita & Artikel Olahraga</h1>
+
+   <!-- Filter & Search -->
+    <form method="get" class="bg-white rounded-xl shadow p-6 mb-6 flex flex-wrap gap-4 items-end">
+      <div class="flex-1">
+        <label for="q" class="block text-sm font-medium text-gray-700">Cari Berita</label>
+        <input type="text" id="q" name="q" placeholder="Cari judul atau kategori berita..."
+               value="{{ search_query }}" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2">
+      </div>
+
+      <div>
+        <label for="date_filter" class="block text-sm font-medium text-gray-700">Filter Waktu</label>
+        <select id="date_filter" name="date_filter" class="mt-1 border border-gray-300 rounded-lg px-3 py-2">
+          <option value="">Semua</option>
+          <option value="today" {% if selected_filter == 'today' %}selected{% endif %}>Hari ini</option>
+          <option value="week" {% if selected_filter == 'week' %}selected{% endif %}>Minggu terakhir</option>
+          <option value="older" {% if selected_filter == 'older' %}selected{% endif %}>Lebih lama</option>
+        </select>
+      </div>
+
+      <button type="submit"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+        Terapkan
+      </button>
+
+      <a href="{% url 'artikel:news_list' %}"
+         class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold transition">
+        Reset
+      </a>
+    </form>
 
   <!-- Modal Toggle Button -->
   <div class="mb-6 text-center">
