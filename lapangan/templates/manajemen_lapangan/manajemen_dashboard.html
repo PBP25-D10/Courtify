@@ -27,6 +27,31 @@ function confirmBooking(bookingId) {
         });
     }
 }
+
+function deleteLapangan(lapanganId) {
+    if (confirm('Yakin ingin menghapus lapangan ini?')) {
+        fetch(`/manajemen/lapangan/delete/${lapanganId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menghapus lapangan.');
+        });
+    }
+}
 </script>
 <div class="min-h-screen bg-gray-100 py-10">
     <div class="max-w-7xl mx-auto px-6">
@@ -164,9 +189,8 @@ function confirmBooking(bookingId) {
                                     <a href="{% url 'manajemen_lapangan:lapangan_edit' l.id_lapangan %}"
                                        class="text-blue-600 hover:text-blue-800 font-medium transition">Edit</a>
                                     <span class="text-gray-400 mx-1">|</span>
-                                    <a href="{% url 'manajemen_lapangan:lapangan_delete' l.id_lapangan %}"
-                                       onclick="return confirm('Yakin ingin menghapus lapangan ini?')"
-                                       class="text-red-600 hover:text-red-800 font-medium transition">Hapus</a>
+                                    <button onclick="deleteLapangan('{{ l.id_lapangan }}')"
+                                       class="text-red-600 hover:text-red-800 font-medium transition">Hapus</button>
                                 </td>
                             </tr>
                         {% endfor %}
