@@ -58,28 +58,15 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
-    # 🔐 URL untuk autentikasi (login, register, profil)
     path('auth/', include('authentication.urls')),
-
-    # 🏟️ URL untuk manajemen lapangan (khusus penyedia)
     path('manajemen/', include('lapangan.urls')),
-
-    # 📅 URL untuk booking
     path('booking/', include('booking.urls')),
-
-      # URL untuk artikel
+    path('wishlist/', include('wishlist.urls')),
     path('artikel/', include(('artikel.urls', 'artikel'), namespace='artikel')),
-
-    # 🏠 URL untuk fitur utama (artikel, wishlist, iklan)
     path('', include('main.urls')),
 ]
 
-# Serve media files in both development and production
-# In production, you should configure your web server (nginx/apache) to serve media files directly
-# But this ensures media files work in both environments
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
-    # Additional static files serving for development
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
