@@ -34,13 +34,17 @@ class LapanganForm(forms.ModelForm):
             'jam_buka': forms.TimeInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
                 'type': 'time',
-                'step': '3600'
-            }, format='%H:%M'),
+                'step': '3600',
+                'min': '00:00',
+                'max': '23:00'
+            }),
             'jam_tutup': forms.TimeInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
                 'type': 'time',
-                'step': '3600'
-            }, format='%H:%M'),
+                'step': '3600',
+                'min': '00:00',
+                'max': '23:00'
+            }),
         }
         labels = {
             'nama': 'Nama Lapangan',
