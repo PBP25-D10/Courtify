@@ -2,55 +2,156 @@
 
 {% block content %}
 {% csrf_token %}
+
+<!-- Modal for confirmations -->
+<div id="confirmationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3 text-center">
+      <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+        </svg>
+      </div>
+      <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2" id="modalTitle">Konfirmasi</h3>
+      <div class="mt-2 px-7 py-3">
+        <p class="text-sm text-gray-500" id="modalMessage">
+          Apakah Anda yakin ingin melanjutkan?
+        </p>
+      </div>
+      <div class="items-center px-4 py-3 flex justify-center space-x-4">
+        <button id="modalCancelBtn" class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
+          Batal
+        </button>
+        <button id="modalConfirmBtn" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
+          Ya
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success/Error Modal -->
+<div id="resultModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3 text-center">
+      <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4" id="resultIcon">
+        <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+      <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2" id="resultTitle">Berhasil</h3>
+      <div class="mt-2 px-7 py-3">
+        <p class="text-sm text-gray-500" id="resultMessage">
+          Operasi berhasil dilakukan.
+        </p>
+      </div>
+      <div class="items-center px-4 py-3">
+        <button id="resultCloseBtn" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-function confirmBooking(bookingId) {
-    if (confirm('Apakah Anda yakin ingin menerima booking ini?')) {
-        fetch(`{% url 'booking:confirm_booking' 0 %}`.replace('0', bookingId), {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                location.reload();
-            } else {
-                alert(data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Terjadi kesalahan saat memproses booking.');
-        });
+let currentAction = null;
+let currentData = null;
+
+function showConfirmationModal(title, message, confirmCallback) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMessage').textContent = message;
+    document.getElementById('confirmationModal').classList.remove('hidden');
+
+    document.getElementById('modalConfirmBtn').onclick = function() {
+        document.getElementById('confirmationModal').classList.add('hidden');
+        confirmCallback();
+    };
+
+    document.getElementById('modalCancelBtn').onclick = function() {
+        document.getElementById('confirmationModal').classList.add('hidden');
+        currentAction = null;
+        currentData = null;
+    };
+}
+
+function showResultModal(title, message, isSuccess = true) {
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultMessage').textContent = message;
+
+    const iconDiv = document.getElementById('resultIcon');
+    if (isSuccess) {
+        iconDiv.innerHTML = '<svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+        iconDiv.className = 'mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4';
+    } else {
+        iconDiv.innerHTML = '<svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+        iconDiv.className = 'mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4';
     }
+
+    document.getElementById('resultModal').classList.remove('hidden');
+
+    document.getElementById('resultCloseBtn').onclick = function() {
+        document.getElementById('resultModal').classList.add('hidden');
+        if (isSuccess) {
+            location.reload();
+        }
+    };
+}
+
+function confirmBooking(bookingId) {
+    showConfirmationModal(
+        'Konfirmasi Booking',
+        'Apakah Anda yakin ingin menerima booking ini?',
+        function() {
+            fetch(`{% url 'booking:confirm_booking' 0 %}`.replace('0', bookingId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showResultModal('Berhasil', data.message, true);
+                } else {
+                    showResultModal('Gagal', data.message, false);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showResultModal('Error', 'Terjadi kesalahan saat memproses booking.', false);
+            });
+        }
+    );
 }
 
 function deleteLapangan(lapanganId) {
-    if (confirm('Yakin ingin menghapus lapangan ini?')) {
-        fetch(`/manajemen/lapangan/delete/${lapanganId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert(data.message);
-                location.reload();
-            } else {
-                alert(data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Terjadi kesalahan saat menghapus lapangan.');
-        });
-    }
+    showConfirmationModal(
+        'Hapus Lapangan',
+        'Yakin ingin menghapus lapangan ini?',
+        function() {
+            fetch(`/manajemen/lapangan/delete/${lapanganId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showResultModal('Berhasil', data.message, true);
+                } else {
+                    showResultModal('Gagal', data.message, false);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showResultModal('Error', 'Terjadi kesalahan saat menghapus lapangan.', false);
+            });
+        }
+    );
 }
 </script>
 <div class="min-h-screen bg-gray-100 py-10">
