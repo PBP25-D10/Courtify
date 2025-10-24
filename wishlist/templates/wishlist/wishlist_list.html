@@ -1,19 +1,40 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Wishlist - Courtify{% endblock %}
-
 {% block content %}
-<div class="container mx-auto px-6 py-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Wishlist Saya</h1>
+<div class="min-h-screen bg-gray-100 py-10">
+  <div class="max-w-5xl mx-auto px-4">
+    <h1 class="text-3xl font-bold text-gray-800 mb-8">Wishlist Saya</h1>
 
-    <div class="text-center py-12">
-        <i class="ri-heart-line text-6xl text-gray-400 mb-4"></i>
-        <h2 class="text-2xl font-semibold text-gray-600 mb-2">Wishlist Kosong</h2>
-        <p class="text-gray-500 mb-6">Belum ada lapangan yang ditambahkan ke wishlist.</p>
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition">
-            Jelajahi Lapangan
-        </button>
-    </div>
+    {% if wishlists %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in wishlists %}
+        <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition">
+          {% if item.lapangan.foto %}
+            <img src="{{ item.lapangan.foto.url }}" alt="{{ item.lapangan.nama }}" class="w-full h-48 object-cover">
+          {% endif %}
+          <div class="p-5">
+            <h2 class="text-xl font-semibold text-gray-800 mb-1">{{ item.lapangan.nama }}</h2>
+            <p class="text-sm text-gray-500 mb-2">{{ item.lapangan.kategori }} • {{ item.lapangan.lokasi }}</p>
+            <p class="text-gray-700 font-medium">Rp {{ item.lapangan.harga_per_jam }} / jam</p>
+
+            <div class="mt-4 flex justify-between items-center">
+              <a href="{% url 'booking:booking_create' item.lapangan.id_lapangan %}"
+                 class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold">
+                Booking
+              </a>
+              <a href="{% url 'wishlist:wishlist_delete' item.id %}"
+                 class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold">
+                Hapus
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center text-gray-500 py-16">
+        Belum ada lapangan di wishlist kamu.
+      </div>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}
