@@ -72,7 +72,7 @@
           <p class="text-sm text-gray-500 mt-2">⏰ {{ lap.jam_buka }} - {{ lap.jam_tutup }}</p>
 
           <div class="mt-4 flex justify-end">
-            <a href="{% url 'booking:booking_create' % lap.id_lapangan }"
+            <a href="{% url 'booking:booking_create' lap.id_lapangan %}"
                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
               Pesan Sekarang
             </a>
@@ -119,7 +119,7 @@ function loadLapangan(filters = {}) {
             <p class="text-gray-700 font-medium">Rp ${lap.harga_per_jam} / jam</p>
             <p class="text-sm text-gray-500 mt-2">⏰ ${lap.jam_buka.substring(0,5)} - ${lap.jam_tutup.substring(0,5)}</p>
             <div class="mt-4 flex justify-end">
-              <a href="/booking/create/?lapangan_id=${lap.id_lapangan}"
+              <a href="/booking/create/${lap.id_lapangan}/"
                  class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
                 Pesan Sekarang
               </a>
