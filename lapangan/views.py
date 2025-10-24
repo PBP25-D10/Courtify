@@ -6,6 +6,7 @@ from django.core import serializers
 from django.views.decorators.csrf import csrf_exempt
 from .models import Lapangan
 from .forms import LapanganForm
+from booking.models import Booking
 
 @penyedia_required
 def manajemen_dashboard_view(request):
@@ -13,9 +14,9 @@ def manajemen_dashboard_view(request):
     lokasi = request.GET.get('lokasi', '')
     harga_min = request.GET.get('harga_min', '')
     harga_max = request.GET.get('harga_max', '')
-    
+
     lapangan_list = Lapangan.objects.filter(owner=request.user)
-    
+
     if kategori:
         lapangan_list = lapangan_list.filter(kategori=kategori)
     if lokasi:
@@ -30,10 +31,16 @@ def manajemen_dashboard_view(request):
             lapangan_list = lapangan_list.filter(harga_per_jam__lte=int(harga_max))
         except ValueError:
             pass
-    
+
+    pending_bookings = Booking.objects.filter(
+        lapangan__owner=request.user,
+        status='pending'
+    ).select_related('lapangan', 'user').order_by('-created_at')
+
     return render(request, 'manajemen_lapangan/manajemen_dashboard.html', {
         'lapangan_list': lapangan_list,
-        'kategori_choices': Lapangan._meta.get_field('kategori').choices
+        'kategori_choices': Lapangan._meta.get_field('kategori').choices,
+        'pending_bookings': pending_bookings
     })
 
 

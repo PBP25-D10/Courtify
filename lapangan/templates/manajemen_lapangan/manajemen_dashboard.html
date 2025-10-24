@@ -1,6 +1,33 @@
 {% extends 'base.html' %}
 
 {% block content %}
+{% csrf_token %}
+<script>
+function confirmBooking(bookingId) {
+    if (confirm('Apakah Anda yakin ingin menerima booking ini?')) {
+        fetch(`{% url 'booking:confirm_booking' 0 %}`.replace('0', bookingId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat memproses booking.');
+        });
+    }
+}
+</script>
 <div class="min-h-screen bg-gray-100 py-10">
     <div class="max-w-7xl mx-auto px-6">
         <div class="flex justify-between items-center mb-8">
@@ -61,6 +88,44 @@
                 {% endif %}
             </p>
         </div>
+
+        <!-- Pending Bookings Section -->
+        {% if pending_bookings %}
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Booking Pending</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left border-collapse">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700">Lapangan</th>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700">User</th>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700">Tanggal</th>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700">Jam</th>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700">Harga</th>
+                            <th class="py-3 px-4 border-b font-semibold text-gray-700 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        {% for booking in pending_bookings %}
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="py-3 px-4 border-b font-medium text-gray-800">{{ booking.lapangan.nama }}</td>
+                                <td class="py-3 px-4 border-b text-gray-700">{{ booking.user.username }}</td>
+                                <td class="py-3 px-4 border-b text-gray-700">{{ booking.tanggal|date:"d/m/Y" }}</td>
+                                <td class="py-3 px-4 border-b text-gray-700">{{ booking.jam_mulai|time:"H:i" }} - {{ booking.jam_selesai|time:"H:i" }}</td>
+                                <td class="py-3 px-4 border-b text-gray-700">Rp {{ booking.total_harga }}</td>
+                                <td class="py-3 px-4 border-b text-center">
+                                    <button onclick="confirmBooking('{{ booking.pk }}')"
+                                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+                                        Terima
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
 
         <div class="bg-white shadow-lg rounded-2xl overflow-hidden">
             <table class="min-w-full text-left border-collapse">

@@ -55,6 +55,7 @@ def booking_list_view(request):
             'jam_buka': str(lap.jam_buka),
             'jam_tutup': str(lap.jam_tutup),
             'foto_url': lap.foto.url if lap.foto else None,
+            'iklan_id': lap.iklan_set.first().id if lap.iklan_set.exists() else None,
         } for lap in lapangan_list]
         return JsonResponse({'lapangan_list': data})
 
@@ -158,18 +159,41 @@ def booking_user_list_view(request):
     return render(request, 'booking/booking_user_list.html', {'bookings': bookings})
 
 
+@login_required
+def confirm_booking_view(request, pk):
+    """Menerima booking (ubah status ke confirmed)"""
+    booking = get_object_or_404(Booking, pk=pk)
+    if request.user != booking.lapangan.owner:
+        return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=403)
+
+    if booking.status == 'pending':
+        booking.status = 'confirmed'
+        booking.save()
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': 'Booking telah dikonfirmasi.',
+                'booking_id': booking.id
+            })
+
+        messages.success(request, 'Booking telah dikonfirmasi.')
+        return redirect('lapangan:manajemen_dashboard')
+    else:
+        return JsonResponse({'success': False, 'message': 'Booking sudah diproses.'}, status=400)
+
+
 def get_booked_hours(request, lapangan_id, tanggal):
     bookings = Booking.objects.filter(
         lapangan_id=lapangan_id,
         tanggal=tanggal,
-        status__in=['pending', 'valid']  # kalau kamu mau hitung yang pending juga
+        status__in=['pending', 'confirmed']  # include confirmed to block hours
     )
 
     jam_terpakai = []
     for b in bookings:
         jam_terpakai.extend(range(b.jam_mulai.hour, b.jam_selesai.hour))
 
-    # Hapus duplikat dan urutkan
     jam_terpakai = sorted(set(jam_terpakai))
 
     return JsonResponse({'jam_terpakai': jam_terpakai})

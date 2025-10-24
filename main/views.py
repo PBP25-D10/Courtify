@@ -14,35 +14,16 @@ def landing_page_view(request):
         try:
             role = request.user.userprofile.role
             if role == 'penyedia':
-                # UBAH INI: Arahkan ke dashboard manajemen
                 return render(request, 'main/landing_page.html', {'iklan_list': iklan_list})
             elif role == 'user':
-                # UBAH INI: Arahkan ke dashboard booking
                 return render(request, 'main/landing_page.html', {'iklan_list': iklan_list})
             else:   
                 return redirect('/admin/')
         except AttributeError:
             # Handle jika user tidak punya UserProfile
-            return redirect('authentication:login') # Asumsi logout dan minta login lagi
-    
-    # Jika tidak login, tampilkan halaman landing publik
+            return redirect('authentication:login')
     return render(request, 'main/landing_page.html', {'iklan_list': iklan_list})
 
-# Views untuk Artikel
-def news_list_view(request):
-    return HttpResponse("Daftar semua artikel")
-
-def news_create_view(request):
-    return HttpResponse("Form tambah artikel (modal)")
-# ... view edit & delete artikel
-
-def news_edit_view(request, id):
-    pass # 'pass' 
-
-def news_delete_view(request, id):
-    pass # 'pass' 
-
-# Views untuk Iklan
 def iklan_list_view(request):
     iklans = Iklan.objects.filter(host=request.user).select_related('lapangan')
     search_query = request.GET.get('q', '')  
@@ -107,16 +88,4 @@ def iklan_delete_view(request, id):
     else:
         return JsonResponse({'success': False, 'error': 'Error'}, status=400)
 
-# Views untuk Wishlist
-def wishlist_list_view(request):
-    return HttpResponse("Daftar wishlist user")
 
-def wishlist_create_view(request):
-    return HttpResponse("Proses tambah wishlist")
-# ... view hapus wishlist
-
-def wishlist_edit_view(request, id):
-    pass # 'pass' 
-
-def wishlist_delete_view(request, id):
-    pass # 'pass' 

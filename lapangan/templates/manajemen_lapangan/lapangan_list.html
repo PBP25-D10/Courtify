@@ -134,7 +134,7 @@ function deleteLapangan(id) {
 document.getElementById('confirmDelete').addEventListener('click', function() {
     if (lapanganToDelete) {
         const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
-        fetch(`/manajemen/lapangan/hapus/${lapanganToDelete}/`, {
+        fetch(`/manajemen/lapangan/delete/${lapanganToDelete}/`, {
             method: 'POST',
             headers: {
                 "X-Requested-With": "XMLHttpRequest",
