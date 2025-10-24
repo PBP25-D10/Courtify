@@ -59,13 +59,3 @@ class LapanganForm(forms.ModelForm):
             'jam_buka': 'Jam Buka',
             'jam_tutup': 'Jam Tutup',
         }
-
-    def clean(self):
-        cleaned_data = super().clean()
-        jam_buka = cleaned_data.get('jam_buka')
-        jam_tutup = cleaned_data.get('jam_tutup')
-
-        if jam_buka and jam_tutup:
-            jam_buka_hour = int(jam_buka.split(':')[0])
-            jam_tutup_hour = int(jam_tutup.split(':')[0])
-        return cleaned_data
