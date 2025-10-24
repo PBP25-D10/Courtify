@@ -10,18 +10,15 @@ from .models import Wishlist
 
 @login_required
 def wishlist_list_view(request):
-    """Halaman wishlist user"""
     wishlists = Wishlist.objects.filter(user=request.user).select_related('lapangan')
     search_query = request.GET.get('q', '')
     kategori_filter = request.GET.get('kategori', '')
 
-    # Filter berdasarkan pencarian (nama lapangan)
     if search_query:
         wishlists = wishlists.filter(
             models.Q(lapangan__nama__icontains=search_query)
         )
 
-    # Filter berdasarkan kategori
     if kategori_filter:
         wishlists = wishlists.filter(
             models.Q(lapangan__kategori__iexact=kategori_filter)
@@ -36,18 +33,15 @@ def wishlist_list_view(request):
 
 @login_required
 def wishlist_add_view(request, lapangan_id):
-    """Toggle lapangan in wishlist (add if not exists, remove if exists)"""
     lapangan = get_object_or_404(Lapangan, id_lapangan=lapangan_id)
     wishlist_item = Wishlist.objects.filter(user=request.user, lapangan=lapangan).first()
 
     if wishlist_item:
-        # Remove from wishlist
         wishlist_item.delete()
         success = True
         message = f"{lapangan.nama} dihapus dari wishlist."
         added = False
     else:
-        # Add to wishlist
         Wishlist.objects.create(user=request.user, lapangan=lapangan)
         success = True
         message = f"{lapangan.nama} ditambahkan ke wishlist!"
@@ -66,7 +60,6 @@ def wishlist_add_view(request, lapangan_id):
 
 @login_required
 def wishlist_delete_view(request, wishlist_id):
-    """Menghapus wishlist"""
     wishlist = get_object_or_404(Wishlist, id=wishlist_id, user=request.user)
     wishlist.delete()
     messages.success(request, "Lapangan dihapus dari wishlist.")
@@ -78,8 +71,8 @@ def wishlist_delete_view(request, wishlist_id):
 
 @login_required
 def wishlist_check_view(request, lapangan_id):
-    """Check if lapangan is in user's wishlist"""
     lapangan = get_object_or_404(Lapangan, id_lapangan=lapangan_id)
     in_wishlist = Wishlist.objects.filter(user=request.user, lapangan=lapangan).exists()
 
     return JsonResponse({'in_wishlist': in_wishlist})
+
