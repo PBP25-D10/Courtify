@@ -26,6 +26,7 @@
         <div class="hidden md:flex items-center space-x-6">
           {% if user.is_authenticated and user.userprofile.role == "penyedia" %}
             <a href="{% url 'manajemen_lapangan:manajemen_dashboard' %}" class="hover:text-blue-400 transition">Dashboard</a>
+            <a href="{% url 'booking:booking_dashboard' %}" class="hover:text-blue-400 transition">Booking</a>
             <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-400 transition">Lapangan</a>
             <a href="{% url 'main:iklan_list' %}" class="hover:text-blue-400 transition">Iklan</a>
             <a href="{% url 'artikel:news_list' %}" class="hover:text-blue-400 transition">Artikel</a>
