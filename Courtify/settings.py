@@ -20,6 +20,12 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = 'None'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -31,12 +37,11 @@ SECRET_KEY = 'django-insecure-b3645r!1&(-$r$n6*uu0fjgk4g($8wvz4(cs47srd*n8*la*rg
 PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 DEBUG = not PRODUCTION
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "justin-timothy-courtify.pbp.cs.ui.ac.id"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "justin-timothy-courtify.pbp.cs.ui.ac.id", "10.0.2.2"]
 
 CSRF_TRUSTED_ORIGINS = [
     'https://justin-timothy-courtify.pbp.cs.ui.ac.id', 'http://justin-timothy-courtify.pbp.cs.ui.ac.id'
 ]
-
 
 # Application definition
 
@@ -53,6 +58,7 @@ INSTALLED_APPS = [
     'main',
     'artikel',
     'wishlist',
+    'corsheaders',
 ]
 
 LOGIN_URL = reverse_lazy('authentication:login')
@@ -66,6 +72,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'Courtify.urls'
