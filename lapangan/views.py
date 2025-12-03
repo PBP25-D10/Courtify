@@ -207,11 +207,11 @@ def flutter_api_list_lapangan(request):
     """API endpoint for Flutter to get list of lapangan for logged-in penyedia"""
     if request.method != 'GET':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
-    
+
     # Check authentication
     if not request.user.is_authenticated:
         return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
-    
+
     # Check if user is penyedia
     try:
         if request.user.userprofile.role != 'penyedia':
@@ -244,11 +244,11 @@ def flutter_api_create_lapangan(request):
     """API endpoint for Flutter to create new lapangan"""
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
-    
+
     # Check authentication
     if not request.user.is_authenticated:
         return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
-    
+
     # Check if user is penyedia
     try:
         if request.user.userprofile.role != 'penyedia':
@@ -294,11 +294,11 @@ def flutter_api_update_lapangan(request, id_lapangan):
     """API endpoint for Flutter to update lapangan"""
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
-    
+
     # Check authentication
     if not request.user.is_authenticated:
         return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
-    
+
     # Check if user is penyedia
     try:
         if request.user.userprofile.role != 'penyedia':
@@ -348,11 +348,11 @@ def flutter_api_delete_lapangan(request, id_lapangan):
     """API endpoint for Flutter to delete lapangan"""
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
-    
+
     # Check authentication
     if not request.user.is_authenticated:
         return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
-    
+
     # Check if user is penyedia
     try:
         if request.user.userprofile.role != 'penyedia':
