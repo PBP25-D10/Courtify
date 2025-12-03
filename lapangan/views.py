@@ -4,9 +4,11 @@ from authentication.decorators import penyedia_required
 from django.http import JsonResponse
 from django.core import serializers
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 from .models import Lapangan
 from .forms import LapanganForm
 from booking.models import Booking
+import json
 
 @penyedia_required
 def manajemen_dashboard_view(request):
@@ -195,4 +197,184 @@ def lapangan_delete_view(request, id_lapangan):
                 'status': 'error',
                 'message': f'Error: {str(e)}'
             }, status=500)
+
+# ============================================
+# FLUTTER API ENDPOINTS
+# ============================================
+
+@csrf_exempt
+def flutter_api_list_lapangan(request):
+    """API endpoint for Flutter to get list of lapangan for logged-in penyedia"""
+    if request.method != 'GET':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+    
+    # Check authentication
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
+    
+    # Check if user is penyedia
+    try:
+        if request.user.userprofile.role != 'penyedia':
+            return JsonResponse({'status': 'error', 'message': 'Only penyedia can access this'}, status=403)
+    except AttributeError:
+        return JsonResponse({'status': 'error', 'message': 'User profile not found'}, status=403)
+    
+    # Get lapangan for this penyedia
+    lapangan_list = Lapangan.objects.filter(owner=request.user)
+    
+    data = []
+    for lapangan in lapangan_list:
+        data.append({
+            'id': str(lapangan.id_lapangan),
+            'nama': lapangan.nama,
+            'deskripsi': lapangan.deskripsi,
+            'kategori': lapangan.kategori,
+            'lokasi': lapangan.lokasi,
+            'harga_per_jam': lapangan.harga_per_jam,
+            'foto_url': lapangan.foto.url if lapangan.foto else None,
+            'jam_buka': lapangan.jam_buka,
+            'jam_tutup': lapangan.jam_tutup,
+        })
+    
+    return JsonResponse({'status': 'success', 'lapangan_list': data})
+
+
+@csrf_exempt
+def flutter_api_create_lapangan(request):
+    """API endpoint for Flutter to create new lapangan"""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+    
+    # Check authentication
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
+    
+    # Check if user is penyedia
+    try:
+        if request.user.userprofile.role != 'penyedia':
+            return JsonResponse({'status': 'error', 'message': 'Only penyedia can create lapangan'}, status=403)
+    except AttributeError:
+        return JsonResponse({'status': 'error', 'message': 'User profile not found'}, status=403)
+    
+    try:
+        form = LapanganForm(request.POST, request.FILES)
+        if form.is_valid():
+            lapangan = form.save(commit=False)
+            lapangan.owner = request.user
+            lapangan.save()
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Lapangan berhasil ditambahkan',
+                'lapangan': {
+                    'id': str(lapangan.id_lapangan),
+                    'nama': lapangan.nama,
+                    'kategori': lapangan.kategori,
+                    'lokasi': lapangan.lokasi,
+                    'foto_url': lapangan.foto.url if lapangan.foto else None
+                }
+            })
+        else:
+            error_messages = []
+            for field, errors in form.errors.items():
+                for error in errors:
+                    error_messages.append(f"{field}: {error}")
+            return JsonResponse({
+                'status': 'error',
+                'message': '; '.join(error_messages)
+            }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Terjadi kesalahan: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+def flutter_api_update_lapangan(request, id_lapangan):
+    """API endpoint for Flutter to update lapangan"""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+    
+    # Check authentication
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
+    
+    # Check if user is penyedia
+    try:
+        if request.user.userprofile.role != 'penyedia':
+            return JsonResponse({'status': 'error', 'message': 'Only penyedia can update lapangan'}, status=403)
+    except AttributeError:
+        return JsonResponse({'status': 'error', 'message': 'User profile not found'}, status=403)
+    
+    try:
+        lapangan = get_object_or_404(Lapangan, pk=id_lapangan)
+        
+        # Check ownership
+        if lapangan.owner != request.user:
+            return JsonResponse({'status': 'error', 'message': 'You do not own this lapangan'}, status=403)
+        
+        form = LapanganForm(request.POST, request.FILES, instance=lapangan)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Lapangan berhasil diperbarui',
+                'lapangan': {
+                    'id': str(lapangan.id_lapangan),
+                    'nama': lapangan.nama,
+                    'kategori': lapangan.kategori,
+                    'lokasi': lapangan.lokasi,
+                    'foto_url': lapangan.foto.url if lapangan.foto else None
+                }
+            })
+        else:
+            error_messages = []
+            for field, errors in form.errors.items():
+                for error in errors:
+                    error_messages.append(f"{field}: {error}")
+            return JsonResponse({
+                'status': 'error',
+                'message': '; '.join(error_messages)
+            }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+def flutter_api_delete_lapangan(request, id_lapangan):
+    """API endpoint for Flutter to delete lapangan"""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+    
+    # Check authentication
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
+    
+    # Check if user is penyedia
+    try:
+        if request.user.userprofile.role != 'penyedia':
+            return JsonResponse({'status': 'error', 'message': 'Only penyedia can delete lapangan'}, status=403)
+    except AttributeError:
+        return JsonResponse({'status': 'error', 'message': 'User profile not found'}, status=403)
+    
+    try:
+        lapangan = get_object_or_404(Lapangan, pk=id_lapangan)
+        
+        # Check ownership
+        if lapangan.owner != request.user:
+            return JsonResponse({'status': 'error', 'message': 'You do not own this lapangan'}, status=403)
+        
+        lapangan.delete()
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Lapangan berhasil dihapus'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error: {str(e)}'
+        }, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
