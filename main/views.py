@@ -8,8 +8,6 @@ from django.contrib.auth.decorators import login_required
 from main.forms import IklanForm
 from main.models import Iklan
 
-
-
 def proxy_image(request):
     image_url = request.GET.get('url')
     if not image_url:
@@ -108,4 +106,19 @@ def iklan_delete_view(request, id):
     else:
         return JsonResponse({'success': False, 'error': 'Error'}, status=400)
 
+def show_json_iklan(request):
+    data_iklan = Iklan.objects.select_related('lapangan').all()
+    list_iklan = []
+    for iklan in data_iklan:
+        image_path = iklan.get_banner_url()
 
+        item = {
+            'pk': iklan.pk,      
+            'judul':iklan.judul,        
+            'deskripsi': iklan.deskripsi,
+            'banner': image_path if image_path else None,
+            'tanggal': iklan.date,
+        }
+        list_iklan.append(item)
+
+    return JsonResponse(list_iklan, safe=False)
