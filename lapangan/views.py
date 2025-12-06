@@ -80,7 +80,7 @@ def lapangan_list_view(request):
                 'kategori': lapangan.kategori,
                 'lokasi': lapangan.lokasi,
                 'harga_per_jam': lapangan.harga_per_jam,
-                'foto_url': lapangan.foto.url if lapangan.foto else None,
+                'foto': lapangan.foto.url if lapangan.foto else None,
                 'jam_buka': lapangan.jam_buka,
                 'jam_tutup': lapangan.jam_tutup,
             })
@@ -98,14 +98,14 @@ def lapangan_create_view(request):
                     lapangan.owner = request.user
                     lapangan.save()
                     return JsonResponse({
-                        "status": "success", 
-                        "message": "Lapangan berhasil ditambahkan", 
+                        "status": "success",
+                        "message": "Lapangan berhasil ditambahkan",
                         "lapangan": {
-                            "id": str(lapangan.id_lapangan), 
-                            "nama": lapangan.nama, 
-                            "kategori": lapangan.kategori, 
-                            "lokasi": lapangan.lokasi, 
-                            "foto_url": lapangan.foto.url if lapangan.foto else None
+                            "id": str(lapangan.id_lapangan),
+                            "nama": lapangan.nama,
+                            "kategori": lapangan.kategori,
+                            "lokasi": lapangan.lokasi,
+                            "foto": lapangan.foto.url if lapangan.foto else None
                         }
                     })
                 else:
@@ -143,14 +143,14 @@ def lapangan_edit_view(request, id_lapangan):
                 if form.is_valid():
                     form.save()
                     return JsonResponse({
-                        "status": "success", 
-                        "message": "Lapangan berhasil diperbarui", 
+                        "status": "success",
+                        "message": "Lapangan berhasil diperbarui",
                         "lapangan": {
-                            "id": str(lapangan.id_lapangan), 
-                            "nama": lapangan.nama, 
-                            "kategori": lapangan.kategori, 
-                            "lokasi": lapangan.lokasi, 
-                            "foto_url": lapangan.foto.url if lapangan.foto else None
+                            "id": str(lapangan.id_lapangan),
+                            "nama": lapangan.nama,
+                            "kategori": lapangan.kategori,
+                            "lokasi": lapangan.lokasi,
+                            "foto": lapangan.foto.url if lapangan.foto else None
                         }
                     })
                 else:
@@ -231,7 +231,7 @@ def flutter_api_list_lapangan(request):
             'kategori': lapangan.kategori,
             'lokasi': lapangan.lokasi,
             'harga_per_jam': lapangan.harga_per_jam,
-            'foto_url': lapangan.foto.url if lapangan.foto else None,
+            'foto': lapangan.foto.url if lapangan.foto else None,
             'jam_buka': lapangan.jam_buka,
             'jam_tutup': lapangan.jam_tutup,
         })
@@ -270,7 +270,7 @@ def flutter_api_create_lapangan(request):
                     'nama': lapangan.nama,
                     'kategori': lapangan.kategori,
                     'lokasi': lapangan.lokasi,
-                    'foto_url': lapangan.foto.url if lapangan.foto else None
+                    'foto': lapangan.foto.url if lapangan.foto else None
                 }
             })
         else:
@@ -324,7 +324,7 @@ def flutter_api_update_lapangan(request, id_lapangan):
                     'nama': lapangan.nama,
                     'kategori': lapangan.kategori,
                     'lokasi': lapangan.lokasi,
-                    'foto_url': lapangan.foto.url if lapangan.foto else None
+                    'foto': lapangan.foto.url if lapangan.foto else None
                 }
             })
         else:
