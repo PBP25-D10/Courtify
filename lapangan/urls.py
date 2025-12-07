@@ -15,4 +15,5 @@ urlpatterns = [
     path('api/update/<uuid:id_lapangan>/', views.flutter_api_update_lapangan, name='api_update_lapangan'),
     path('api/delete/<uuid:id_lapangan>/', views.flutter_api_delete_lapangan, name='api_delete_lapangan'),
     path('lapangan/delete/<uuid:id_lapangan>/', views.lapangan_delete_view, name='lapangan_delete'),
+    path('api/upload-foto/<uuid:id_lapangan>/', views.flutter_api_upload_foto_lapangan, name='flutter_upload_foto_lapangan'),
 ]
