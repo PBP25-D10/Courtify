@@ -408,3 +408,30 @@ def flutter_api_delete_lapangan(request, id_lapangan):
             'message': f'Error: {str(e)}'
         }, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
+
+
+@csrf_exempt
+def flutter_api_upload_foto_lapangan(request, id_lapangan):
+    if request.method != "POST":
+        return JsonResponse({"status":"error","message":"Method not allowed"}, status=405)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({"status":"error","message":"Not authenticated"}, status=401)
+
+    lapangan = get_object_or_404(Lapangan, pk=id_lapangan)
+
+    # ownership check
+    if lapangan.owner != request.user:
+        return JsonResponse({"status":"error","message":"You do not own this lapangan"}, status=403)
+
+    if "foto" not in request.FILES:
+        return JsonResponse({"status":"error","message":"Field 'foto' wajib dikirim sebagai file"}, status=400)
+
+    lapangan.foto = request.FILES["foto"]
+    lapangan.save()
+
+    return JsonResponse({
+        "status":"success",
+        "message":"Foto berhasil diupload",
+        "foto": lapangan.foto.url if lapangan.foto else None
+    })
