@@ -170,7 +170,8 @@ def flutter_login_api(request):
                     "status": True,
                     "message": "Login berhasil!",
                     "username": user.username,
-                    "role": role
+                    "role": role,
+                    "id": user.id  # <--- TAMBAHKAN BARIS INI
                 }, status=200)
             else:
                 return JsonResponse({"status": False, "message": "Akun dinonaktifkan."}, status=401)
