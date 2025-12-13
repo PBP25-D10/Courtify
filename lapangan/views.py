@@ -409,6 +409,42 @@ def flutter_api_delete_lapangan(request, id_lapangan):
         }, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
 
+from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
+
+@csrf_exempt
+def flutter_api_get_penyedia_lapangan(request, penyedia_id):
+    if request.method != 'GET':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+    # 1. Ambil User berdasarkan ID yang dikirim Flutter
+    User = get_user_model()
+    # Menggunakan 'pk' agar fleksibel (bisa id integer atau uuid user)
+    penyedia = get_object_or_404(User, pk=penyedia_id) 
+
+    # 2. Filter lapangan milik user tersebut
+    lapangan_list = Lapangan.objects.filter(owner=penyedia)
+    
+    # 3. Format data agar SAMA PERSIS dengan model Lapangan.fromJson di Flutter
+    data = []
+    for lapangan in lapangan_list:
+        data.append({
+            'id_lapangan': str(lapangan.id_lapangan),
+            'nama': lapangan.nama,
+            'deskripsi': lapangan.deskripsi,
+            'kategori': lapangan.kategori,
+            'lokasi': lapangan.lokasi,
+            'harga_per_jam': lapangan.harga_per_jam,
+            # Flutter code Anda menambahkan base url sendiri, jadi kirim path-nya saja
+            # contoh: "/media/img/foto.jpg"
+            'foto': lapangan.foto.url if lapangan.foto else None, 
+            'jam_buka': lapangan.jam_buka.strftime("%H:%M:%S"), # Format waktu string
+            'jam_tutup': lapangan.jam_tutup.strftime("%H:%M:%S"),
+        })
+    
+    # PENTING: safe=False agar bisa me-return List JSON (Array) langsung
+    # Ini cocok dengan kode Flutter: final List data = jsonDecode(response.body);
+    return JsonResponse(data, safe=False)
 
 @csrf_exempt
 def flutter_api_upload_foto_lapangan(request, id_lapangan):
