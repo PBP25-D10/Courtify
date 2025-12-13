@@ -110,8 +110,9 @@ def iklan_delete_view(request, id):
     else:
         return JsonResponse({'success': False, 'error': 'Error'}, status=400)
 
+@login_required
 def show_json_iklan(request):
-    data_iklan = Iklan.objects.select_related('lapangan').all()
+    data_iklan = Iklan.objects.filter(host=request.user).select_related('lapangan')
     list_iklan = []
     for iklan in data_iklan:
         image_path = iklan.get_banner_url()
