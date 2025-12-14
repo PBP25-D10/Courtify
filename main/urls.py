@@ -1,7 +1,7 @@
 # main/urls.py
 from django.urls import path
 from . import views
-from .views import proxy_image, show_json_iklan
+from .views import proxy_image, show_json_iklan, show_iklan_landing_page
 
 app_name = 'main'
 
@@ -14,4 +14,5 @@ urlpatterns = [
     path('iklan/hapus/<int:id>/', views.iklan_delete_view, name='iklan_delete'),
     path('proxy-image/', proxy_image, name='proxy_image'),
     path('iklan/show-json/', show_json_iklan, name='show_json_iklan'),
+    path('iklan/show-top10/', show_iklan_landing_page, name='show_iklan_landing_page')
 ]
