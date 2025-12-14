@@ -113,16 +113,37 @@ def iklan_delete_view(request, id):
 @login_required
 def show_json_iklan(request):
     data_iklan = Iklan.objects.filter(host=request.user).select_related('lapangan')
+    
     list_iklan = []
     for iklan in data_iklan:
         image_path = iklan.get_banner_url()
 
         item = {
             'pk': iklan.pk,      
-            'judul':iklan.judul,        
+            'judul': iklan.judul,        
             'deskripsi': iklan.deskripsi,
             'banner': image_path if image_path else None,
             'tanggal': iklan.date,
+            'lapangan': iklan.lapangan.pk, 
+        }
+        list_iklan.append(item)
+
+    return JsonResponse(list_iklan, safe=False)
+
+def show_iklan_landing_page(request):
+    data_iklan = Iklan.objects.select_related('lapangan').all()[:10]
+    
+    list_iklan = []
+    for iklan in data_iklan:
+        image_path = iklan.get_banner_url()
+        
+        item = {
+            'pk': iklan.pk,
+            'judul': iklan.judul,
+            'deskripsi': iklan.deskripsi,
+            'banner': image_path if image_path else None,
+            'tanggal': iklan.date,
+            'lapangan': iklan.lapangan.pk, 
         }
         list_iklan.append(item)
 
