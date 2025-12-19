@@ -1,13 +1,39 @@
+import json
+import base64
 import requests
 from datetime import timedelta
 from django.utils import timezone
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.base import ContentFile  # Tambahan untuk convert Base64 ke File
 from main.forms import IklanForm
 from main.models import Iklan
-from django.views.decorators.csrf import csrf_exempt
+
+# --- HELPER FUNCTION (Tambahan untuk API) ---
+def decode_base64_image(base64_string, user_id, prefix="img"):
+    """
+    Menerima string base64, mengembalikan ContentFile django.
+    Format string diharapkan: 'data:image/png;base64,iVBORw0KGgo...'
+    """
+    if not base64_string or not isinstance(base64_string, str):
+        return None
+    
+    if "base64," in base64_string:
+        try:
+            format, imgstr = base64_string.split(';base64,') 
+            ext = format.split('/')[-1] # ambil ekstensi (jpg/png)
+            file_name = f"{prefix}_{user_id}_{base64_string[-10:]}.{ext}" # nama file unik
+            return ContentFile(base64.b64decode(imgstr), name=file_name)
+        except Exception as e:
+            print(f"Error decoding base64: {e}")
+            return None
+    return None
+
+# ============================================
+# STANDARD VIEWS (Tidak Diubah)
+# ============================================
 
 def proxy_image(request):
     image_url = request.GET.get('url')
@@ -110,24 +136,24 @@ def iklan_delete_view(request, id):
     else:
         return JsonResponse({'success': False, 'error': 'Error'}, status=400)
 
+# ======================
+# FLUTTER API ENDPOINTS 
+# ======================
+
 @csrf_exempt
 def flutter_api_list_iklan(request):
-    """API endpoint for Flutter to get list of Iklan for logged-in penyedia"""
     if request.method != 'GET':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
-    # Check authentication
     if not request.user.is_authenticated:
         return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
 
-    # Check if user is penyedia
     try:
         if request.user.userprofile.role != 'penyedia':
             return JsonResponse({'status': 'error', 'message': 'Only penyedia can access this'}, status=403)
     except AttributeError:
         return JsonResponse({'status': 'error', 'message': 'User profile not found'}, status=403)
     
-    # Get iklan for this penyedia
     iklan_list = Iklan.objects.filter(host=request.user).select_related('lapangan')
     
     data = []
@@ -137,9 +163,9 @@ def flutter_api_list_iklan(request):
             'judul': iklan.judul,
             'deskripsi': iklan.deskripsi,
             'banner': iklan.banner.url if iklan.banner else None,
-            'tanggal': iklan.date.strftime("%Y-%m-%d"), # Format tanggal string
+            'tanggal': iklan.date.strftime("%Y-%m-%d"),
             'lapangan_id': iklan.lapangan.pk,
-            'lapangan_nama': iklan.lapangan.nama, # Tambahan info biar mudah di flutter
+            'lapangan_nama': iklan.lapangan.nama,
         })
     
     return JsonResponse({'status': 'success', 'iklan_list': data})
@@ -147,7 +173,6 @@ def flutter_api_list_iklan(request):
 
 @csrf_exempt
 def flutter_api_landing_page_iklan(request):
-    """API endpoint for public landing page ads"""
     if request.method != 'GET':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
         
@@ -165,13 +190,11 @@ def flutter_api_landing_page_iklan(request):
             'lapangan_nama': iklan.lapangan.nama,
         })
 
-    # Menggunakan format wrapper agar konsisten dengan API lainnya
     return JsonResponse({'status': 'success', 'iklan_list': data})
 
 
 @csrf_exempt
 def flutter_api_create_iklan(request):
-    """API endpoint for Flutter to create new Iklan"""
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
@@ -185,37 +208,40 @@ def flutter_api_create_iklan(request):
         return JsonResponse({'status': 'error', 'message': 'User profile not found'}, status=403)
 
     try:
-        data = request.POST
+        data = {}
+        files = {}
 
-        # ✅ Handle JSON Payload (jika Flutter mengirim pure JSON tanpa gambar)
         if request.content_type and 'application/json' in request.content_type:
             try:
                 payload = json.loads(request.body.decode('utf-8') or '{}')
+                
+                for k, v in payload.items():
+                    if k != 'banner': 
+                        data[k] = v
+                
+                if 'banner' in payload and payload['banner']:
+                    image_file = decode_base64_image(payload['banner'], request.user.id, "iklan")
+                    if image_file:
+                        files['banner'] = image_file
+
             except json.JSONDecodeError:
                 return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+        
+        else:
+            data = request.POST.copy()
+            files = request.FILES.copy()
 
-            # Jika "banner" berupa string path (bukan file), hapus agar tidak error di Form
-            if isinstance(payload, dict) and isinstance(payload.get('banner'), str):
-                payload.pop('banner', None)
-
-            qd = QueryDict('', mutable=True)
-            if isinstance(payload, dict):
-                for k, v in payload.items():
-                    if v is None: continue
-                    qd[k] = str(v)
-            data = qd
-
-        # Menggunakan IklanForm untuk validasi
-        form = IklanForm(data, request.FILES)
+        try:
+            form = IklanForm(data, files, user=request.user)
+        except TypeError:
+            form = IklanForm(data, files)
         
         if form.is_valid():
             iklan = form.save(commit=False)
-            iklan.host = request.user # Set Host otomatis dari user login
+            iklan.host = request.user
             
-            # Validasi kepemilikan lapangan (Penyedia tidak boleh buat iklan untuk lapangan orang lain)
-            # Asumsi field form bernama 'lapangan'
             if iklan.lapangan.owner != request.user:
-                 return JsonResponse({'status': 'error', 'message': 'Anda tidak bisa membuat iklan untuk lapangan yang bukan milik Anda'}, status=403)
+                 return JsonResponse({'status': 'error', 'message': 'Anda tidak bisa membuat iklan untuk lapangan orang lain'}, status=403)
 
             iklan.save()
             
@@ -225,13 +251,10 @@ def flutter_api_create_iklan(request):
                 'iklan': {
                     'pk': iklan.pk,
                     'judul': iklan.judul,
-                    'deskripsi': iklan.deskripsi,
-                    'banner': iklan.banner.url if iklan.banner else None,
                     'lapangan': iklan.lapangan.nama
                 }
             })
         else:
-             # Extract error messages
             error_messages = []
             for field, errors in form.errors.items():
                 for error in errors:
@@ -239,12 +262,12 @@ def flutter_api_create_iklan(request):
             return JsonResponse({'status': 'error', 'message': '; '.join(error_messages)}, status=400)
 
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': f'Terjadi kesalahan: {str(e)}'}, status=500)
+        print(f"SERVER ERROR (Create): {str(e)}") 
+        return JsonResponse({'status': 'error', 'message': f'Terjadi kesalahan server: {str(e)}'}, status=500)
 
 
 @csrf_exempt
 def flutter_api_update_iklan(request, id_iklan):
-    """API endpoint for Flutter to update Iklan"""
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
@@ -252,42 +275,43 @@ def flutter_api_update_iklan(request, id_iklan):
         return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
 
     try:
-        if request.user.userprofile.role != 'penyedia':
-            return JsonResponse({'status': 'error', 'message': 'Only penyedia can update iklan'}, status=403)
-    except AttributeError:
-        return JsonResponse({'status': 'error', 'message': 'User profile not found'}, status=403)
-
-    try:
         iklan = get_object_or_404(Iklan, pk=id_iklan)
 
-        # Check ownership (Pastikan yang edit adalah pembuat iklan)
         if iklan.host != request.user:
             return JsonResponse({'status': 'error', 'message': 'You do not own this iklan'}, status=403)
 
-        data = request.POST
+        data = {}
+        files = {}
 
-        # ✅ Handle JSON Payload
         if request.content_type and 'application/json' in request.content_type:
             try:
                 payload = json.loads(request.body.decode('utf-8') or '{}')
+                
+                for k, v in payload.items():
+                    if k != 'banner':
+                        data[k] = v
+                
+                if 'banner' in payload and payload['banner']:
+                    if "base64," in payload['banner']:
+                        image_file = decode_base64_image(payload['banner'], request.user.id, "iklan_update")
+                        if image_file:
+                            files['banner'] = image_file
+            
             except json.JSONDecodeError:
                 return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+        
+        else:
+            data = request.POST.copy()
+            files = request.FILES.copy()
 
-            if isinstance(payload, dict) and isinstance(payload.get('banner'), str):
-                payload.pop('banner', None)
-
-            qd = QueryDict('', mutable=True)
-            if isinstance(payload, dict):
-                for k, v in payload.items():
-                    if v is None: continue
-                    qd[k] = str(v)
-            data = qd
-
-        form = IklanForm(data, request.FILES, instance=iklan)
+        try:
+            form = IklanForm(data, files, instance=iklan, user=request.user)
+        except TypeError:
+            form = IklanForm(data, files, instance=iklan)
+        
         if form.is_valid():
             updated_iklan = form.save(commit=False)
             
-            # Validasi ulang kepemilikan lapangan jika lapangan diubah
             if updated_iklan.lapangan.owner != request.user:
                  return JsonResponse({'status': 'error', 'message': 'Lapangan yang dipilih bukan milik Anda'}, status=403)
             
@@ -308,12 +332,12 @@ def flutter_api_update_iklan(request, id_iklan):
             return JsonResponse({'status': 'error', 'message': '; '.join(error_messages)}, status=400)
 
     except Exception as e:
+        print(f"SERVER ERROR (Update): {str(e)}")
         return JsonResponse({'status': 'error', 'message': f'Error: {str(e)}'}, status=500)
 
 
 @csrf_exempt
 def flutter_api_delete_iklan(request, id_iklan):
-    """API endpoint for Flutter to delete Iklan"""
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
@@ -321,15 +345,8 @@ def flutter_api_delete_iklan(request, id_iklan):
         return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
 
     try:
-        if request.user.userprofile.role != 'penyedia':
-            return JsonResponse({'status': 'error', 'message': 'Only penyedia can delete iklan'}, status=403)
-    except AttributeError:
-        return JsonResponse({'status': 'error', 'message': 'User profile not found'}, status=403)
-    
-    try:
         iklan = get_object_or_404(Iklan, pk=id_iklan)
         
-        # Check ownership
         if iklan.host != request.user:
             return JsonResponse({'status': 'error', 'message': 'You do not own this iklan'}, status=403)
         
