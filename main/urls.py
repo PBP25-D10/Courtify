@@ -17,6 +17,6 @@ urlpatterns = [
     path('api/iklan/list/', flutter_api_list_iklan, name='flutter_api_list_iklan'),
     path('api/iklan/landing/', flutter_api_landing_page_iklan, name='flutter_api_landing_page_iklan'),
     path('api/iklan/create/', flutter_api_create_iklan, name='flutter_api_create_iklan'),
-    path('api/iklan/update/<int:id_iklan>/', flutter_api_update_iklan, name='flutter_api_update_iklan'),
-    path('api/iklan/delete/<int:id_iklan>/', flutter_api_delete_iklan, name='flutter_api_delete_iklan'),
+    path('api/iklan/edit/<int:id>/', flutter_api_update_iklan, name='flutter_api_update_iklan'),
+    path('api/iklan/delete/<int:id>/', flutter_api_delete_iklan, name='flutter_api_delete_iklan'),
 ]
