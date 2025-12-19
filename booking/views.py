@@ -241,7 +241,7 @@ def confirm_booking_view(request, pk):
     else:
         return JsonResponse({'success': False, 'message': 'Booking sudah diproses.'}, status=400)
 
-
+@login_required
 def get_booked_hours(request, lapangan_id, tanggal):
     bookings = Booking.objects.filter(
         lapangan_id=lapangan_id,
@@ -257,7 +257,7 @@ def get_booked_hours(request, lapangan_id, tanggal):
 
     return JsonResponse({'jam_terpakai': jam_terpakai})
 
-
+@login_required
 def api_booking_dashboard(request):
     bookings = Booking.objects.filter(user=request.user).order_by('-created_at')[:5]
     lapangan_list = Lapangan.objects.all().order_by('nama')[:5]
@@ -268,7 +268,7 @@ def api_booking_dashboard(request):
         'lapangan_list': [serialize_lapangan(l) for l in lapangan_list],
     })
 
-
+@login_required
 def api_booking_user_list(request):
     bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
 
@@ -277,7 +277,7 @@ def api_booking_user_list(request):
         'bookings': [serialize_booking(b) for b in bookings],
     })
 
-
+@login_required
 def api_create_booking(request, id_lapangan):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Method not allowed'}, status=405)
@@ -306,7 +306,7 @@ def api_create_booking(request, id_lapangan):
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=400)
 
-
+@login_required
 def api_cancel_booking(request, booking_id):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Method not allowed'}, status=405)
