@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="max-w-6xl mx-auto py-10">
+  <h1 class="text-3xl font-bold mb-8 text-center">🏟️ Berita & Artikel Olahraga</h1>
+
+  <!-- Modal Toggle Button -->
+  <div class="mb-6 text-center">
+    <button id="openModalBtn" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300">
+      ➕ Tambah Berita Baru
+    </button>
+  </div>
+
+  <!-- Permission Warning -->
+  <div id="permissionWarning" class="mb-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-lg hidden">
+    <strong>Peringatan:</strong> Hanya penyedia yang dapat mengelola berita.
+  </div>
+
+
+  <div id="newsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white shadow-lg rounded-xl p-8 w-full max-w-lg">
+      <h3 id="modalTitle" class="text-3xl font-bold text-center mb-6">Tambah Berita Baru</h3>
+      <form id="newsForm" enctype="multipart/form-data" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" id="newsId" name="news_id">
+        {{ form.as_p }}
+        <div class="flex items-center justify-between pt-4">
+          <button type="button" id="closeModalBtn" class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300">
+            Batal
+          </button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
+            Simpan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Hapus -->
+  <div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/3 shadow-lg rounded-md bg-white">
+      <div class="mt-3">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Konfirmasi Hapus</h3>
+        <p id="deleteMessage" class="text-gray-700 mb-4">Apakah Anda yakin ingin menghapus berita ini?</p>
+        <div class="flex items-center justify-between">
+          <button type="button" id="cancelDeleteBtn" class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300">
+            Batal
+          </button>
+          <button type="button" id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300">
+            Hapus
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    {% for news in news_list %}
+    <div class="block bg-white rounded-xl shadow hover:shadow-xl transition relative">
+      <img src="{{ news.thumbnail.url }}" alt="{{ news.title }}" class="w-full h-48 object-cover rounded-t-xl">
+      <div class="p-4">
+        <h2 class="text-lg font-semibold">{{ news.title }}</h2>
+        <p class="text-gray-500 text-sm mt-1">{{ news.kategori }} • {{ news.created_at|date:"d M Y" }}</p>
+        <p class="text-gray-600 mt-2 line-clamp-3">{{ news.content|truncatechars:120 }}</p>
+        <div class="mt-3 flex justify-between items-center">
+          <a href="{% url 'artikel:news_detail' news.id_berita %}" class="text-blue-600 font-medium">Baca Selengkapnya →</a>
+          <div class="flex space-x-2">
+            <button onclick="openEditModal({{ news.id_berita }}, '{{ news.title|escapejs }}', '{{ news.content|escapejs }}', '{{ news.kategori }}')" class="text-yellow-600 hover:text-yellow-800 font-medium text-sm">✏️ Edit</button>
+            <button onclick="openDeleteModal({{ news.id_berita }}, '{{ news.title|escapejs }}')" class="text-red-600 hover:text-red-800 font-medium text-sm">🗑️ Hapus</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+      <p class="text-center col-span-3 text-gray-500">Belum ada artikel yang tersedia.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  // URLs
+  const urlCreate = "{% url 'artikel:news_create' %}";
+  const urlUpdate = "{% url 'artikel:news_update' 0 %}";
+  const urlDelete = "{% url 'artikel:news_delete' 0 %}";
+
+  // Modal functionality
+  const modal = document.getElementById('newsModal');
+  const deleteModal = document.getElementById('deleteModal');
+  const openModalBtn = document.getElementById('openModalBtn');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+  const form = document.getElementById('newsForm');
+  const modalTitle = document.getElementById('modalTitle');
+  const newsIdInput = document.getElementById('newsId');
+  const deleteMessage = document.getElementById('deleteMessage');
+
+  let currentNewsId = null;
+
+  // Open add modal
+  openModalBtn.addEventListener('click', () => {
+    modalTitle.textContent = 'Tambah Berita Baru';
+    form.reset();
+    newsIdInput.value = '';
+    modal.classList.remove('hidden');
+  });
+
+  // Close modals
+  closeModalBtn.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+
+  cancelDeleteBtn.addEventListener('click', () => {
+    deleteModal.classList.add('hidden');
+  });
+
+  // Close modal when clicking outside
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.add('hidden');
+    }
+  });
+
+  // Close modal when pressing Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      modal.classList.add('hidden');
+      deleteModal.classList.add('hidden');
+    }
+  });
+
+  deleteModal.addEventListener('click', (e) => {
+    if (e.target === deleteModal) {
+      deleteModal.classList.add('hidden');
+    }
+  });
+
+  // Open edit modal
+  function openEditModal(id, title, content, kategori) {
+    modalTitle.textContent = 'Edit Berita';
+    document.getElementById('id_title').value = title;
+    document.getElementById('id_content').value = content;
+    document.getElementById('id_kategori').value = kategori;
+    document.getElementById('id_thumbnail').value = '';
+    newsIdInput.value = id;
+    modal.classList.remove('hidden');
+  }
+
+  // Open delete modal
+  function openDeleteModal(id, title) {
+    currentNewsId = id;
+    deleteMessage.textContent = `Apakah Anda yakin ingin menghapus berita "${title}"?`;
+    deleteModal.classList.remove('hidden');
+  }
+
+  // Handle form submission
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const isEdit = newsIdInput.value !== '';
+
+    const url = isEdit ? urlUpdate.replace('0', newsIdInput.value) : urlCreate;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        modal.classList.add('hidden');
+        location.reload(); // Reload to show updated news
+      } else {
+        if (data.errors && data.errors.permission) {
+          document.getElementById('permissionWarning').classList.remove('hidden');
+          document.getElementById('permissionWarning').textContent = data.errors.permission;
+        } else {
+          alert('Error: ' + JSON.stringify(data.errors));
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Terjadi kesalahan saat menyimpan berita.');
+    }
+  });
+
+  // Handle delete confirmation
+  confirmDeleteBtn.addEventListener('click', async () => {
+    if (!currentNewsId) return;
+
+    try {
+      const response = await fetch(urlDelete.replace('0', currentNewsId), {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        deleteModal.classList.add('hidden');
+        location.reload(); // Reload to show updated list
+      } else {
+        if (data.errors && data.errors.permission) {
+          document.getElementById('permissionWarning').classList.remove('hidden');
+          document.getElementById('permissionWarning').textContent = data.errors.permission;
+        } else {
+          alert('Error: Gagal menghapus berita.');
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Terjadi kesalahan saat menghapus berita.');
+    }
+  });
+</script>
+{% endblock %}

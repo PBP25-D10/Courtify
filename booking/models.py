@@ -13,16 +13,16 @@ class Booking(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='bookings',
-        null=True,   # tambahkan ini
-        blank=True   # tambahkan ini
+        null=True,  
+        blank=True   
     )
 
     lapangan = models.ForeignKey(
         Lapangan,
         on_delete=models.CASCADE,
         related_name='bookings',
-        null=True,   # tambahkan ini
-        blank=True   # tambahkan ini
+        null=True,  
+        blank=True  
     )
 
     tanggal = models.DateField()

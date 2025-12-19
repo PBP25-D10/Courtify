@@ -1,6 +1,6 @@
 # booking/urls.py
 
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 app_name = 'booking'
@@ -8,7 +8,15 @@ app_name = 'booking'
 urlpatterns = [
     path('dashboard/', views.booking_dashboard_view, name='booking_dashboard'),
     path('list/', views.booking_list_view, name='booking_list'),
-    path('create/', views.booking_create_view, name='booking_create'),
+    path('create/<uuid:id_lapangan>/', views.booking_create_view, name='booking_create'),
     path('update/<int:pk>/', views.update_booking_view, name='update_booking'),
     path('cancel/<int:pk>/', views.cancel_booking_view, name='cancel_booking'),
+    path('confirm/<int:pk>/', views.confirm_booking_view, name='confirm_booking'),
+    path('my-bookings/', views.booking_user_list_view, name='booking_user_list'),
+    path('api/booked/<uuid:lapangan_id>/<str:tanggal>/', views.get_booked_hours, name='get_booked_hours'),
+    path('api/dashboard/', views.api_booking_dashboard),
+    path('api/my-bookings/', views.api_booking_user_list),
+    path('api/create/<uuid:id_lapangan>/', views.api_create_booking),
+    path('api/cancel/<int:booking_id>/', views.api_cancel_booking),
+    path('api/booked/<uuid:lapangan_id>/<str:tanggal>/', views.get_booked_hours),
 ]

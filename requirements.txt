@@ -3,5 +3,7 @@ gunicorn
 whitenoise
 psycopg2-binary
 requests
+Pillow
 urllib3
 python-dotenv
+django-cors-headers

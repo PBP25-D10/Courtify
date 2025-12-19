@@ -21,5 +21,10 @@ urlpatterns = [
     path('api/login/', views.login_api, name='api_login'),
     path('api/logout/', views.logout_api, name='api_logout'),
 
+    # URL API Flutter
+    path('api/flutter/login/', views.flutter_login_api, name='flutter_login_api'),
+    path('api/flutter/register/', views.flutter_register_api, name='flutter_register_api'),
+    path('api/flutter/logout/', views.flutter_logout_api, name='flutter_logout_api'),
+
 
 ]

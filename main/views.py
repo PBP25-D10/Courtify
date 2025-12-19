@@ -1,66 +1,150 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+import requests
+from datetime import timedelta
+from django.utils import timezone
+from django.shortcuts import get_object_or_404, render
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from main.forms import IklanForm
+from main.models import Iklan
+from django.views.decorators.csrf import csrf_exempt
 
-from django.shortcuts import render, redirect
+def proxy_image(request):
+    image_url = request.GET.get('url')
+    if not image_url:
+        return HttpResponse('No URL provided', status=400)
+    
+    try:
+        # Fetch image from external source
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Return the image with proper content type
+        return HttpResponse(
+            response.content,
+            content_type=response.headers.get('Content-Type', 'image/jpeg')
+        )
+    except requests.RequestException as e:
+        return HttpResponse(f'Error fetching image: {str(e)}', status=500)
 
 def landing_page_view(request):
+    iklan_list = Iklan.objects.all()[:10]
     if request.user.is_authenticated:
         try:
             role = request.user.userprofile.role
             if role == 'penyedia':
-                # UBAH INI: Arahkan ke dashboard manajemen
-                return redirect('manajemen_lapangan:manajemen_dashboard')
+                return render(request, 'main/landing_page.html', {'iklan_list': iklan_list})
             elif role == 'user':
-                # UBAH INI: Arahkan ke dashboard booking
-                return redirect('booking:booking_dashboard')
-            else:
+                return render(request, 'main/landing_page.html', {'iklan_list': iklan_list})
+            else:   
                 return redirect('/admin/')
         except AttributeError:
             # Handle jika user tidak punya UserProfile
-            return redirect('authentication:login') # Asumsi logout dan minta login lagi
-    
-    # Jika tidak login, tampilkan halaman landing publik
-    return render(request, 'main/landing_page.html')
+            return redirect('authentication:login')
+    return render(request, 'main/landing_page.html', {'iklan_list': iklan_list})
 
-# Views untuk Artikel
-def news_list_view(request):
-    return HttpResponse("Daftar semua artikel")
-
-def news_create_view(request):
-    return HttpResponse("Form tambah artikel (modal)")
-# ... view edit & delete artikel
-
-def news_edit_view(request, id):
-    pass # 'pass' 
-
-def news_delete_view(request, id):
-    pass # 'pass' 
-
-# Views untuk Iklan
 def iklan_list_view(request):
-    return HttpResponse("Daftar semua iklan")
+    iklans = Iklan.objects.filter(host=request.user).select_related('lapangan')
+    search_query = request.GET.get('q', '')  
+    date_filter = request.GET.get('date_filter', '')  
 
+    # Filter berdasarkan pencarian (judul atau nama lapangan)
+    if search_query:
+        iklans = iklans.filter(lapangan__nama__icontains=search_query) | iklans.filter(judul__icontains=search_query)
+
+    # Filter berdasarkan tanggal post
+    if date_filter == 'today':
+        iklans = iklans.filter(date__date=timezone.now().date())
+    elif date_filter == 'week':
+        week_ago = timezone.now() - timedelta(days=7)
+        iklans = iklans.filter(date__gte=week_ago)
+    elif date_filter == 'older':
+        week_ago = timezone.now() - timedelta(days=7)
+        iklans = iklans.filter(date__lt=week_ago)
+
+    return render(request, 'main/iklan_list_owner.html', {
+        'iklan_list': iklans,
+        'search_query': search_query,
+        'selected_filter': date_filter
+    })
+
+@csrf_exempt
+@login_required
 def iklan_create_view(request):
-    return HttpResponse("Form tambah iklan (modal)")
-# ... view edit & delete iklan
+    if request.method == 'POST':
+        form = IklanForm(request.POST or None, request.FILES or None, user=request.user)
+        if form.is_valid():
+            iklan_entry = form.save(commit = False)
+            iklan_entry.host = request.user
+            iklan_entry.save()
+            return JsonResponse({'success': True, 'message': 'Iklan dibuat!'})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+    else:
+        form = IklanForm(user=request.user)
 
+    return render(request, 'main/iklan_form.html', {'form': form})
+
+@csrf_exempt
+@login_required
 def iklan_edit_view(request, id):
-    pass # 'pass' 
+    iklans = get_object_or_404(Iklan, pk=id, host=request.user)
+    if request.method == 'POST':
+        form = IklanForm(request.POST, request.FILES, instance=iklans)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True, 'message': 'Berhasil edit iklan!'})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)    
+    else:
+      form = IklanForm(instance=iklans)
+    return render(request, 'main/iklan_form.html', {'form': form})
 
+@csrf_exempt
+@login_required
 def iklan_delete_view(request, id):
-    pass # 'pass' 
+    iklan = get_object_or_404(Iklan, pk=id, host=request.user)
+    if request.method == 'POST':
+        iklan.delete()
+        return JsonResponse({'success': True, 'message': 'Berhasil menghapus iklan!'})
+    else:
+        return JsonResponse({'success': False, 'error': 'Error'}, status=400)
 
-# Views untuk Wishlist
-def wishlist_list_view(request):
-    return HttpResponse("Daftar wishlist user")
+@login_required
+def show_json_iklan(request):
+    data_iklan = Iklan.objects.filter(host=request.user).select_related('lapangan')
+    
+    list_iklan = []
+    for iklan in data_iklan:
+        image_path = iklan.get_banner_url()
 
-def wishlist_create_view(request):
-    return HttpResponse("Proses tambah wishlist")
-# ... view hapus wishlist
+        item = {
+            'pk': iklan.pk,      
+            'judul': iklan.judul,        
+            'deskripsi': iklan.deskripsi,
+            'banner': image_path if image_path else None,
+            'tanggal': iklan.date,
+            'lapangan': iklan.lapangan.pk, 
+        }
+        list_iklan.append(item)
 
-def wishlist_edit_view(request, id):
-    pass # 'pass' 
+    return JsonResponse(list_iklan, safe=False)
 
-def wishlist_delete_view(request, id):
-    pass # 'pass' 
+def show_iklan_landing_page(request):
+    data_iklan = Iklan.objects.select_related('lapangan').all()[:10]
+    
+    list_iklan = []
+    for iklan in data_iklan:
+        image_path = iklan.get_banner_url()
+        
+        item = {
+            'pk': iklan.pk,
+            'judul': iklan.judul,
+            'deskripsi': iklan.deskripsi,
+            'banner': image_path if image_path else None,
+            'tanggal': iklan.date,
+            'lapangan': iklan.lapangan.pk, 
+        }
+        list_iklan.append(item)
+
+    return JsonResponse(list_iklan, safe=False)

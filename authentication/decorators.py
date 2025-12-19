@@ -4,11 +4,6 @@ from django.shortcuts import redirect
 from django.contrib.auth.decorators import user_passes_test
 
 def role_required(allowed_roles=[]):
-    """
-    Decorator untuk view yang memeriksa apakah user memiliki peran yang diizinkan.
-    Contoh penggunaan:
-    @role_required(allowed_roles=['admin', 'penyedia'])
-    """
     def decorator(view_func):
         def wrapper(request, *args, **kwargs):
             # Jika user tidak login, redirect ke halaman login
@@ -34,7 +29,6 @@ def role_required(allowed_roles=[]):
         return wrapper
     return decorator
 
-# --- Alternatif lebih sederhana jika Anda hanya butuh 1 role per decorator ---
 
 def is_penyedia(user):
     return user.is_authenticated and user.userprofile.role == 'penyedia'
@@ -42,6 +36,5 @@ def is_penyedia(user):
 def is_user(user):
     return user.is_authenticated and user.userprofile.role == 'user'
 
-# Decorator yang sudah jadi, siap pakai
 penyedia_required = user_passes_test(is_penyedia, login_url='/auth/login/')
 user_required = user_passes_test(is_user, login_url='/auth/login/')

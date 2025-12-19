@@ -4,6 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.html import strip_tags
 
+from django.utils import timezone
+from datetime import timedelta
+from django.db import models
 from .models import News
 from .forms import NewsForm
 import json
@@ -18,12 +21,37 @@ def news_list_view(request):
         user_profile = request.user.userprofile
         if user_profile.role == 'penyedia':
             news_list = News.objects.all().order_by('-created_at')
+            search_query = request.GET.get('q', '')
+            date_filter = request.GET.get('date_filter', '')
+
+            # Filter berdasarkan pencarian (judul atau kategori)
+            if search_query:
+                news_list = news_list.filter(
+                    models.Q(title__icontains=search_query) | models.Q(kategori__icontains=search_query)
+                )
+
+            # Filter berdasarkan tanggal post
+            if date_filter == 'today':
+                news_list = news_list.filter(created_at__date=timezone.now().date())
+            elif date_filter == 'week':
+                week_ago = timezone.now() - timedelta(days=7)
+                news_list = news_list.filter(created_at__gte=week_ago)
+            elif date_filter == 'older':
+                week_ago = timezone.now() - timedelta(days=7)
+                news_list = news_list.filter(created_at__lt=week_ago)
+
             form = NewsForm()
             return render(
                 request,
                 'artikel/berita_list_owner.html',
                 {'news_list': news_list, 'form': form}
             )
+            return render(request, 'artikel/berita_list_owner.html', {
+                'news_list': news_list,
+                'form': form,
+                'search_query': search_query,
+                'selected_filter': date_filter
+            })
         else:
             return redirect('artikel:news_public_list')
     except:

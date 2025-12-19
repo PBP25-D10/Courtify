@@ -1,12 +1,61 @@
 {% extends 'base.html' %}
-
 {% block content %}
 <div class="min-h-screen bg-gray-100 py-10">
   <div class="max-w-6xl mx-auto px-4">
-    <h1 class="text-3xl font-bold text-gray-800 mb-8">List Lapangan</h1>
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-800">List Lapangan</h1>
+    </div>
 
+    <!-- FILTER + SEARCH SECTION -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Filter & Pencarian Lapangan</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- Search -->
+        <div class="lg:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Cari Lapangan</label>
+          <input type="text" id="filterSearch" placeholder="Cari nama atau lokasi..."
+                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+          <select id="filterKategori" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            <option value="">Semua</option>
+            <option value="futsal">Futsal</option>
+            <option value="basket">Basket</option>
+            <option value="badminton">Badminton</option>
+            <option value="tenis">Tenis</option>
+            <option value="voli">Voli</option>
+            <option value="lainnya">Lainnya</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Harga Min</label>
+          <input type="number" id="filterHargaMin" placeholder="Min harga..."
+                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Harga Max</label>
+          <input type="number" id="filterHargaMax" placeholder="Max harga..."
+                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-3 mt-4">
+        <button id="applyFilter" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+          Terapkan
+        </button>
+        <button id="clearFilter" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold transition">
+          Reset
+        </button>
+      </div>
+    </div>
+    
     {% if lapangan_list %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div id="lapangan-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {% for lap in lapangan_list %}
       <div class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition">
         {% if lap.foto %}
@@ -16,19 +65,22 @@
             Tidak ada foto
           </div>
         {% endif %}
-
         <div class="p-5">
-          <h2 class="text-xl font-semibold text-gray-800 mb-1">{{ lap.nama }}</h2>
+          <h3 class="text-lg font-semibold text-gray-800 mb-1">{{ lap.nama }}</h3>
           <p class="text-sm text-gray-500 mb-2">{{ lap.kategori }} • {{ lap.lokasi }}</p>
           <p class="text-gray-700 font-medium">Rp {{ lap.harga_per_jam }} / jam</p>
-
-          <p class="text-sm text-gray-500 mt-2">
-            ⏰ {{ lap.jam_buka }} - {{ lap.jam_tutup }}
-          </p>
-
-          <div class="mt-4 flex justify-end">
-            <a href="{% url 'booking:booking_create' %}?lapangan_id={{ lap.id_lapangan }}"
-               class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
+          <p class="text-sm text-gray-500 mt-2">⏰ {{ lap.jam_buka }} - {{ lap.jam_tutup }}</p>
+          <div class="mt-4 flex justify-between items-center">
+            <button onclick="toggleWishlist('{{ lap.id_lapangan }}', this)"
+              class="wishlist-btn text-gray-400 hover:text-red-500 transition duration-300"
+              title="Tambah ke Wishlist"
+              data-lapangan-id="{{ lap.id_lapangan }}">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-7 h-7">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+              </svg>
+            </button>
+            <a href="{% url 'booking:booking_create' lap.id_lapangan %}"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
               Pesan Sekarang
             </a>
           </div>
@@ -37,10 +89,166 @@
       {% endfor %}
     </div>
     {% else %}
-    <div class="bg-white shadow rounded-xl p-8 text-center">
-      <p class="text-gray-600 text-lg">Belum ada lapangan yang tersedia.</p>
-    </div>
+    <p class="text-gray-600 text-center mt-8">Belum ada lapangan yang tersedia.</p>
     {% endif %}
-  </div>
-</div>
+
+    <!-- Hidden CSRF token for AJAX -->
+    {% csrf_token %}
+
+<!-- SCRIPT -->
+<script>
+function loadLapangan(filters = {}) {
+  let url = window.location.pathname;
+  const params = new URLSearchParams();
+
+  if (filters.search) params.append('search', filters.search);
+  if (filters.kategori) params.append('kategori', filters.kategori);
+  if (filters.harga_min) params.append('harga_min', filters.harga_min);
+  if (filters.harga_max) params.append('harga_max', filters.harga_max);
+
+  if (params.toString()) url += '?' + params.toString();
+
+  fetch(url, { headers: {"X-Requested-With": "XMLHttpRequest"} })
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById("lapangan-container");
+      container.innerHTML = "";
+
+      if (data.lapangan_list.length === 0) {
+        container.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Tidak ada lapangan yang sesuai.</div>';
+        return;
+      }
+
+      data.lapangan_list.forEach(lap => {
+        const card = `
+        <div class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition">
+          ${lap.foto_url ? `<img src="${lap.foto_url}" alt="${lap.nama}" class="w-full h-48 object-cover">` 
+                         : `<div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 italic">Tidak ada foto</div>`}
+          <div class="p-5">
+            <h2 class="text-xl font-semibold text-gray-800 mb-1">${lap.nama}</h2>
+            <p class="text-sm text-gray-500 mb-2">${lap.kategori} • ${lap.lokasi}</p>
+            <p class="text-gray-700 font-medium">Rp ${lap.harga_per_jam} / jam</p>
+            <p class="text-sm text-gray-500 mt-2">⏰ ${lap.jam_buka.substring(0,5)} - ${lap.jam_tutup.substring(0,5)}</p>
+            <div class="mt-4 flex justify-between items-center">
+              <button onclick="toggleWishlist('${lap.id_lapangan}', this)"
+                class="wishlist-btn text-gray-400 hover:text-red-500 transition duration-300"
+                title="Tambah ke Wishlist"
+                data-lapangan-id="${lap.id_lapangan}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-7 h-7">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+              </button>
+              <a href="/booking/create/${lap.id_lapangan}/"
+                 class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
+                Pesan Sekarang
+              </a>
+            </div>
+          </div>
+        </div>`;
+        container.insertAdjacentHTML("beforeend", card);
+      });
+    });
+}
+
+// Tombol Apply Filter
+document.getElementById("applyFilter").addEventListener("click", function() {
+  const filters = {
+    search: document.getElementById("filterSearch").value,
+    kategori: document.getElementById("filterKategori").value,
+    harga_min: document.getElementById("filterHargaMin").value,
+    harga_max: document.getElementById("filterHargaMax").value
+  };
+  loadLapangan(filters);
+});
+
+// Tombol Reset
+document.getElementById("clearFilter").addEventListener("click", function() {
+  document.getElementById("filterSearch").value = "";
+  document.getElementById("filterKategori").value = "";
+  document.getElementById("filterHargaMin").value = "";
+  document.getElementById("filterHargaMax").value = "";
+  loadLapangan();
+});
+
+// Enter key = search langsung
+document.getElementById("filterSearch").addEventListener("keypress", function(e) {
+  if (e.key === "Enter") {
+    document.getElementById("applyFilter").click();
+  }
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+  loadLapangan();
+
+  // Wishlist toggle functionality for dynamic content
+  window.toggleWishlist = async function(lapanganId, button) {
+    try {
+      const response = await fetch(`/wishlist/add/${lapanganId}/`, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update the heart icon based on 'added' flag
+        const svg = button.querySelector('svg');
+
+        if (data.added) {
+          // Added to wishlist - fill the heart
+          svg.setAttribute('fill', 'currentColor');
+          svg.setAttribute('stroke', 'none');
+          button.classList.remove('text-gray-400');
+          button.classList.add('text-red-500');
+          alert('Ditambahkan ke wishlist!');
+        } else {
+          // Removed from wishlist - change to outline
+          svg.setAttribute('fill', 'none');
+          svg.setAttribute('stroke', 'currentColor');
+          button.classList.remove('text-red-500');
+          button.classList.add('text-gray-400');
+          alert('Dihapus dari wishlist.');
+        }
+      } else {
+        alert(data.message || 'Gagal memperbarui wishlist.');
+      }
+    } catch (error) {
+      alert('Terjadi kesalahan koneksi ke server.');
+    }
+  };
+
+  // Initialize wishlist states for dynamic content
+  function initializeWishlistStates() {
+    document.querySelectorAll('.wishlist-btn').forEach(async (btn) => {
+      const lapanganId = btn.dataset.lapanganId;
+      try {
+        const response = await fetch(`/wishlist/check/${lapanganId}/`, {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.in_wishlist) {
+            const svg = btn.querySelector('svg');
+            svg.setAttribute('fill', 'currentColor');
+            svg.setAttribute('stroke', 'none');
+            btn.classList.remove('text-gray-400');
+            btn.classList.add('text-red-500');
+          }
+        }
+      } catch (error) {
+        // Ignore errors during initialization
+      }
+    });
+  }
+
+  // Initialize after loading lapangan
+  initializeWishlistStates();
+});
+</script>
 {% endblock %}
