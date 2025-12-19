@@ -1,4 +1,4 @@
-name: Push to PWS
+name: Push to PWS 
 
 on:
   push:
@@ -19,15 +19,17 @@ jobs:
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
         
     - name: Push to PWS
-        env:
-          PWS_URL: ${{ secrets.PWS_URL }}
-        run: |
-            current_branch=$(git branch --show-current)
-            echo "Current branch: $current_branch"
-      
-            push_output=$(git push $PWS_URL $current_branch:$current_branch 2>&1)
-            if [[ $? -ne 0 ]]; then
-              echo "Push failed with output: $push_output"
-              exit 1
-            fi
-            echo "Push successful with output: $push_output"
+      env:
+        PWS_URL: ${{ secrets.PWS_URL }}
+      run: |
+        current_branch=$(git branch --show-current)
+        echo "Current branch: $current_branch"
+
+        # This will show the REAL git error
+        if ! git push "$PWS_URL" "$current_branch:master"; then
+          echo "❌ Push failed. See error above."
+          exit 1
+        fi
+
+        echo "✅ Push successful."
+

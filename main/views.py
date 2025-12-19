@@ -7,8 +7,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from main.forms import IklanForm
 from main.models import Iklan
-
-
+from django.views.decorators.csrf import csrf_exempt
 
 def proxy_image(request):
     image_url = request.GET.get('url')
@@ -69,6 +68,7 @@ def iklan_list_view(request):
         'selected_filter': date_filter
     })
 
+@csrf_exempt
 @login_required
 def iklan_create_view(request):
     if request.method == 'POST':
@@ -85,6 +85,7 @@ def iklan_create_view(request):
 
     return render(request, 'main/iklan_form.html', {'form': form})
 
+@csrf_exempt
 @login_required
 def iklan_edit_view(request, id):
     iklans = get_object_or_404(Iklan, pk=id, host=request.user)
@@ -99,6 +100,7 @@ def iklan_edit_view(request, id):
       form = IklanForm(instance=iklans)
     return render(request, 'main/iklan_form.html', {'form': form})
 
+@csrf_exempt
 @login_required
 def iklan_delete_view(request, id):
     iklan = get_object_or_404(Iklan, pk=id, host=request.user)
@@ -108,4 +110,41 @@ def iklan_delete_view(request, id):
     else:
         return JsonResponse({'success': False, 'error': 'Error'}, status=400)
 
+@login_required
+def show_json_iklan(request):
+    data_iklan = Iklan.objects.filter(host=request.user).select_related('lapangan')
+    
+    list_iklan = []
+    for iklan in data_iklan:
+        image_path = iklan.get_banner_url()
 
+        item = {
+            'pk': iklan.pk,      
+            'judul': iklan.judul,        
+            'deskripsi': iklan.deskripsi,
+            'banner': image_path if image_path else None,
+            'tanggal': iklan.date,
+            'lapangan': iklan.lapangan.pk, 
+        }
+        list_iklan.append(item)
+
+    return JsonResponse(list_iklan, safe=False)
+
+def show_iklan_landing_page(request):
+    data_iklan = Iklan.objects.select_related('lapangan').all()[:10]
+    
+    list_iklan = []
+    for iklan in data_iklan:
+        image_path = iklan.get_banner_url()
+        
+        item = {
+            'pk': iklan.pk,
+            'judul': iklan.judul,
+            'deskripsi': iklan.deskripsi,
+            'banner': image_path if image_path else None,
+            'tanggal': iklan.date,
+            'lapangan': iklan.lapangan.pk, 
+        }
+        list_iklan.append(item)
+
+    return JsonResponse(list_iklan, safe=False)
