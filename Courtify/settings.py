@@ -20,8 +20,6 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # SECURITY WARNING: don't run with debug turned on in production!
 PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 DEBUG = not PRODUCTION
@@ -45,7 +43,7 @@ SESSION_COOKIE_SAMESITE = None
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-b3645r!1&(-$r$n6*uu0fjgk4g($8wvz4(cs47srd*n8*la*rg'
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "justin-timothy-courtify.pbp.cs.ui.ac.id", "10.0.2.2", "*"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "justin-timothy-courtify.pbp.cs.ui.ac.id", "10.0.2.2"]
 
 CSRF_TRUSTED_ORIGINS = [
     'https://justin-timothy-courtify.pbp.cs.ui.ac.id', 'http://justin-timothy-courtify.pbp.cs.ui.ac.id'
