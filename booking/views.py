@@ -258,5 +258,68 @@ def get_booked_hours(request, lapangan_id, tanggal):
     return JsonResponse({'jam_terpakai': jam_terpakai})
 
 
+def api_booking_dashboard(request):
+    bookings = Booking.objects.filter(user=request.user).order_by('-created_at')[:5]
+    lapangan_list = Lapangan.objects.all().order_by('nama')[:5]
+
+    return JsonResponse({
+        'status': 'success',
+        'bookings': [serialize_booking(b) for b in bookings],
+        'lapangan_list': [serialize_lapangan(l) for l in lapangan_list],
+    })
+
+
+def api_booking_user_list(request):
+    bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
+
+    return JsonResponse({
+        'status': 'success',
+        'bookings': [serialize_booking(b) for b in bookings],
+    })
+
+
+def api_create_booking(request, id_lapangan):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Method not allowed'}, status=405)
+
+    lapangan = get_object_or_404(Lapangan, id_lapangan=id_lapangan)
+
+    try:
+        tanggal = request.POST.get('tanggal')
+        jam_mulai = request.POST.get('jam_mulai')
+        jam_selesai = request.POST.get('jam_selesai')
+
+        booking = Booking.objects.create(
+            user=request.user,
+            lapangan=lapangan,
+            tanggal=tanggal,
+            jam_mulai=jam_mulai,
+            jam_selesai=jam_selesai,
+            status='pending'
+        )
+
+        return JsonResponse({
+            'success': True,
+            'booking': serialize_booking(booking)
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=400)
+
+
+def api_cancel_booking(request, booking_id):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Method not allowed'}, status=405)
+
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+    booking.status = 'cancelled'
+    booking.save()
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Booking dibatalkan',
+        'booking_id': booking.id
+    })
+
 
 

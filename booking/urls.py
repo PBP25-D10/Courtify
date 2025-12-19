@@ -14,5 +14,9 @@ urlpatterns = [
     path('confirm/<int:pk>/', views.confirm_booking_view, name='confirm_booking'),
     path('my-bookings/', views.booking_user_list_view, name='booking_user_list'),
     path('api/booked/<uuid:lapangan_id>/<str:tanggal>/', views.get_booked_hours, name='get_booked_hours'),
-
+    path('api/dashboard/', views.api_booking_dashboard),
+    path('api/my-bookings/', views.api_booking_user_list),
+    path('api/create/<uuid:id_lapangan>/', views.api_create_booking),
+    path('api/cancel/<int:booking_id>/', views.api_cancel_booking),
+    path('api/booked/<uuid:lapangan_id>/<str:tanggal>/', views.get_booked_hours),
 ]
