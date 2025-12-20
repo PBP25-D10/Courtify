@@ -202,6 +202,7 @@ def create_news_flutter(request):
     title = strip_tags(data.get("title", ""))
     content = strip_tags(data.get("content", ""))
     kategori = data.get("kategori", "Komunitas")
+    url_thumbnail = data.get("url_thumbnail") or None
 
     if not title or not content:
         return _json_error("Judul dan konten wajib diisi", status=400)
@@ -210,7 +211,7 @@ def create_news_flutter(request):
         title=title,
         content=content,
         kategori=kategori,
-        url_thumbnail=data.get("url_thumbnail") or None,
+        url_thumbnail=url_thumbnail,
         author=request.user,
     )
 

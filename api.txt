@@ -214,6 +214,7 @@ Author diset server-side dari sesi; klien tidak boleh mengirim author.
 - Response sukses (201):
   { "status": "success", "id": <int>, "news": {id, title, ...} }
 - Error: 401 jika belum login, 403 jika bukan penyedia, 400 jika field kosong/JSON invalid.
+ - Catatan: `thumbnail` (upload media) sekarang optional; jika tidak ada url_thumbnail maupun thumbnail, API tetap jalan dan akan memakai default di response.
 
 3) Hapus artikel (role penyedia, owner)
 - POST /flutter/delete/<int:id>/
