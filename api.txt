@@ -198,6 +198,7 @@ Endpoint Flutter sudah @csrf_exempt; cukup kirim cookie `sessionid` jika butuh a
 1) List artikel publik
 - GET /json/
 - Response: array berita (tanpa wrapper) berisi `{id, title, content, kategori, thumbnail_url, created_at, author}`.
+  `thumbnail_url` akan menggunakan default jika tidak ada gambar.
 
 2) Buat artikel (role penyedia, login)
 - POST /flutter/create/
@@ -231,3 +232,38 @@ Endpoint Flutter sudah @csrf_exempt; cukup kirim cookie `sessionid` jika butuh a
 - Response sukses:
   { "status": "success", "news": { ... } }
 - Error: 401 jika belum login, 403 jika bukan pemilik/penyedia, 404 jika id tidak ada, 400 jika title/content kosong.
+
+API Iklan (Flutter)
+Base URL: http://<host>/api/iklan/
+Banner default jika kosong: https://images.pexels.com/photos/17724042/pexels-photo-17724042.jpeg.
+
+1) List iklan penyedia (hanya milik sendiri)
+- GET /list/
+- Auth: cookie sessionid penyedia.
+- Response:
+  { "status": "success", "iklan_list": [ {pk, judul, deskripsi, banner, tanggal, lapangan_id, lapangan_nama}, ... ] }
+- Error: 401 jika belum login, 403 jika bukan penyedia.
+
+2) List iklan publik (semua penyedia)
+- GET /landing/
+- Response: { "status": "success", "iklan_list": [...] } (banner selalu terisi default jika kosong).
+
+3) Buat iklan (penyedia)
+- POST /create/ (JSON atau form-data; jika kirim base64 banner gunakan field `banner` dengan prefix data:image/*;base64,)
+- Body minimal: judul, deskripsi, lapangan, banner (opsional)
+- Response sukses:
+  { "status": "success", "message": "Iklan berhasil ditambahkan", "iklan": { ... } }
+- Error: 401 belum login, 403 jika bukan penyedia atau lapangan bukan milik penyedia, 400 jika form invalid.
+
+4) Update iklan (penyedia, owner)
+- POST /edit/<int:id>/
+- Body: sama seperti create; banner bisa base64 atau file.
+- Response sukses:
+  { "status": "success", "message": "Iklan berhasil diperbarui", "iklan": { ... } }
+- Error: 401/403/400 sesuai kasus; 404 jika id tidak ada.
+
+5) Hapus iklan (penyedia, owner)
+- POST /delete/<int:id>/
+- Response:
+  { "status": "success", "message": "Iklan berhasil dihapus" }
+- Error: 401/403 jika bukan owner/penyedia, 404 jika id tidak ada.

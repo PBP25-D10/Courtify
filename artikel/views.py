@@ -12,12 +12,14 @@ from .forms import NewsForm
 
 
 def _serialize_news(request, news):
+    default_thumbnail = "https://images.pexels.com/photos/17724042/pexels-photo-17724042.jpeg"
+    thumb = request.build_absolute_uri(news.thumbnail.url) if news.thumbnail else default_thumbnail
     return {
         "id": news.id_berita,
         "title": news.title,
         "content": news.content,
         "kategori": news.kategori,
-        "thumbnail_url": request.build_absolute_uri(news.thumbnail.url) if news.thumbnail else "",
+        "thumbnail_url": thumb,
         "created_at": news.created_at.isoformat(),
         "author": news.author.username if news.author else "",
     }
@@ -32,7 +34,7 @@ def news_list_view(request):
     try:
         user_profile = request.user.userprofile
         if user_profile.role == 'penyedia':
-            news_list = News.objects.all().order_by('-created_at')
+            news_list = News.objects.filter(author=request.user).order_by('-created_at')
             search_query = request.GET.get('q', '')
             date_filter = request.GET.get('date_filter', '')
 
