@@ -155,13 +155,13 @@ def cancel_booking_view(request, pk):
 # Helper function untuk serialize Lapangan
 def serialize_lapangan(lap):
     return {
-        'id_lapangan': str(lap.id_lapangan), # Pastikan ID jadi string (aman untuk UUID/Int)
+        # PERBAIKAN: Jangan pakai str(), biarkan tetap int agar Flutter tidak error
+        'id_lapangan': lap.id_lapangan, 
         'nama': lap.nama,
         'kategori': lap.kategori,
         'lokasi': lap.lokasi,
-        # FORCE INT: Mengubah Decimal/String jadi Integer murni
         'harga_per_jam': int(lap.harga_per_jam) if lap.harga_per_jam else 0,
-        'jam_buka': str(lap.jam_buka),
+        'jam_buka': str(lap.jam_buka), # Jam tetap string (HH:MM:SS) itu oke
         'jam_tutup': str(lap.jam_tutup),
         'foto_url': lap.foto.url if lap.foto else None,
     }
@@ -169,13 +169,12 @@ def serialize_lapangan(lap):
 # Helper function untuk serialize Booking
 def serialize_booking(booking):
     return {
-        'id': int(booking.id), # Force Integer
-        # PENTING: Gunakan serialize_lapangan agar struktur konsisten!
+        'id': booking.id, # Biarkan int
         'lapangan': serialize_lapangan(booking.lapangan) if booking.lapangan else None,
         'tanggal': str(booking.tanggal),
         'jam_mulai': str(booking.jam_mulai),
         'jam_selesai': str(booking.jam_selesai),
-        # FORCE FLOAT: Pastikan harga jadi angka desimal (e.g. 150000.0)
+        # Pastikan float/double agar Flutter bisa baca (int juga bisa dibaca sebagai double di Dart)
         'total_harga': float(booking.total_harga) if booking.total_harga else 0.0,
         'status': str(booking.status),
         'created_at': booking.created_at.strftime('%Y-%m-%d %H:%M:%S'),
