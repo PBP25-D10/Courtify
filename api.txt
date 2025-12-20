@@ -151,7 +151,7 @@ Catatan cepat:
 
 API Booking (Flutter)
 Base URL: http://<host>/booking/api/
-Semua endpoint butuh cookie `sessionid` user login.
+Semua endpoint butuh cookie `sessionid` user login. Endpoint Flutter di-backend sudah @csrf_exempt sehingga tidak perlu header CSRF selama cookie sessionid dikirim.
 
 1) List booking user
 - GET /flutter/bookings/
