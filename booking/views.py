@@ -264,6 +264,29 @@ def api_booking_user_list(request):
 
 
 @login_required
+def api_owner_bookings(request):
+    """
+    Bookings for lapangan owned by the current penyedia.
+    Optional query param: status (pending/confirmed/cancelled).
+    """
+    try:
+        if request.user.userprofile.role != 'penyedia':
+            return JsonResponse({'success': False, 'message': 'Only penyedia can access this'}, status=403)
+    except AttributeError:
+        return JsonResponse({'success': False, 'message': 'User profile not found'}, status=403)
+
+    status_filter = request.GET.get('status')
+    bookings = Booking.objects.filter(lapangan__owner=request.user).order_by('-created_at')
+    if status_filter:
+        bookings = bookings.filter(status=status_filter)
+
+    return JsonResponse({
+        'status': 'success',
+        'bookings': [_serialize_booking(b) for b in bookings],
+    })
+
+
+@login_required
 def api_create_booking(request, id_lapangan):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Method not allowed'}, status=405)
