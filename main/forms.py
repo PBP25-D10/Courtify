@@ -5,7 +5,7 @@ from .models import Iklan
 class IklanForm(forms.ModelForm):
     class Meta:
         model = Iklan
-        fields = ["lapangan","judul", "deskripsi", "banner"]
+        fields = ["lapangan","judul", "deskripsi", "banner", "url_thumbnail"]
         widgets = {
             'deskripsi': forms.Textarea(attrs={'rows': 3}),
         }

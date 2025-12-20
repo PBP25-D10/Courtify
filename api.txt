@@ -246,6 +246,7 @@ Author diset server-side dari sesi; klien tidak boleh mengirim author.
 API Iklan (Flutter)
 Base URL: http://<host>/api/iklan/
 Banner default jika kosong: https://images.pexels.com/photos/17724042/pexels-photo-17724042.jpeg.
+Prioritas gambar: `url_thumbnail` (jika ada) → `banner` media → foto lapangan → default.
 
 1) List iklan penyedia (hanya milik sendiri)
 - GET /list/
@@ -260,14 +261,14 @@ Banner default jika kosong: https://images.pexels.com/photos/17724042/pexels-pho
 
 3) Buat iklan (penyedia)
 - POST /create/ (JSON atau form-data; jika kirim base64 banner gunakan field `banner` dengan prefix data:image/*;base64,)
-- Body minimal: judul, deskripsi, lapangan, banner (opsional)
+- Body minimal: judul, deskripsi, lapangan. Opsional: `banner` (file/base64) atau `url_thumbnail` (string URL).
 - Response sukses:
   { "status": "success", "message": "Iklan berhasil ditambahkan", "iklan": { ... } }
 - Error: 401 belum login, 403 jika bukan penyedia atau lapangan bukan milik penyedia, 400 jika form invalid.
 
 4) Update iklan (penyedia, owner)
 - POST /edit/<int:id>/
-- Body: sama seperti create; banner bisa base64 atau file.
+- Body: sama seperti create; banner bisa base64/file; atau set `url_thumbnail`.
 - Response sukses:
   { "status": "success", "message": "Iklan berhasil diperbarui", "iklan": { ... } }
 - Error: 401/403/400 sesuai kasus; 404 jika id tidak ada.
