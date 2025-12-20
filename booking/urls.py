@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/booked/<uuid:lapangan_id>/<str:tanggal>/', views.get_booked_hours, name='get_booked_hours'),
     path('api/dashboard/', views.api_booking_dashboard),
     path('api/my-bookings/', views.api_booking_user_list),
+    path('api/owner-bookings/', views.api_owner_bookings),
     path('api/create/<uuid:id_lapangan>/', views.api_create_booking),
     path('api/cancel/<int:booking_id>/', views.api_cancel_booking),
     path('api/flutter/bookings/', views.flutter_api_booking_list, name='flutter_booking_list'),

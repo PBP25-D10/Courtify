@@ -261,7 +261,28 @@ def flutter_api_list_lapangan(request):
     if auth_error:
         return auth_error
 
+    kategori = request.GET.get('kategori', '')
+    lokasi = request.GET.get('lokasi', '')
+    harga_min = request.GET.get('harga_min', '')
+    harga_max = request.GET.get('harga_max', '')
+
     lapangan_list = Lapangan.objects.filter(owner=request.user)
+
+    if kategori:
+        lapangan_list = lapangan_list.filter(kategori=kategori)
+    if lokasi:
+        lapangan_list = lapangan_list.filter(lokasi__icontains=lokasi)
+    if harga_min:
+        try:
+            lapangan_list = lapangan_list.filter(harga_per_jam__gte=int(harga_min))
+        except ValueError:
+            pass
+    if harga_max:
+        try:
+            lapangan_list = lapangan_list.filter(harga_per_jam__lte=int(harga_max))
+        except ValueError:
+            pass
+
     data = [_serialize_lapangan(lapangan) for lapangan in lapangan_list]
     return JsonResponse({'status': 'success', 'lapangan_list': data})
 
