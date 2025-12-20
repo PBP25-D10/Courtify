@@ -1,4 +1,5 @@
 from datetime import datetime
+import json  # <--- PERBAIKAN: Wajib ada untuk parsing JSON dari Flutter
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -46,6 +47,8 @@ def _compute_total_harga(lapangan, jam_mulai_str, jam_selesai_str):
         end = datetime.strptime(jam_selesai_str, "%H:%M").time()
     except ValueError:
         return None
+    
+    # Hitung durasi
     duration = datetime.combine(datetime.today(), end) - datetime.combine(datetime.today(), start)
     hours = max(int(duration.total_seconds() // 3600), 0)
     return lapangan.harga_per_jam * hours
@@ -240,6 +243,8 @@ def get_booked_hours(request, lapangan_id, tanggal):
     return JsonResponse({'jam_terpakai': jam_terpakai})
 
 
+# --- FLUTTER API SECTION ---
+
 @login_required
 def api_booking_dashboard(request):
     bookings = Booking.objects.filter(user=request.user).order_by('-created_at')[:5]
@@ -262,6 +267,8 @@ def api_booking_user_list(request):
     })
 
 
+# API Create Booking (Legacy)
+@csrf_exempt 
 @login_required
 def api_create_booking(request, id_lapangan):
     if request.method != 'POST':
@@ -294,6 +301,7 @@ def api_create_booking(request, id_lapangan):
         return JsonResponse({'success': False, 'message': str(exc)}, status=400)
 
 
+@csrf_exempt
 @login_required
 def api_cancel_booking(request, booking_id):
     if request.method != 'POST':
@@ -310,6 +318,8 @@ def api_cancel_booking(request, booking_id):
     })
 
 
+# --- MAIN FLUTTER ENDPOINTS ---
+
 @login_required
 def flutter_api_booking_list(request):
     if request.method != 'GET':
@@ -318,6 +328,7 @@ def flutter_api_booking_list(request):
     return JsonResponse({'success': True, 'bookings': [_serialize_booking(b) for b in bookings]})
 
 
+@csrf_exempt  # <--- PERBAIKAN: Ditambahkan agar POST dari Flutter tidak 403 Forbidden
 @login_required
 def flutter_api_create_booking(request, id_lapangan):
     if request.method != 'POST':
@@ -326,7 +337,9 @@ def flutter_api_create_booking(request, id_lapangan):
     lapangan = get_object_or_404(Lapangan, id_lapangan=id_lapangan)
 
     try:
+        # Cek apakah request JSON atau Form Data
         if request.content_type and 'application/json' in request.content_type:
+            # Perlu 'import json' di atas file
             payload = json.loads(request.body.decode('utf-8') or '{}')
             tanggal = payload.get('tanggal')
             jam_mulai = payload.get('jam_mulai')
@@ -355,6 +368,7 @@ def flutter_api_create_booking(request, id_lapangan):
         return _json_error(str(exc), status=400)
 
 
+@csrf_exempt  # <--- PERBAIKAN: Ditambahkan
 @login_required
 def flutter_api_cancel_booking(request, booking_id):
     if request.method != 'POST':
@@ -366,6 +380,7 @@ def flutter_api_cancel_booking(request, booking_id):
     return JsonResponse({'success': True, 'message': 'Booking dibatalkan', 'booking_id': booking.id})
 
 
+@csrf_exempt  # <--- PERBAIKAN: Ditambahkan
 @login_required
 def flutter_api_confirm_booking(request, booking_id):
     if request.method != 'POST':
