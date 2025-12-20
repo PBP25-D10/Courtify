@@ -197,7 +197,7 @@ Endpoint Flutter sudah @csrf_exempt; cukup kirim cookie `sessionid` jika butuh a
 
 1) List artikel publik
 - GET /json/
-- Response: array berita (tanpa wrapper) berisi `{id, title, content, kategori, thumbnail, created_at, author}`.
+- Response: array berita (tanpa wrapper) berisi `{id, title, content, kategori, thumbnail_url, created_at, author}`.
 
 2) Buat artikel (role penyedia, login)
 - POST /flutter/create/
@@ -216,5 +216,18 @@ Endpoint Flutter sudah @csrf_exempt; cukup kirim cookie `sessionid` jika butuh a
 - Hanya author penyedia yang boleh menghapus.
 - Response sukses:
   { "status": "success" }
-- Error: 404 jika tidak ditemukan, 403 jika bukan pemilik/penyedia.
+- Error: 401 jika belum login, 403 jika bukan pemilik/penyedia, 404 jika id tidak ada.
 
+4) List artikel milik penyedia (hanya miliknya)
+- GET /flutter/my/
+- Response:
+  { "status": "success", "news": [ {id, title, content, kategori, thumbnail_url, created_at, author}, ... ] }
+- Error: 401 jika belum login, 403 jika bukan penyedia.
+
+5) Update artikel (role penyedia, owner)
+- POST /flutter/update/<int:id>/
+- Body (JSON, optional fields):
+  { "title": "...", "content": "...", "kategori": "..." }
+- Response sukses:
+  { "status": "success", "news": { ... } }
+- Error: 401 jika belum login, 403 jika bukan pemilik/penyedia, 404 jika id tidak ada, 400 jika title/content kosong.

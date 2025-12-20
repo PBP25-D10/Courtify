@@ -13,4 +13,6 @@ urlpatterns = [
     path('api/json/', views.news_list_json, name='news_json'),
     path('api/flutter/create/', views.create_news_flutter, name='create_news_flutter'),
     path('api/flutter/delete/<int:id>/', views.delete_news_flutter, name='delete_news_flutter'),
+    path('api/flutter/my/', views.list_own_news_flutter, name='list_own_news_flutter'),
+    path('api/flutter/update/<int:id>/', views.update_news_flutter, name='update_news_flutter'),
 ]

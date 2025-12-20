@@ -17,7 +17,7 @@ def _serialize_news(request, news):
         "title": news.title,
         "content": news.content,
         "kategori": news.kategori,
-        "thumbnail": request.build_absolute_uri(news.thumbnail.url) if news.thumbnail else "",
+        "thumbnail_url": request.build_absolute_uri(news.thumbnail.url) if news.thumbnail else "",
         "created_at": news.created_at.isoformat(),
         "author": news.author.username if news.author else "",
     }
@@ -221,9 +221,76 @@ def delete_news_flutter(request, id):
         return _json_error("User profile tidak ditemukan", status=400)
 
     try:
-        news = News.objects.get(id_berita=id, author=request.user)
+        news = News.objects.get(id_berita=id)
+        if news.author != request.user:
+            return _json_error("Bukan pemilik artikel", status=403)
         news.delete()
         return JsonResponse({"status": "success"}, status=200)
     except News.DoesNotExist:
         return _json_error("News not found", status=404)
 
+
+@csrf_exempt
+def list_own_news_flutter(request):
+    if request.method != "GET":
+        return _json_error("Invalid method", status=405)
+
+    if not request.user.is_authenticated:
+        return _json_error("User not authenticated", status=401)
+
+    try:
+        user_profile = request.user.userprofile
+        if user_profile.role != 'penyedia':
+            return _json_error("Bukan penyedia", status=403)
+    except Exception:
+        return _json_error("User profile tidak ditemukan", status=400)
+
+    news_list = News.objects.filter(author=request.user).order_by('-created_at')
+    data = [_serialize_news(request, item) for item in news_list]
+    return JsonResponse({"status": "success", "news": data})
+
+
+@csrf_exempt
+def update_news_flutter(request, id):
+    if request.method != "POST":
+        return _json_error("Invalid method", status=405)
+
+    if not request.user.is_authenticated:
+        return _json_error("User not authenticated", status=401)
+
+    try:
+        user_profile = request.user.userprofile
+        if user_profile.role != 'penyedia':
+            return _json_error("Bukan penyedia", status=403)
+    except Exception:
+        return _json_error("User profile tidak ditemukan", status=400)
+
+    try:
+        news = News.objects.get(id_berita=id)
+    except News.DoesNotExist:
+        return _json_error("News not found", status=404)
+
+    if news.author != request.user:
+        return _json_error("Bukan pemilik artikel", status=403)
+
+    try:
+        if request.content_type and 'application/json' in request.content_type:
+            data = json.loads(request.body.decode('utf-8') or '{}')
+        else:
+            data = request.POST
+    except json.JSONDecodeError:
+        return _json_error("Format JSON tidak valid", status=400)
+
+    title = strip_tags(data.get("title", news.title))
+    content = strip_tags(data.get("content", news.content))
+    kategori = data.get("kategori", news.kategori)
+
+    if not title or not content:
+        return _json_error("Judul dan konten wajib diisi", status=400)
+
+    news.title = title
+    news.content = content
+    news.kategori = kategori
+    news.save()
+
+    return JsonResponse({"status": "success", "news": _serialize_news(request, news)}, status=200)
