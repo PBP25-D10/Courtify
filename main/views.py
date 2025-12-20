@@ -15,7 +15,13 @@ DEFAULT_BANNER_URL = "https://images.pexels.com/photos/17724042/pexels-photo-177
 
 
 def _banner_url(iklan):
-    return iklan.banner.url if iklan.banner else DEFAULT_BANNER_URL
+    if iklan.url_thumbnail:
+        return iklan.url_thumbnail
+    if iklan.banner:
+        return iklan.banner.url
+    if iklan.lapangan and iklan.lapangan.foto:
+        return iklan.lapangan.foto.url
+    return DEFAULT_BANNER_URL
 
 
 def _serialize_iklan(iklan):
