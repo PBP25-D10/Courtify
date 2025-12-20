@@ -25,14 +25,7 @@ PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 DEBUG = not PRODUCTION
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "https://justin-timothy-courtify.pbp.cs.ui.ac.id",
-    "http://justin-timothy-courtify.pbp.cs.ui.ac.id",
-]
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://localhost:\d+$",
-    r"^http://127.0.0.1:\d+$",
-]
+CORS_ALLOW_ALL_ORIGINS = True
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
