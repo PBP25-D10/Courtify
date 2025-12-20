@@ -4,32 +4,12 @@ import requests
 from datetime import timedelta
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, QueryDict
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.base import ContentFile  # Tambahan untuk convert Base64 ke File
 from main.forms import IklanForm
 from main.models import Iklan
-
-# --- HELPER FUNCTION (Tambahan untuk API) ---
-def decode_base64_image(base64_string, user_id, prefix="img"):
-    """
-    Menerima string base64, mengembalikan ContentFile django.
-    Format string diharapkan: 'data:image/png;base64,iVBORw0KGgo...'
-    """
-    if not base64_string or not isinstance(base64_string, str):
-        return None
-    
-    if "base64," in base64_string:
-        try:
-            format, imgstr = base64_string.split(';base64,') 
-            ext = format.split('/')[-1] # ambil ekstensi (jpg/png)
-            file_name = f"{prefix}_{user_id}_{base64_string[-10:]}.{ext}" # nama file unik
-            return ContentFile(base64.b64decode(imgstr), name=file_name)
-        except Exception as e:
-            print(f"Error decoding base64: {e}")
-            return None
-    return None
 
 # ============================================
 # STANDARD VIEWS (Tidak Diubah)
@@ -140,6 +120,12 @@ def iklan_delete_view(request, id):
 # FLUTTER API ENDPOINTS 
 # ======================
 
+# ... import lainnya sama ...
+
+# ======================
+# FLUTTER API ENDPOINTS 
+# ======================
+
 @csrf_exempt
 def flutter_api_list_iklan(request):
     if request.method != 'GET':
@@ -170,7 +156,6 @@ def flutter_api_list_iklan(request):
     
     return JsonResponse({'status': 'success', 'iklan_list': data})
 
-
 @csrf_exempt
 def flutter_api_landing_page_iklan(request):
     if request.method != 'GET':
@@ -192,7 +177,6 @@ def flutter_api_landing_page_iklan(request):
 
     return JsonResponse({'status': 'success', 'iklan_list': data})
 
-
 @csrf_exempt
 def flutter_api_create_iklan(request):
     if request.method != 'POST':
@@ -208,33 +192,27 @@ def flutter_api_create_iklan(request):
         return JsonResponse({'status': 'error', 'message': 'User profile not found'}, status=403)
 
     try:
-        data = {}
-        files = {}
-
+        data = request.POST
         if request.content_type and 'application/json' in request.content_type:
             try:
                 payload = json.loads(request.body.decode('utf-8') or '{}')
-                
-                for k, v in payload.items():
-                    if k != 'banner': 
-                        data[k] = v
-                
-                if 'banner' in payload and payload['banner']:
-                    image_file = decode_base64_image(payload['banner'], request.user.id, "iklan")
-                    if image_file:
-                        files['banner'] = image_file
-
             except json.JSONDecodeError:
                 return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
-        
-        else:
-            data = request.POST.copy()
-            files = request.FILES.copy()
 
-        try:
-            form = IklanForm(data, files, user=request.user)
-        except TypeError:
-            form = IklanForm(data, files)
+            if isinstance(payload, dict) and isinstance(payload.get('banner'), str):
+                payload.pop('banner', None)
+
+            qd = QueryDict('', mutable=True)
+            if isinstance(payload, dict):
+                for k, v in payload.items():
+                    if v is None: continue
+                    if isinstance(v, list):
+                        qd.setlist(k, [str(i) for i in v])
+                    else:
+                        qd[k] = str(v)
+            data = qd
+
+        form = IklanForm(data, request.FILES, user=request.user)
         
         if form.is_valid():
             iklan = form.save(commit=False)
@@ -244,14 +222,14 @@ def flutter_api_create_iklan(request):
                  return JsonResponse({'status': 'error', 'message': 'Anda tidak bisa membuat iklan untuk lapangan orang lain'}, status=403)
 
             iklan.save()
-            
             return JsonResponse({
                 'status': 'success',
-                'message': 'Iklan berhasil dibuat',
+                'message': 'Iklan berhasil ditambahkan',
                 'iklan': {
                     'pk': iklan.pk,
                     'judul': iklan.judul,
-                    'lapangan': iklan.lapangan.nama
+                    'lapangan': iklan.lapangan.nama,
+                    'banner': iklan.banner.url if iklan.banner else None
                 }
             })
         else:
@@ -262,12 +240,10 @@ def flutter_api_create_iklan(request):
             return JsonResponse({'status': 'error', 'message': '; '.join(error_messages)}, status=400)
 
     except Exception as e:
-        print(f"SERVER ERROR (Create): {str(e)}") 
-        return JsonResponse({'status': 'error', 'message': f'Terjadi kesalahan server: {str(e)}'}, status=500)
-
+        return JsonResponse({'status': 'error', 'message': f'Terjadi kesalahan: {str(e)}'}, status=500)
 
 @csrf_exempt
-def flutter_api_update_iklan(request, id_iklan):
+def flutter_api_update_iklan(request, id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
@@ -275,39 +251,39 @@ def flutter_api_update_iklan(request, id_iklan):
         return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
 
     try:
-        iklan = get_object_or_404(Iklan, pk=id_iklan)
+        if request.user.userprofile.role != 'penyedia':
+            return JsonResponse({'status': 'error', 'message': 'Only penyedia can update iklan'}, status=403)
+    except AttributeError:
+        return JsonResponse({'status': 'error', 'message': 'User profile not found'}, status=403)
+
+    try:
+        iklan = get_object_or_404(Iklan, pk=id)
 
         if iklan.host != request.user:
             return JsonResponse({'status': 'error', 'message': 'You do not own this iklan'}, status=403)
 
-        data = {}
-        files = {}
-
+        data = request.POST
+        
         if request.content_type and 'application/json' in request.content_type:
             try:
                 payload = json.loads(request.body.decode('utf-8') or '{}')
-                
-                for k, v in payload.items():
-                    if k != 'banner':
-                        data[k] = v
-                
-                if 'banner' in payload and payload['banner']:
-                    if "base64," in payload['banner']:
-                        image_file = decode_base64_image(payload['banner'], request.user.id, "iklan_update")
-                        if image_file:
-                            files['banner'] = image_file
-            
             except json.JSONDecodeError:
                 return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
-        
-        else:
-            data = request.POST.copy()
-            files = request.FILES.copy()
 
-        try:
-            form = IklanForm(data, files, instance=iklan, user=request.user)
-        except TypeError:
-            form = IklanForm(data, files, instance=iklan)
+            if isinstance(payload, dict) and isinstance(payload.get('banner'), str):
+                payload.pop('banner', None)
+
+            qd = QueryDict('', mutable=True)
+            if isinstance(payload, dict):
+                for k, v in payload.items():
+                    if v is None: continue
+                    if isinstance(v, list):
+                        qd.setlist(k, [str(i) for i in v])
+                    else:
+                        qd[k] = str(v)
+            data = qd
+
+        form = IklanForm(data, request.FILES, instance=iklan, user=request.user)
         
         if form.is_valid():
             updated_iklan = form.save(commit=False)
@@ -322,6 +298,7 @@ def flutter_api_update_iklan(request, id_iklan):
                 'iklan': {
                     'pk': updated_iklan.pk,
                     'judul': updated_iklan.judul,
+                    'banner': updated_iklan.banner.url if updated_iklan.banner else None
                 }
             })
         else:
@@ -332,12 +309,10 @@ def flutter_api_update_iklan(request, id_iklan):
             return JsonResponse({'status': 'error', 'message': '; '.join(error_messages)}, status=400)
 
     except Exception as e:
-        print(f"SERVER ERROR (Update): {str(e)}")
         return JsonResponse({'status': 'error', 'message': f'Error: {str(e)}'}, status=500)
 
-
 @csrf_exempt
-def flutter_api_delete_iklan(request, id_iklan):
+def flutter_api_delete_iklan(request, id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
@@ -345,7 +320,7 @@ def flutter_api_delete_iklan(request, id_iklan):
         return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
 
     try:
-        iklan = get_object_or_404(Iklan, pk=id_iklan)
+        iklan = get_object_or_404(Iklan, pk=id)
         
         if iklan.host != request.user:
             return JsonResponse({'status': 'error', 'message': 'You do not own this iklan'}, status=403)
