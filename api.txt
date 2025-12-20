@@ -194,11 +194,13 @@ Catatan cepat:
 API Artikel (Flutter)
 Base URL: http://<host>/artikel/api/
 Endpoint Flutter sudah @csrf_exempt; cukup kirim cookie `sessionid` jika butuh auth penyedia.
+Prioritas gambar: `url_thumbnail` (jika ada) → `thumbnail` media → default `https://images.pexels.com/photos/17724042/pexels-photo-17724042.jpeg`.
+Author diset server-side dari sesi; klien tidak boleh mengirim author.
 
 1) List artikel publik
 - GET /json/
 - Response: array berita (tanpa wrapper) berisi `{id, title, content, kategori, thumbnail_url, created_at, author}`.
-  `thumbnail_url` akan menggunakan default jika tidak ada gambar.
+- `thumbnail_url` akan menggunakan default jika tidak ada gambar.
 
 2) Buat artikel (role penyedia, login)
 - POST /flutter/create/
@@ -206,7 +208,8 @@ Endpoint Flutter sudah @csrf_exempt; cukup kirim cookie `sessionid` jika butuh a
   {
     "title": "Judul",
     "content": "Konten berita",
-    "kategori": "Futsal|Basket|Badminton|Tenis|Padel|Komunitas|Tips"
+    "kategori": "Futsal|Basket|Badminton|Tenis|Padel|Komunitas|Tips",
+    "url_thumbnail": "https://example.com/thumb.jpg" // opsional
   }
 - Response sukses (201):
   { "status": "success", "id": <int>, "news": {id, title, ...} }
@@ -228,10 +231,16 @@ Endpoint Flutter sudah @csrf_exempt; cukup kirim cookie `sessionid` jika butuh a
 5) Update artikel (role penyedia, owner)
 - POST /flutter/update/<int:id>/
 - Body (JSON, optional fields):
-  { "title": "...", "content": "...", "kategori": "..." }
+  { "title": "...", "content": "...", "kategori": "...", "url_thumbnail": "..." }
 - Response sukses:
   { "status": "success", "news": { ... } }
 - Error: 401 jika belum login, 403 jika bukan pemilik/penyedia, 404 jika id tidak ada, 400 jika title/content kosong.
+
+6) List artikel milik user login (umum, fetchMyNews)
+- GET /my-news/
+- Response:
+  { "status": "success", "news": [ ...hanya milik request.user... ] }
+- Error: 401 jika belum login.
 
 API Iklan (Flutter)
 Base URL: http://<host>/api/iklan/
