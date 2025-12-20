@@ -189,3 +189,32 @@ Semua endpoint butuh cookie `sessionid` user login. Endpoint Flutter di-backend 
 Catatan cepat:
 - Kirim waktu dengan format "HH:MM". Durasi dihitung dalam jam penuh.
 - Pastikan kirim cookie `sessionid` agar sesi dikenali.
+
+
+API Artikel (Flutter)
+Base URL: http://<host>/artikel/api/
+Endpoint Flutter sudah @csrf_exempt; cukup kirim cookie `sessionid` jika butuh auth penyedia.
+
+1) List artikel publik
+- GET /json/
+- Response: array berita (tanpa wrapper) berisi `{id, title, content, kategori, thumbnail, created_at, author}`.
+
+2) Buat artikel (role penyedia, login)
+- POST /flutter/create/
+- Body (JSON):
+  {
+    "title": "Judul",
+    "content": "Konten berita",
+    "kategori": "Futsal|Basket|Badminton|Tenis|Padel|Komunitas|Tips"
+  }
+- Response sukses (201):
+  { "status": "success", "id": <int>, "news": {id, title, ...} }
+- Error: 401 jika belum login, 403 jika bukan penyedia, 400 jika field kosong/JSON invalid.
+
+3) Hapus artikel (role penyedia, owner)
+- POST /flutter/delete/<int:id>/
+- Hanya author penyedia yang boleh menghapus.
+- Response sukses:
+  { "status": "success" }
+- Error: 404 jika tidak ditemukan, 403 jika bukan pemilik/penyedia.
+
