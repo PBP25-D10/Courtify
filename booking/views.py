@@ -310,6 +310,7 @@ def api_cancel_booking(request, booking_id):
     })
 
 
+@csrf_exempt
 @login_required
 def flutter_api_booking_list(request):
     if request.method != 'GET':
@@ -318,6 +319,7 @@ def flutter_api_booking_list(request):
     return JsonResponse({'success': True, 'bookings': [_serialize_booking(b) for b in bookings]})
 
 
+@csrf_exempt
 @login_required
 def flutter_api_create_booking(request, id_lapangan):
     if request.method != 'POST':
@@ -355,6 +357,7 @@ def flutter_api_create_booking(request, id_lapangan):
         return _json_error(str(exc), status=400)
 
 
+@csrf_exempt
 @login_required
 def flutter_api_cancel_booking(request, booking_id):
     if request.method != 'POST':
@@ -366,6 +369,7 @@ def flutter_api_cancel_booking(request, booking_id):
     return JsonResponse({'success': True, 'message': 'Booking dibatalkan', 'booking_id': booking.id})
 
 
+@csrf_exempt
 @login_required
 def flutter_api_confirm_booking(request, booking_id):
     if request.method != 'POST':
