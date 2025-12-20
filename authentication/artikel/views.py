@@ -6,7 +6,6 @@ from .forms import NewsForm
 
 @login_required
 def news_list_view(request):
-    # Check user role
     try:
         user_profile = request.user.userprofile
         if user_profile.role == 'penyedia':
@@ -14,15 +13,12 @@ def news_list_view(request):
             form = NewsForm()
             return render(request, 'artikel/berita_list_owner.html', {'news_list': news_list, 'form': form})
         else:
-            # Regular user - redirect to public list
             return redirect('artikel:news_public_list')
     except:
-        # If no profile, treat as regular user
         return redirect('artikel:news_public_list')
 
 @login_required
 def news_create_view(request):
-    # Check if user is penyedia
     try:
         user_profile = request.user.userprofile
         if user_profile.role != 'penyedia':
@@ -44,7 +40,6 @@ def news_create_view(request):
 def news_update_view(request, pk):
     news = get_object_or_404(News, pk=pk)
 
-    # Check if user is penyedia and owns the news
     try:
         user_profile = request.user.userprofile
         if user_profile.role != 'penyedia' or news.author != request.user:
@@ -64,7 +59,6 @@ def news_update_view(request, pk):
 def news_delete_view(request, pk):
     news = get_object_or_404(News, pk=pk)
 
-    # Check if user is penyedia and owns the news
     try:
         user_profile = request.user.userprofile
         if user_profile.role != 'penyedia' or news.author != request.user:
