@@ -16,7 +16,7 @@ class News(models.Model):
     title = models.CharField(max_length=200)
     content = models.TextField()
     kategori = models.CharField(max_length=50, choices=KATEGORI_CHOICES)
-    thumbnail = models.ImageField(upload_to='thumbnails/')
+    thumbnail = models.ImageField(upload_to='thumbnails/', blank=True, null=True)
     url_thumbnail = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
