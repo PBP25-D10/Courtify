@@ -120,6 +120,12 @@ def iklan_delete_view(request, id):
 # FLUTTER API ENDPOINTS 
 # ======================
 
+# ... import lainnya sama ...
+
+# ======================
+# FLUTTER API ENDPOINTS 
+# ======================
+
 @csrf_exempt
 def flutter_api_list_iklan(request):
     if request.method != 'GET':
@@ -150,7 +156,6 @@ def flutter_api_list_iklan(request):
     
     return JsonResponse({'status': 'success', 'iklan_list': data})
 
-
 @csrf_exempt
 def flutter_api_landing_page_iklan(request):
     if request.method != 'GET':
@@ -172,7 +177,6 @@ def flutter_api_landing_page_iklan(request):
 
     return JsonResponse({'status': 'success', 'iklan_list': data})
 
-
 @csrf_exempt
 def flutter_api_create_iklan(request):
     if request.method != 'POST':
@@ -189,7 +193,6 @@ def flutter_api_create_iklan(request):
 
     try:
         data = request.POST
-
         if request.content_type and 'application/json' in request.content_type:
             try:
                 payload = json.loads(request.body.decode('utf-8') or '{}')
@@ -202,8 +205,7 @@ def flutter_api_create_iklan(request):
             qd = QueryDict('', mutable=True)
             if isinstance(payload, dict):
                 for k, v in payload.items():
-                    if v is None:
-                        continue
+                    if v is None: continue
                     if isinstance(v, list):
                         qd.setlist(k, [str(i) for i in v])
                     else:
@@ -220,7 +222,6 @@ def flutter_api_create_iklan(request):
                  return JsonResponse({'status': 'error', 'message': 'Anda tidak bisa membuat iklan untuk lapangan orang lain'}, status=403)
 
             iklan.save()
-            
             return JsonResponse({
                 'status': 'success',
                 'message': 'Iklan berhasil ditambahkan',
@@ -242,7 +243,7 @@ def flutter_api_create_iklan(request):
         return JsonResponse({'status': 'error', 'message': f'Terjadi kesalahan: {str(e)}'}, status=500)
 
 @csrf_exempt
-def flutter_api_update_iklan(request, id_iklan):
+def flutter_api_update_iklan(request, id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
@@ -256,13 +257,13 @@ def flutter_api_update_iklan(request, id_iklan):
         return JsonResponse({'status': 'error', 'message': 'User profile not found'}, status=403)
 
     try:
-        iklan = get_object_or_404(Iklan, pk=id_iklan)
+        iklan = get_object_or_404(Iklan, pk=id)
 
         if iklan.host != request.user:
             return JsonResponse({'status': 'error', 'message': 'You do not own this iklan'}, status=403)
 
         data = request.POST
-
+        
         if request.content_type and 'application/json' in request.content_type:
             try:
                 payload = json.loads(request.body.decode('utf-8') or '{}')
@@ -275,8 +276,7 @@ def flutter_api_update_iklan(request, id_iklan):
             qd = QueryDict('', mutable=True)
             if isinstance(payload, dict):
                 for k, v in payload.items():
-                    if v is None:
-                        continue
+                    if v is None: continue
                     if isinstance(v, list):
                         qd.setlist(k, [str(i) for i in v])
                     else:
@@ -312,7 +312,7 @@ def flutter_api_update_iklan(request, id_iklan):
         return JsonResponse({'status': 'error', 'message': f'Error: {str(e)}'}, status=500)
 
 @csrf_exempt
-def flutter_api_delete_iklan(request, id_iklan):
+def flutter_api_delete_iklan(request, id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
@@ -320,15 +320,8 @@ def flutter_api_delete_iklan(request, id_iklan):
         return JsonResponse({'status': 'error', 'message': 'Not authenticated'}, status=401)
 
     try:
-        if request.user.userprofile.role != 'penyedia':
-            return JsonResponse({'status': 'error', 'message': 'Only penyedia can delete iklan'}, status=403)
-    except AttributeError:
-        return JsonResponse({'status': 'error', 'message': 'User profile not found'}, status=403)
-    
-    try:
-        iklan = get_object_or_404(Iklan, pk=id_iklan)
+        iklan = get_object_or_404(Iklan, pk=id)
         
-        # Check ownership
         if iklan.host != request.user:
             return JsonResponse({'status': 'error', 'message': 'You do not own this iklan'}, status=403)
         
