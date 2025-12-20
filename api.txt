@@ -153,6 +153,31 @@ Catatan cepat:
 - Format waktu dikirim sebagai string "HH:MM:SS".
 
 
+API Wishlist (Flutter)
+Base URL: http://<host>/wishlist/api/
+Semua endpoint butuh cookie `sessionid` user login; hanya menampilkan wishlist milik user tersebut.
+
+1) List wishlist user
+- GET /list/
+- Response:
+  { "status": "success", "wishlist": [ {id, lapangan:{id_lapangan, nama, kategori, lokasi, harga_per_jam, thumbnail}, created_at}, ... ] }
+
+2) Toggle wishlist (add/remove)
+- POST /toggle/<uuid:lapangan_id>/
+- Jika belum ada, ditambahkan; jika sudah ada, dihapus.
+- Response:
+  { "status": "success", "added": true|false, "message": "..." }
+
+3) Delete by wishlist id
+- POST /delete/<int:wishlist_id>/
+- Response:
+  { "status": "success", "message": "Deleted" }
+
+4) Check status
+- GET /check/<uuid:lapangan_id>/
+- Response:
+  { "status": "success", "in_wishlist": true|false }
+  
 API Booking (Flutter)
 Base URL: http://<host>/booking/api/
 Semua endpoint butuh cookie `sessionid` user login. Endpoint Flutter di-backend sudah @csrf_exempt sehingga tidak perlu header CSRF selama cookie sessionid dikirim.
