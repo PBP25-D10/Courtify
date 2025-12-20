@@ -1,0 +1,191 @@
+API Authentication (Flutter)
+Base URL: http://<host>/auth/api/flutter/auth/
+
+1) Register
+- Endpoint: /register/
+- Method: POST
+- Body (JSON):
+  {
+    "username": "jane",
+    "password": "rahasia123",
+    "email": "jane@example.com",
+    "role": "user" | "penyedia",
+    "first_name": "Jane",       // optional
+    "last_name": "Doe"          // optional
+  }
+- Respons sukses (201):
+  {
+    "status": true,
+    "message": "Registrasi berhasil!",
+    "user": {
+      "username": "jane",
+      "email": "jane@example.com",
+      "role": "user"
+    }
+  }
+- Error umum: 400 (field kosong/role tidak valid/username sudah dipakai).
+
+2) Login
+- Endpoint: /login/
+- Method: POST
+- Body (JSON):
+  {
+    "username": "jane",
+    "password": "rahasia123"
+  }
+- Respons sukses (200):
+  {
+    "status": true,
+    "message": "Login berhasil!",
+    "sessionid": "<session key>",
+    "user": {
+      "username": "jane",
+      "email": "jane@example.com",
+      "first_name": "",
+      "last_name": "",
+      "role": "user"
+    }
+  }
+- Catatan: Django juga mengirim cookie `sessionid`; simpan cookie itu di client Flutter (mis. dengan cookie jar) agar request berikutnya otomatis terautentikasi.
+- Error umum: 400 (field kosong), 401 (username/password salah).
+
+3) Cek sesi aktif
+- Endpoint: /me/
+- Method: GET
+- Header: sertakan cookie `sessionid` dari login.
+- Respons sukses (200):
+  {
+    "status": true,
+    "message": "Sesi masih aktif.",
+    "user": {
+      "username": "jane",
+      "email": "jane@example.com",
+      "first_name": "",
+      "last_name": "",
+      "role": "user"
+    }
+  }
+- Error: 401 jika belum login atau sesi kedaluwarsa.
+
+4) Logout
+- Endpoint: /logout/
+- Method: POST
+- Header: sertakan cookie `sessionid`.
+- Respons sukses (200):
+  {
+    "status": true,
+    "message": "Logout berhasil, sampai jumpa jane!"
+  }
+- Error: 401 jika belum login.
+
+Cara pakai cepat (curl contoh):
+- Register: curl -X POST http://127.0.0.1:8000/auth/api/flutter/auth/register/ -H "Content-Type: application/json" -d "{\"username\":\"jane\",\"password\":\"rahasia123\",\"email\":\"jane@example.com\",\"role\":\"user\"}"
+- Login (simpan cookie): curl -X POST http://127.0.0.1:8000/auth/api/flutter/auth/login/ -H "Content-Type: application/json" -c cookies.txt -d "{\"username\":\"jane\",\"password\":\"rahasia123\"}"
+- Cek sesi: curl http://127.0.0.1:8000/auth/api/flutter/auth/me/ -b cookies.txt
+- Logout: curl -X POST http://127.0.0.1:8000/auth/api/flutter/auth/logout/ -b cookies.txt
+
+
+API Lapangan (Flutter)
+Base URL: http://<host>/manajemen/api/
+Gunakan cookie `sessionid` dari API Auth untuk endpoint yang butuh login penyedia.
+
+1) List lapangan milik penyedia (protected)
+- GET /list/
+- Auth: cookie sessionid pengguna ber-role penyedia.
+- Response sukses:
+  {
+    "status": "success",
+    "lapangan_list": [ {id, id_lapangan, nama, kategori, lokasi, harga_per_jam, foto, jam_buka, jam_tutup, deskripsi}, ... ]
+  }
+- Error: 401 jika belum login, 403 jika bukan penyedia.
+
+2) List lapangan publik (filter optional)
+- GET /public/?kategori=&lokasi=&harga_min=&harga_max=
+- Response sukses sama seperti (1) tanpa butuh login.
+
+3) Detail lapangan publik
+- GET /detail/<uuid:id_lapangan>/
+- Response:
+  { "status": "success", "lapangan": { ...data lapangan... } }
+
+4) List lapangan milik penyedia tertentu (publik)
+- GET /penyedia/<penyedia_id>/
+- Response: array lapangan milik penyedia tersebut (tanpa wrapper status, cocok untuk jsonDecode list).
+
+5) Buat lapangan (protected)
+- POST /create/
+- Body: form-data atau JSON
+  {
+    "nama": "...",
+    "deskripsi": "...",
+    "kategori": "futsal|basket|badminton|tenis|voli|lainnya",
+    "lokasi": "...",
+    "harga_per_jam": 100000,
+    "jam_buka": "08:00",
+    "jam_tutup": "22:00",
+    "foto": <file> (hanya jika form-data)
+  }
+- Response sukses:
+  { "status": "success", "message": "Lapangan berhasil ditambahkan", "lapangan": { ... } }
+
+6) Update lapangan (protected, owner only)
+- POST /update/<uuid:id_lapangan>/
+- Body: form-data atau JSON (sama seperti create; jika kirim string URL foto, akan diabaikan).
+- Response sukses:
+  { "status": "success", "message": "Lapangan berhasil diperbarui", "lapangan": { ... } }
+
+7) Hapus lapangan (protected, owner only)
+- POST /delete/<uuid:id_lapangan>/
+- Response sukses:
+  { "status": "success", "message": "Lapangan berhasil dihapus" }
+
+8) Upload foto saja (protected, owner only)
+- POST /upload-foto/<uuid:id_lapangan>/ dengan form-data field `foto`.
+- Response:
+ { "status": "success", "message": "Foto berhasil diupload", "foto": "<url>" }
+
+Catatan cepat:
+- Semua endpoint protected membutuhkan cookie `sessionid` milik penyedia.
+- Format waktu dikirim sebagai string "HH:MM:SS".
+
+
+API Booking (Flutter)
+Base URL: http://<host>/booking/api/
+Semua endpoint butuh cookie `sessionid` user login.
+
+1) List booking user
+- GET /flutter/bookings/
+- Response:
+  { "success": true, "bookings": [ {id, lapangan:{...}, tanggal, jam_mulai, jam_selesai, total_harga, status, created_at}, ... ] }
+
+2) Buat booking
+- POST /flutter/bookings/create/<uuid:id_lapangan>/
+- Body: JSON atau form-data
+  {
+    "tanggal": "2025-12-25",
+    "jam_mulai": "10:00",
+    "jam_selesai": "12:00"
+  }
+- Server menghitung total_harga dari durasi * harga_per_jam.
+- Response sukses (201):
+  { "success": true, "booking": { ...booking... } }
+
+3) Batalkan booking (pemilik booking)
+- POST /flutter/bookings/cancel/<int:booking_id>/
+- Response:
+  { "success": true, "message": "Booking dibatalkan", "booking_id": <id> }
+
+4) Konfirmasi booking (pemilik lapangan)
+- POST /flutter/bookings/confirm/<int:booking_id>/
+- Hanya pemilik lapangan yang boleh; status harus pending.
+- Response:
+  { "success": true, "message": "Booking dikonfirmasi", "booking_id": <id> }
+
+5) Cek jam yang sudah terpakai
+- GET /flutter/booked/<uuid:id_lapangan>/<YYYY-MM-DD>/
+- Response:
+  { "success": true, "jam_terpakai": [10,11,12] }  // list jam integer
+
+Catatan cepat:
+- Kirim waktu dengan format "HH:MM". Durasi dihitung dalam jam penuh.
+- Pastikan kirim cookie `sessionid` agar sesi dikenali.

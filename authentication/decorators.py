@@ -1,4 +1,3 @@
-# accounts/decorators.py
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import user_passes_test
@@ -6,25 +5,17 @@ from django.contrib.auth.decorators import user_passes_test
 def role_required(allowed_roles=[]):
     def decorator(view_func):
         def wrapper(request, *args, **kwargs):
-            # Jika user tidak login, redirect ke halaman login
             if not request.user.is_authenticated:
-                return redirect('authentication:login_page') # Ganti dengan nama URL login Anda
+                return redirect('authentication:login_page')
 
-            # Cek apakah user memiliki peran yang diizinkan
             try:
-                # Ambil role dari UserProfile yang terhubung
                 user_role = request.user.userprofile.role
                 if user_role in allowed_roles:
-                    # Jika diizinkan, lanjutkan ke view asli
                     return view_func(request, *args, **kwargs)
                 else:
-                    # Jika tidak diizinkan, lempar error Permission Denied (403 Forbidden)
-                    # atau redirect ke halaman lain
-                    # raise PermissionDenied
-                    return redirect('authentication:dashboard') # Redirect ke dashboard umum
+                    return redirect('authentication:dashboard')
             except AttributeError:
-                # Handle jika user tidak punya UserProfile (seharusnya tidak terjadi)
-                return redirect('authentication:dashboard') # atau halaman error
+                return redirect('authentication:dashboard')
 
         return wrapper
     return decorator

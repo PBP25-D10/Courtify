@@ -1,21 +1,68 @@
-# booking/views.py
-
+from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
+from django.db.models import Q
+from django.views.decorators.csrf import csrf_exempt
 from .models import Booking
-from .models import Lapangan
+from lapangan.models import Lapangan
 from .forms import BookingForm
 
-from django.db.models import Q
+
+def _json_error(message, status=400):
+    return JsonResponse({'success': False, 'message': message}, status=status)
 
 
-# Dashboard Booking
+def _serialize_lapangan(lap):
+    return {
+        'id_lapangan': str(lap.id_lapangan),
+        'nama': lap.nama,
+        'kategori': lap.kategori,
+        'lokasi': lap.lokasi,
+        'harga_per_jam': int(lap.harga_per_jam) if lap.harga_per_jam else 0,
+        'jam_buka': str(lap.jam_buka),
+        'jam_tutup': str(lap.jam_tutup),
+        'foto_url': lap.foto.url if lap.foto else None,
+    }
+
+
+def _serialize_booking(booking):
+    return {
+        'id': int(booking.id),
+        'lapangan': _serialize_lapangan(booking.lapangan) if booking.lapangan else None,
+        'tanggal': str(booking.tanggal),
+        'jam_mulai': str(booking.jam_mulai),
+        'jam_selesai': str(booking.jam_selesai),
+        'total_harga': float(booking.total_harga) if booking.total_harga else 0.0,
+        'status': str(booking.status),
+        'created_at': booking.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+    }
+
+
+def _compute_total_harga(lapangan, jam_mulai_str, jam_selesai_str):
+    try:
+        start = datetime.strptime(jam_mulai_str, "%H:%M").time()
+        end = datetime.strptime(jam_selesai_str, "%H:%M").time()
+    except ValueError:
+        return None
+    duration = datetime.combine(datetime.today(), end) - datetime.combine(datetime.today(), start)
+    hours = max(int(duration.total_seconds() // 3600), 0)
+    return lapangan.harga_per_jam * hours
+
+
 @login_required
 def booking_dashboard_view(request):
     bookings = Booking.objects.filter(user=request.user).order_by('-created_at')[:5]
     lapangan_list = Lapangan.objects.all().order_by('nama')[:5]
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+        data = {
+            'status': 'success',
+            'bookings': [_serialize_booking(b) for b in bookings],
+            'lapangan_list': [_serialize_lapangan(l) for l in lapangan_list]
+        }
+        return JsonResponse(data)
 
     return render(request, 'booking/dashboard.html', {
         'bookings': bookings,
@@ -23,8 +70,6 @@ def booking_dashboard_view(request):
     })
 
 
-
-# List Semua Booking (bisa untuk admin atau penyedia)
 @login_required
 def booking_list_view(request):
     lapangan_list = Lapangan.objects.all().order_by('nama')
@@ -35,9 +80,7 @@ def booking_list_view(request):
     harga_max = request.GET.get('harga_max')
 
     if search:
-        lapangan_list = lapangan_list.filter(
-            Q(nama__icontains=search) | Q(lokasi__icontains=search)
-        )
+        lapangan_list = lapangan_list.filter(Q(nama__icontains=search) | Q(lokasi__icontains=search))
     if kategori:
         lapangan_list = lapangan_list.filter(kategori__icontains=kategori)
     if harga_min:
@@ -77,18 +120,13 @@ def booking_create_view(request, id_lapangan=None):
                 booking.lapangan = lapangan_terpilih
             booking.save()
 
-            # TARO DI SINI (di dalam if form.is_valid())
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                # kalau request-nya AJAX
                 return JsonResponse({'success': True})
-            
-            # kalau bukan AJAX (misal user submit form biasa)
+
             messages.success(request, 'Booking berhasil dibuat!')
             return redirect('booking:booking_dashboard')
-        else:
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'errors': form.errors})
-
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'errors': form.errors})
     else:
         initial = {}
         if lapangan_terpilih:
@@ -103,10 +141,8 @@ def booking_create_view(request, id_lapangan=None):
     })
 
 
-# Update Booking
 @login_required
 def update_booking_view(request, pk):
-    """Mengedit booking tertentu"""
     booking = get_object_or_404(Booking, pk=pk, user=request.user)
     if request.method == 'POST':
         form = BookingForm(request.POST, instance=booking)
@@ -126,7 +162,7 @@ def update_booking_view(request, pk):
             messages.success(request, 'Booking berhasil diperbarui!')
             return redirect('booking:booking_dashboard')
 
-        elif request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'errors': form.errors}, status=400)
     else:
         form = BookingForm(instance=booking)
@@ -134,10 +170,8 @@ def update_booking_view(request, pk):
     return render(request, 'booking/booking_form.html', {'form': form})
 
 
-# Batalkan Booking
 @login_required
 def cancel_booking_view(request, pk):
-    """Membatalkan booking"""
     booking = get_object_or_404(Booking, pk=pk, user=request.user)
     booking.status = 'cancelled'
     booking.save()
@@ -152,56 +186,7 @@ def cancel_booking_view(request, pk):
     messages.warning(request, 'Booking telah dibatalkan.')
     return redirect('booking:booking_dashboard')
 
-# Helper function untuk serialize Lapangan
-def serialize_lapangan(lap):
-    return {
-        'id_lapangan': str(lap.id_lapangan), # Pastikan ID jadi string (aman untuk UUID/Int)
-        'nama': lap.nama,
-        'kategori': lap.kategori,
-        'lokasi': lap.lokasi,
-        # FORCE INT: Mengubah Decimal/String jadi Integer murni
-        'harga_per_jam': int(lap.harga_per_jam) if lap.harga_per_jam else 0,
-        'jam_buka': str(lap.jam_buka),
-        'jam_tutup': str(lap.jam_tutup),
-        'foto_url': lap.foto.url if lap.foto else None,
-    }
 
-# Helper function untuk serialize Booking
-def serialize_booking(booking):
-    return {
-        'id': int(booking.id), # Force Integer
-        # PENTING: Gunakan serialize_lapangan agar struktur konsisten!
-        'lapangan': serialize_lapangan(booking.lapangan) if booking.lapangan else None,
-        'tanggal': str(booking.tanggal),
-        'jam_mulai': str(booking.jam_mulai),
-        'jam_selesai': str(booking.jam_selesai),
-        # FORCE FLOAT: Pastikan harga jadi angka desimal (e.g. 150000.0)
-        'total_harga': float(booking.total_harga) if booking.total_harga else 0.0,
-        'status': str(booking.status),
-        'created_at': booking.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-    }
-
-# 1. Update Dashboard View
-@login_required
-def booking_dashboard_view(request):
-    bookings = Booking.objects.filter(user=request.user).order_by('-created_at')[:5]
-    lapangan_list = Lapangan.objects.all().order_by('nama')[:5]
-
-    # Cek apakah request dari Flutter/AJAX menginginkan JSON
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
-        data = {
-            'status': 'success',
-            'bookings': [serialize_booking(b) for b in bookings],
-            'lapangan_list': [serialize_lapangan(l) for l in lapangan_list]
-        }
-        return JsonResponse(data)
-
-    return render(request, 'booking/dashboard.html', {
-        'bookings': bookings,
-        'lapangan_list': lapangan_list
-    })
-
-# 2. Update Booking User List View (List Semua Booking User)
 @login_required
 def booking_user_list_view(request):
     bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
@@ -209,7 +194,7 @@ def booking_user_list_view(request):
     if request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
         data = {
             'status': 'success',
-            'bookings': [serialize_booking(b) for b in bookings]
+            'bookings': [_serialize_booking(b) for b in bookings]
         }
         return JsonResponse(data)
 
@@ -218,7 +203,6 @@ def booking_user_list_view(request):
 
 @login_required
 def confirm_booking_view(request, pk):
-    """Menerima booking (ubah status ke confirmed)"""
     booking = get_object_or_404(Booking, pk=pk)
     if request.user != booking.lapangan.owner:
         return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=403)
@@ -236,24 +220,25 @@ def confirm_booking_view(request, pk):
 
         messages.success(request, 'Booking telah dikonfirmasi.')
         return redirect('lapangan:manajemen_dashboard')
-    else:
-        return JsonResponse({'success': False, 'message': 'Booking sudah diproses.'}, status=400)
+    return JsonResponse({'success': False, 'message': 'Booking sudah diproses.'}, status=400)
+
 
 @login_required
 def get_booked_hours(request, lapangan_id, tanggal):
     bookings = Booking.objects.filter(
         lapangan_id=lapangan_id,
         tanggal=tanggal,
-        status__in=['pending', 'confirmed']  # include confirmed to block hours
+        status__in=['pending', 'confirmed']
     )
 
     jam_terpakai = []
-    for b in bookings:
-        jam_terpakai.extend(range(b.jam_mulai.hour, b.jam_selesai.hour))
+    for booking in bookings:
+        jam_terpakai.extend(range(booking.jam_mulai.hour, booking.jam_selesai.hour))
 
     jam_terpakai = sorted(set(jam_terpakai))
 
     return JsonResponse({'jam_terpakai': jam_terpakai})
+
 
 @login_required
 def api_booking_dashboard(request):
@@ -262,9 +247,10 @@ def api_booking_dashboard(request):
 
     return JsonResponse({
         'status': 'success',
-        'bookings': [serialize_booking(b) for b in bookings],
-        'lapangan_list': [serialize_lapangan(l) for l in lapangan_list],
+        'bookings': [_serialize_booking(b) for b in bookings],
+        'lapangan_list': [_serialize_lapangan(l) for l in lapangan_list],
     })
+
 
 @login_required
 def api_booking_user_list(request):
@@ -272,8 +258,9 @@ def api_booking_user_list(request):
 
     return JsonResponse({
         'status': 'success',
-        'bookings': [serialize_booking(b) for b in bookings],
+        'bookings': [_serialize_booking(b) for b in bookings],
     })
+
 
 @login_required
 def api_create_booking(request, id_lapangan):
@@ -286,6 +273,7 @@ def api_create_booking(request, id_lapangan):
         tanggal = request.POST.get('tanggal')
         jam_mulai = request.POST.get('jam_mulai')
         jam_selesai = request.POST.get('jam_selesai')
+        total_harga = _compute_total_harga(lapangan, jam_mulai, jam_selesai)
 
         booking = Booking.objects.create(
             user=request.user,
@@ -293,16 +281,18 @@ def api_create_booking(request, id_lapangan):
             tanggal=tanggal,
             jam_mulai=jam_mulai,
             jam_selesai=jam_selesai,
+            total_harga=total_harga,
             status='pending'
         )
 
         return JsonResponse({
             'success': True,
-            'booking': serialize_booking(booking)
+            'booking': _serialize_booking(booking)
         })
 
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)}, status=400)
+    except Exception as exc:
+        return JsonResponse({'success': False, 'message': str(exc)}, status=400)
+
 
 @login_required
 def api_cancel_booking(request, booking_id):
@@ -320,4 +310,93 @@ def api_cancel_booking(request, booking_id):
     })
 
 
+@login_required
+def flutter_api_booking_list(request):
+    if request.method != 'GET':
+        return _json_error('Method not allowed', status=405)
+    bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
+    return JsonResponse({'success': True, 'bookings': [_serialize_booking(b) for b in bookings]})
 
+
+@login_required
+def flutter_api_create_booking(request, id_lapangan):
+    if request.method != 'POST':
+        return _json_error('Method not allowed', status=405)
+
+    lapangan = get_object_or_404(Lapangan, id_lapangan=id_lapangan)
+
+    try:
+        if request.content_type and 'application/json' in request.content_type:
+            payload = json.loads(request.body.decode('utf-8') or '{}')
+            tanggal = payload.get('tanggal')
+            jam_mulai = payload.get('jam_mulai')
+            jam_selesai = payload.get('jam_selesai')
+        else:
+            tanggal = request.POST.get('tanggal')
+            jam_mulai = request.POST.get('jam_mulai')
+            jam_selesai = request.POST.get('jam_selesai')
+
+        total_harga = _compute_total_harga(lapangan, jam_mulai, jam_selesai)
+        if total_harga is None:
+            return _json_error('Format waktu tidak valid', status=400)
+
+        booking = Booking.objects.create(
+            user=request.user,
+            lapangan=lapangan,
+            tanggal=tanggal,
+            jam_mulai=jam_mulai,
+            jam_selesai=jam_selesai,
+            total_harga=total_harga,
+            status='pending'
+        )
+
+        return JsonResponse({'success': True, 'booking': _serialize_booking(booking)}, status=201)
+    except Exception as exc:
+        return _json_error(str(exc), status=400)
+
+
+@login_required
+def flutter_api_cancel_booking(request, booking_id):
+    if request.method != 'POST':
+        return _json_error('Method not allowed', status=405)
+
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+    booking.status = 'cancelled'
+    booking.save()
+    return JsonResponse({'success': True, 'message': 'Booking dibatalkan', 'booking_id': booking.id})
+
+
+@login_required
+def flutter_api_confirm_booking(request, booking_id):
+    if request.method != 'POST':
+        return _json_error('Method not allowed', status=405)
+
+    booking = get_object_or_404(Booking, id=booking_id)
+    if request.user != booking.lapangan.owner:
+        return _json_error('Unauthorized', status=403)
+
+    if booking.status != 'pending':
+        return _json_error('Booking sudah diproses.', status=400)
+
+    booking.status = 'confirmed'
+    booking.save()
+    return JsonResponse({'success': True, 'message': 'Booking dikonfirmasi', 'booking_id': booking.id})
+
+
+@csrf_exempt
+def flutter_api_get_booked_hours(request, lapangan_id, tanggal):
+    if request.method != 'GET':
+        return _json_error('Method not allowed', status=405)
+
+    bookings = Booking.objects.filter(
+        lapangan_id=lapangan_id,
+        tanggal=tanggal,
+        status__in=['pending', 'confirmed']
+    )
+
+    jam_terpakai = []
+    for booking in bookings:
+        jam_terpakai.extend(range(booking.jam_mulai.hour, booking.jam_selesai.hour))
+
+    jam_terpakai = sorted(set(jam_terpakai))
+    return JsonResponse({'success': True, 'jam_terpakai': jam_terpakai})
