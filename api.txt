@@ -88,6 +88,8 @@ Cara pakai cepat (curl contoh):
 API Lapangan (Flutter)
 Base URL: http://<host>/manajemen/api/
 Gunakan cookie `sessionid` dari API Auth untuk endpoint yang butuh login penyedia.
+Prioritas gambar: `url_thumbnail` (jika ada) → `foto` upload → default https://images.pexels.com/photos/17724042/pexels-photo-17724042.jpeg.
+Jam buka/tutup: kirim HH:MM atau HH:MM:SS (server memotong detik).
 
 1) List lapangan milik penyedia (protected)
 - GET /list/
@@ -98,6 +100,7 @@ Gunakan cookie `sessionid` dari API Auth untuk endpoint yang butuh login penyedi
     "lapangan_list": [ {id, id_lapangan, nama, kategori, lokasi, harga_per_jam, foto, jam_buka, jam_tutup, deskripsi}, ... ]
   }
 - Error: 401 jika belum login, 403 jika bukan penyedia.
+ - Catatan: hanya menampilkan lapangan milik akun penyedia tersebut (bukan semua).
 
 2) List lapangan publik (filter optional)
 - GET /public/?kategori=&lokasi=&harga_min=&harga_max=
@@ -123,14 +126,15 @@ Gunakan cookie `sessionid` dari API Auth untuk endpoint yang butuh login penyedi
     "harga_per_jam": 100000,
     "jam_buka": "08:00",
     "jam_tutup": "22:00",
-    "foto": <file> (hanya jika form-data)
+    "foto": <file> (opsional, hanya jika form-data),
+    "url_thumbnail": "https://example.com/thumb.jpg" (opsional)
   }
 - Response sukses:
   { "status": "success", "message": "Lapangan berhasil ditambahkan", "lapangan": { ... } }
 
 6) Update lapangan (protected, owner only)
 - POST /update/<uuid:id_lapangan>/
-- Body: form-data atau JSON (sama seperti create; jika kirim string URL foto, akan diabaikan).
+- Body: form-data atau JSON (sama seperti create; jika kirim string URL foto, akan diabaikan; boleh kirim url_thumbnail).
 - Response sukses:
   { "status": "success", "message": "Lapangan berhasil diperbarui", "lapangan": { ... } }
 
