@@ -13,7 +13,12 @@ from .forms import NewsForm
 
 def _serialize_news(request, news):
     default_thumbnail = "https://images.pexels.com/photos/17724042/pexels-photo-17724042.jpeg"
-    thumb = request.build_absolute_uri(news.thumbnail.url) if news.thumbnail else default_thumbnail
+    if news.url_thumbnail:
+        thumb = news.url_thumbnail
+    elif news.thumbnail:
+        thumb = request.build_absolute_uri(news.thumbnail.url)
+    else:
+        thumb = default_thumbnail
     return {
         "id": news.id_berita,
         "title": news.title,
@@ -167,6 +172,13 @@ def news_list_json(request):
     return JsonResponse(data, safe=False)
 
 
+@login_required
+def my_news(request):
+    qs = News.objects.filter(author=request.user).order_by('-created_at')
+    data = [_serialize_news(request, news) for news in qs]
+    return JsonResponse({"status": "success", "news": data})
+
+
 @csrf_exempt
 def create_news_flutter(request):
     if request.method != "POST":
@@ -198,6 +210,7 @@ def create_news_flutter(request):
         title=title,
         content=content,
         kategori=kategori,
+        url_thumbnail=data.get("url_thumbnail") or None,
         author=request.user,
     )
 
@@ -286,6 +299,7 @@ def update_news_flutter(request, id):
     title = strip_tags(data.get("title", news.title))
     content = strip_tags(data.get("content", news.content))
     kategori = data.get("kategori", news.kategori)
+    url_thumbnail = data.get("url_thumbnail", news.url_thumbnail)
 
     if not title or not content:
         return _json_error("Judul dan konten wajib diisi", status=400)
@@ -293,6 +307,7 @@ def update_news_flutter(request, id):
     news.title = title
     news.content = content
     news.kategori = kategori
+    news.url_thumbnail = url_thumbnail
     news.save()
 
     return JsonResponse({"status": "success", "news": _serialize_news(request, news)}, status=200)

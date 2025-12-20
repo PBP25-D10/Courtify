@@ -11,6 +11,7 @@ urlpatterns = [
     path('<int:pk>/', views.news_detail_view, name='news_detail'),
 
     path('api/json/', views.news_list_json, name='news_json'),
+    path('api/my-news/', views.my_news, name='my_news'),
     path('api/flutter/create/', views.create_news_flutter, name='create_news_flutter'),
     path('api/flutter/delete/<int:id>/', views.delete_news_flutter, name='delete_news_flutter'),
     path('api/flutter/my/', views.list_own_news_flutter, name='list_own_news_flutter'),
