@@ -11,6 +11,30 @@ from django.core.files.base import ContentFile  # Tambahan untuk convert Base64 
 from main.forms import IklanForm
 from main.models import Iklan
 
+DEFAULT_BANNER_URL = "https://images.pexels.com/photos/17724042/pexels-photo-17724042.jpeg"
+
+
+def _banner_url(iklan):
+    if iklan.url_thumbnail:
+        return iklan.url_thumbnail
+    if iklan.banner:
+        return iklan.banner.url
+    if iklan.lapangan and iklan.lapangan.foto:
+        return iklan.lapangan.foto.url
+    return DEFAULT_BANNER_URL
+
+
+def _serialize_iklan(iklan):
+    return {
+        'pk': iklan.pk,
+        'judul': iklan.judul,
+        'deskripsi': iklan.deskripsi,
+        'banner': _banner_url(iklan),
+        'tanggal': iklan.date.strftime("%Y-%m-%d"),
+        'lapangan_id': iklan.lapangan.pk,
+        'lapangan_nama': iklan.lapangan.nama,
+    }
+
 # ============================================
 # STANDARD VIEWS (Tidak Diubah)
 # ============================================
@@ -142,18 +166,7 @@ def flutter_api_list_iklan(request):
     
     iklan_list = Iklan.objects.filter(host=request.user).select_related('lapangan')
     
-    data = []
-    for iklan in iklan_list:
-        data.append({
-            'pk': iklan.pk,
-            'judul': iklan.judul,
-            'deskripsi': iklan.deskripsi,
-            'banner': iklan.banner.url if iklan.banner else None,
-            'tanggal': iklan.date.strftime("%Y-%m-%d"),
-            'lapangan_id': iklan.lapangan.pk,
-            'lapangan_nama': iklan.lapangan.nama,
-        })
-    
+    data = [_serialize_iklan(iklan) for iklan in iklan_list]
     return JsonResponse({'status': 'success', 'iklan_list': data})
 
 @csrf_exempt
@@ -163,18 +176,7 @@ def flutter_api_landing_page_iklan(request):
         
     data_iklan = Iklan.objects.select_related('lapangan').all()[:10]
     
-    data = []
-    for iklan in data_iklan:
-        data.append({
-            'pk': iklan.pk,
-            'judul': iklan.judul,
-            'deskripsi': iklan.deskripsi,
-            'banner': iklan.banner.url if iklan.banner else None,
-            'tanggal': iklan.date.strftime("%Y-%m-%d"),
-            'lapangan_id': iklan.lapangan.pk,
-            'lapangan_nama': iklan.lapangan.nama,
-        })
-
+    data = [_serialize_iklan(iklan) for iklan in data_iklan]
     return JsonResponse({'status': 'success', 'iklan_list': data})
 
 @csrf_exempt
@@ -225,12 +227,7 @@ def flutter_api_create_iklan(request):
             return JsonResponse({
                 'status': 'success',
                 'message': 'Iklan berhasil ditambahkan',
-                'iklan': {
-                    'pk': iklan.pk,
-                    'judul': iklan.judul,
-                    'lapangan': iklan.lapangan.nama,
-                    'banner': iklan.banner.url if iklan.banner else None
-                }
+                'iklan': _serialize_iklan(iklan)
             })
         else:
             error_messages = []
@@ -295,11 +292,7 @@ def flutter_api_update_iklan(request, id):
             return JsonResponse({
                 'status': 'success',
                 'message': 'Iklan berhasil diperbarui',
-                'iklan': {
-                    'pk': updated_iklan.pk,
-                    'judul': updated_iklan.judul,
-                    'banner': updated_iklan.banner.url if updated_iklan.banner else None
-                }
+                'iklan': _serialize_iklan(updated_iklan)
             })
         else:
             error_messages = []

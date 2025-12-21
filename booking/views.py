@@ -1,5 +1,4 @@
 from datetime import datetime
-import json  # <--- PERBAIKAN: Wajib ada untuk parsing JSON dari Flutter
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -267,6 +266,29 @@ def api_booking_user_list(request):
     })
 
 
+@login_required
+def api_owner_bookings(request):
+    """
+    Bookings for lapangan owned by the current penyedia.
+    Optional query param: status (pending/confirmed/cancelled).
+    """
+    try:
+        if request.user.userprofile.role != 'penyedia':
+            return JsonResponse({'success': False, 'message': 'Only penyedia can access this'}, status=403)
+    except AttributeError:
+        return JsonResponse({'success': False, 'message': 'User profile not found'}, status=403)
+
+    status_filter = request.GET.get('status')
+    bookings = Booking.objects.filter(lapangan__owner=request.user).order_by('-created_at')
+    if status_filter:
+        bookings = bookings.filter(status=status_filter)
+
+    return JsonResponse({
+        'status': 'success',
+        'bookings': [_serialize_booking(b) for b in bookings],
+    })
+
+
 # API Create Booking (Legacy)
 @csrf_exempt 
 @login_required
@@ -320,6 +342,7 @@ def api_cancel_booking(request, booking_id):
 
 # --- MAIN FLUTTER ENDPOINTS ---
 
+@csrf_exempt
 @login_required
 def flutter_api_booking_list(request):
     if request.method != 'GET':
@@ -328,7 +351,6 @@ def flutter_api_booking_list(request):
     return JsonResponse({'success': True, 'bookings': [_serialize_booking(b) for b in bookings]})
 
 
-@csrf_exempt  # <--- PERBAIKAN: Ditambahkan agar POST dari Flutter tidak 403 Forbidden
 @login_required
 def flutter_api_create_booking(request, id_lapangan):
     if request.method != 'POST':
@@ -368,7 +390,6 @@ def flutter_api_create_booking(request, id_lapangan):
         return _json_error(str(exc), status=400)
 
 
-@csrf_exempt  # <--- PERBAIKAN: Ditambahkan
 @login_required
 def flutter_api_cancel_booking(request, booking_id):
     if request.method != 'POST':
@@ -380,7 +401,6 @@ def flutter_api_cancel_booking(request, booking_id):
     return JsonResponse({'success': True, 'message': 'Booking dibatalkan', 'booking_id': booking.id})
 
 
-@csrf_exempt  # <--- PERBAIKAN: Ditambahkan
 @login_required
 def flutter_api_confirm_booking(request, booking_id):
     if request.method != 'POST':
@@ -396,6 +416,24 @@ def flutter_api_confirm_booking(request, booking_id):
     booking.status = 'confirmed'
     booking.save()
     return JsonResponse({'success': True, 'message': 'Booking dikonfirmasi', 'booking_id': booking.id})
+
+
+@csrf_exempt
+@login_required
+def flutter_api_owner_cancel_booking(request, booking_id):
+    if request.method != 'POST':
+        return _json_error('Method not allowed', status=405)
+
+    booking = get_object_or_404(Booking, id=booking_id)
+    if request.user != booking.lapangan.owner:
+        return _json_error('Unauthorized', status=403)
+
+    if booking.status != 'pending':
+        return _json_error('Booking sudah diproses.', status=400)
+
+    booking.status = 'cancelled'
+    booking.save()
+    return JsonResponse({'success': True, 'message': 'Booking dibatalkan oleh penyedia', 'booking_id': booking.id})
 
 
 @csrf_exempt

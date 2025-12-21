@@ -45,7 +45,7 @@ Base URL: http://<host>/auth/api/flutter/auth/
       "last_name": "",
       "role": "user"
     }
-  }
+ }
 - Catatan: Django juga mengirim cookie `sessionid`; simpan cookie itu di client Flutter (mis. dengan cookie jar) agar request berikutnya otomatis terautentikasi.
 - Error umum: 400 (field kosong), 401 (username/password salah).
 
@@ -69,14 +69,14 @@ Base URL: http://<host>/auth/api/flutter/auth/
 
 4) Logout
 - Endpoint: /logout/
-- Method: POST
-- Header: sertakan cookie `sessionid`.
-- Respons sukses (200):
+- Method: POST (endpoint @csrf_exempt, aman dipanggil dari mobile tanpa CSRF token).
+- Header: kirim cookie `sessionid` jika ada; jika tidak ada/expired, server tetap merespons sukses.
+- Respons sukses (200, selalu):
   {
     "status": true,
-    "message": "Logout berhasil, sampai jumpa jane!"
+    "message": "Logout berhasil, sampai jumpa jane!" // atau "Logout berhasil." jika sesi sudah hilang
   }
-- Error: 401 jika belum login.
+- Catatan: respon tetap 200 meski tidak ada sesi, supaya UI mobile tidak menggantung; server akan menghapus cookie `sessionid` jika ada.
 
 Cara pakai cepat (curl contoh):
 - Register: curl -X POST http://127.0.0.1:8000/auth/api/flutter/auth/register/ -H "Content-Type: application/json" -d "{\"username\":\"jane\",\"password\":\"rahasia123\",\"email\":\"jane@example.com\",\"role\":\"user\"}"
@@ -88,6 +88,8 @@ Cara pakai cepat (curl contoh):
 API Lapangan (Flutter)
 Base URL: http://<host>/manajemen/api/
 Gunakan cookie `sessionid` dari API Auth untuk endpoint yang butuh login penyedia.
+Prioritas gambar: `url_thumbnail` (jika ada) → `foto` upload → default https://images.pexels.com/photos/17724042/pexels-photo-17724042.jpeg.
+Jam buka/tutup: kirim HH:MM atau HH:MM:SS (server memotong detik).
 
 1) List lapangan milik penyedia (protected)
 - GET /list/
@@ -98,6 +100,7 @@ Gunakan cookie `sessionid` dari API Auth untuk endpoint yang butuh login penyedi
     "lapangan_list": [ {id, id_lapangan, nama, kategori, lokasi, harga_per_jam, foto, jam_buka, jam_tutup, deskripsi}, ... ]
   }
 - Error: 401 jika belum login, 403 jika bukan penyedia.
+ - Catatan: hanya menampilkan lapangan milik akun penyedia tersebut (bukan semua).
 
 2) List lapangan publik (filter optional)
 - GET /public/?kategori=&lokasi=&harga_min=&harga_max=
@@ -123,14 +126,15 @@ Gunakan cookie `sessionid` dari API Auth untuk endpoint yang butuh login penyedi
     "harga_per_jam": 100000,
     "jam_buka": "08:00",
     "jam_tutup": "22:00",
-    "foto": <file> (hanya jika form-data)
+    "foto": <file> (opsional, hanya jika form-data),
+    "url_thumbnail": "https://example.com/thumb.jpg" (opsional)
   }
 - Response sukses:
   { "status": "success", "message": "Lapangan berhasil ditambahkan", "lapangan": { ... } }
 
 6) Update lapangan (protected, owner only)
 - POST /update/<uuid:id_lapangan>/
-- Body: form-data atau JSON (sama seperti create; jika kirim string URL foto, akan diabaikan).
+- Body: form-data atau JSON (sama seperti create; jika kirim string URL foto, akan diabaikan; boleh kirim url_thumbnail).
 - Response sukses:
   { "status": "success", "message": "Lapangan berhasil diperbarui", "lapangan": { ... } }
 
@@ -149,14 +153,45 @@ Catatan cepat:
 - Format waktu dikirim sebagai string "HH:MM:SS".
 
 
+API Wishlist (Flutter)
+Base URL: http://<host>/wishlist/api/
+Semua endpoint butuh cookie `sessionid` user login; hanya menampilkan wishlist milik user tersebut.
+
+1) List wishlist user
+- GET /list/
+- Response:
+  { "status": "success", "wishlist": [ {id, lapangan:{id_lapangan, nama, kategori, lokasi, harga_per_jam, thumbnail}, created_at}, ... ] }
+
+2) Toggle wishlist (add/remove)
+- POST /toggle/<uuid:lapangan_id>/
+- Jika belum ada, ditambahkan; jika sudah ada, dihapus.
+- Response:
+  { "status": "success", "added": true|false, "message": "..." }
+
+3) Delete by wishlist id
+- POST /delete/<int:wishlist_id>/
+- Response:
+  { "status": "success", "message": "Deleted" }
+
+4) Check status
+- GET /check/<uuid:lapangan_id>/
+- Response:
+  { "status": "success", "in_wishlist": true|false }
+  
 API Booking (Flutter)
 Base URL: http://<host>/booking/api/
-Semua endpoint butuh cookie `sessionid` user login.
+Semua endpoint butuh cookie `sessionid` user login. Endpoint Flutter di-backend sudah @csrf_exempt sehingga tidak perlu header CSRF selama cookie sessionid dikirim.
 
 1) List booking user
 - GET /flutter/bookings/
 - Response:
   { "success": true, "bookings": [ {id, lapangan:{...}, tanggal, jam_mulai, jam_selesai, total_harga, status, created_at}, ... ] }
+
+1b) List booking penyedia (hanya lapangan milik penyedia login)
+- GET /flutter/bookings/owner/?status=pending|confirmed|cancelled (opsional filter status)
+- Auth: cookie sessionid penyedia.
+- Response:
+  { "success": true, "bookings": [ {...booking...} ] }
 
 2) Buat booking
 - POST /flutter/bookings/create/<uuid:id_lapangan>/
@@ -172,6 +207,7 @@ Semua endpoint butuh cookie `sessionid` user login.
 
 3) Batalkan booking (pemilik booking)
 - POST /flutter/bookings/cancel/<int:booking_id>/
+- Hanya si pembuat booking yang bisa membatalkan miliknya sendiri (status jadi cancelled).
 - Response:
   { "success": true, "message": "Booking dibatalkan", "booking_id": <id> }
 
@@ -181,7 +217,13 @@ Semua endpoint butuh cookie `sessionid` user login.
 - Response:
   { "success": true, "message": "Booking dikonfirmasi", "booking_id": <id> }
 
-5) Cek jam yang sudah terpakai
+5) Batalkan booking oleh penyedia (reject)
+- POST /flutter/bookings/owner/cancel/<int:booking_id>/
+- Hanya pemilik lapangan yang boleh; status harus pending.
+- Response:
+  { "success": true, "message": "Booking dibatalkan oleh penyedia", "booking_id": <id> }
+
+6) Cek jam yang sudah terpakai
 - GET /flutter/booked/<uuid:id_lapangan>/<YYYY-MM-DD>/
 - Response:
   { "success": true, "jam_terpakai": [10,11,12] }  // list jam integer
@@ -189,3 +231,93 @@ Semua endpoint butuh cookie `sessionid` user login.
 Catatan cepat:
 - Kirim waktu dengan format "HH:MM". Durasi dihitung dalam jam penuh.
 - Pastikan kirim cookie `sessionid` agar sesi dikenali.
+- Alur status: create => pending; penyedia dapat confirm => confirmed atau cancel => cancelled; user hanya bisa mengubah booking miliknya ke cancelled (tidak bisa confirm).
+
+
+API Artikel (Flutter)
+Base URL: http://<host>/artikel/api/
+Endpoint Flutter sudah @csrf_exempt; cukup kirim cookie `sessionid` jika butuh auth penyedia.
+Prioritas gambar: `url_thumbnail` (jika ada) → `thumbnail` media → default `https://images.pexels.com/photos/17724042/pexels-photo-17724042.jpeg`.
+Author diset server-side dari sesi; klien tidak boleh mengirim author.
+
+1) List artikel publik
+- GET /json/
+- Response: array berita (tanpa wrapper) berisi `{id, title, content, kategori, thumbnail_url, created_at, author}`.
+- `thumbnail_url` akan menggunakan default jika tidak ada gambar.
+
+2) Buat artikel (role penyedia, login)
+- POST /flutter/create/
+- Body (JSON):
+  {
+    "title": "Judul",
+    "content": "Konten berita",
+    "kategori": "Futsal|Basket|Badminton|Tenis|Padel|Komunitas|Tips",
+    "url_thumbnail": "https://example.com/thumb.jpg" // opsional
+  }
+- Response sukses (201):
+  { "status": "success", "id": <int>, "news": {id, title, ...} }
+- Error: 401 jika belum login, 403 jika bukan penyedia, 400 jika field kosong/JSON invalid.
+ - Catatan: `thumbnail` (upload media) sekarang optional; jika tidak ada url_thumbnail maupun thumbnail, API tetap jalan dan akan memakai default di response.
+
+3) Hapus artikel (role penyedia, owner)
+- POST /flutter/delete/<int:id>/
+- Hanya author penyedia yang boleh menghapus.
+- Response sukses:
+  { "status": "success" }
+- Error: 401 jika belum login, 403 jika bukan pemilik/penyedia, 404 jika id tidak ada.
+
+4) List artikel milik penyedia (hanya miliknya)
+- GET /flutter/my/
+- Response:
+  { "status": "success", "news": [ {id, title, content, kategori, thumbnail_url, created_at, author}, ... ] }
+- Error: 401 jika belum login, 403 jika bukan penyedia.
+
+5) Update artikel (role penyedia, owner)
+- POST /flutter/update/<int:id>/
+- Body (JSON, optional fields):
+  { "title": "...", "content": "...", "kategori": "...", "url_thumbnail": "..." }
+- Response sukses:
+  { "status": "success", "news": { ... } }
+- Error: 401 jika belum login, 403 jika bukan pemilik/penyedia, 404 jika id tidak ada, 400 jika title/content kosong.
+
+6) List artikel milik user login (umum, fetchMyNews)
+- GET /my-news/
+- Response:
+  { "status": "success", "news": [ ...hanya milik request.user... ] }
+- Error: 401 jika belum login.
+
+API Iklan (Flutter)
+Base URL: http://<host>/api/iklan/
+Banner default jika kosong: https://images.pexels.com/photos/17724042/pexels-photo-17724042.jpeg.
+Prioritas gambar: `url_thumbnail` (jika ada) → `banner` media → foto lapangan → default.
+
+1) List iklan penyedia (hanya milik sendiri)
+- GET /list/
+- Auth: cookie sessionid penyedia.
+- Response:
+  { "status": "success", "iklan_list": [ {pk, judul, deskripsi, banner, tanggal, lapangan_id, lapangan_nama}, ... ] }
+- Error: 401 jika belum login, 403 jika bukan penyedia.
+
+2) List iklan publik (semua penyedia)
+- GET /landing/
+- Response: { "status": "success", "iklan_list": [...] } (banner selalu terisi default jika kosong).
+
+3) Buat iklan (penyedia)
+- POST /create/ (JSON atau form-data; jika kirim base64 banner gunakan field `banner` dengan prefix data:image/*;base64,)
+- Body minimal: judul, deskripsi, lapangan. Opsional: `banner` (file/base64) atau `url_thumbnail` (string URL).
+- Response sukses:
+  { "status": "success", "message": "Iklan berhasil ditambahkan", "iklan": { ... } }
+- Error: 401 belum login, 403 jika bukan penyedia atau lapangan bukan milik penyedia, 400 jika form invalid.
+
+4) Update iklan (penyedia, owner)
+- POST /edit/<int:id>/
+- Body: sama seperti create; banner bisa base64/file; atau set `url_thumbnail`.
+- Response sukses:
+  { "status": "success", "message": "Iklan berhasil diperbarui", "iklan": { ... } }
+- Error: 401/403/400 sesuai kasus; 404 jika id tidak ada.
+
+5) Hapus iklan (penyedia, owner)
+- POST /delete/<int:id>/
+- Response:
+  { "status": "success", "message": "Iklan berhasil dihapus" }
+- Error: 401/403 jika bukan owner/penyedia, 404 jika id tidak ada.

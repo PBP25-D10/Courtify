@@ -19,6 +19,7 @@ class Iklan(models.Model):
     judul = models.CharField(max_length=100, default="New Ad!")
     deskripsi = models.TextField(default="Click to see details..")
     banner = models.ImageField(upload_to='iklan_banners/', blank=True, null=True)
+    url_thumbnail = models.URLField(blank=True, null=True)
     date = models.DateTimeField(default=timezone.now)
 
     # Urutan berdasarkan iklan terbaru

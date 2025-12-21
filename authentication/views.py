@@ -5,7 +5,10 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 import json
+import logging
 from .models import UserProfile
+
+logger = logging.getLogger(__name__)
 
 def _get_user_role(user):
     """
@@ -294,12 +297,21 @@ def flutter_auth_logout_api(request):
     if request.method != 'POST':
         return JsonResponse({'status': False, 'message': 'Metode harus POST'}, status=405)
 
-    if request.user.is_authenticated:
-        username = request.user.username
-        auth_logout(request)
-        return JsonResponse({'status': True, 'message': f'Logout berhasil, sampai jumpa {username}!'})
+    username = request.user.username if request.user.is_authenticated else None
 
-    return JsonResponse({'status': False, 'message': 'Anda belum login.'}, status=401)
+    try:
+        auth_logout(request)
+    except Exception:
+        # Pastikan logout mobile tetap merespons cepat meski ada error sesi.
+        logger.exception("Gagal melakukan logout Flutter, melanjutkan dengan respons sukses.")
+
+    message = 'Logout berhasil.'
+    if username:
+        message = f'Logout berhasil, sampai jumpa {username}!'
+
+    response = JsonResponse({'status': True, 'message': message}, status=200)
+    response.delete_cookie('sessionid')
+    return response
 
 
 @csrf_exempt

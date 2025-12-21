@@ -26,6 +26,12 @@ def _validate_penyedia(request, forbidden_message=None):
 
 
 def _serialize_lapangan(lapangan):
+    if lapangan.url_thumbnail:
+        thumb = lapangan.url_thumbnail
+    elif lapangan.foto:
+        thumb = lapangan.foto.url
+    else:
+        thumb = DEFAULT_LAPANGAN_IMAGE
     return {
         'id': str(lapangan.id_lapangan),
         'id_lapangan': str(lapangan.id_lapangan),
@@ -34,7 +40,7 @@ def _serialize_lapangan(lapangan):
         'kategori': lapangan.kategori,
         'lokasi': lapangan.lokasi,
         'harga_per_jam': lapangan.harga_per_jam,
-        'foto': lapangan.foto.url if lapangan.foto else None,
+        'foto': thumb,
         'jam_buka': lapangan.jam_buka.strftime("%H:%M:%S"),
         'jam_tutup': lapangan.jam_tutup.strftime("%H:%M:%S"),
     }
@@ -53,6 +59,8 @@ def _normalize_payload(payload):
         if isinstance(value, list):
             query_dict.setlist(key, [str(item) for item in value])
         else:
+            if key in ('jam_buka', 'jam_tutup'):
+                value = _normalize_time(value)
             query_dict[key] = str(value)
     return query_dict
 
@@ -253,7 +261,28 @@ def flutter_api_list_lapangan(request):
     if auth_error:
         return auth_error
 
+    kategori = request.GET.get('kategori', '')
+    lokasi = request.GET.get('lokasi', '')
+    harga_min = request.GET.get('harga_min', '')
+    harga_max = request.GET.get('harga_max', '')
+
     lapangan_list = Lapangan.objects.filter(owner=request.user)
+
+    if kategori:
+        lapangan_list = lapangan_list.filter(kategori=kategori)
+    if lokasi:
+        lapangan_list = lapangan_list.filter(lokasi__icontains=lokasi)
+    if harga_min:
+        try:
+            lapangan_list = lapangan_list.filter(harga_per_jam__gte=int(harga_min))
+        except ValueError:
+            pass
+    if harga_max:
+        try:
+            lapangan_list = lapangan_list.filter(harga_per_jam__lte=int(harga_max))
+        except ValueError:
+            pass
+
     data = [_serialize_lapangan(lapangan) for lapangan in lapangan_list]
     return JsonResponse({'status': 'success', 'lapangan_list': data})
 
@@ -433,3 +462,10 @@ def flutter_api_upload_foto_lapangan(request, id_lapangan):
         "message": "Foto berhasil diupload",
         "foto": lapangan.foto.url if lapangan.foto else None
     })
+DEFAULT_LAPANGAN_IMAGE = "https://images.pexels.com/photos/17724042/pexels-photo-17724042.jpeg"
+
+
+def _normalize_time(val):
+    if isinstance(val, str) and len(val) == 8 and val.count(':') == 2 and val.endswith(':00'):
+        return val[:5]
+    return val

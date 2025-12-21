@@ -1,36 +1,53 @@
+from datetime import timedelta
+import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.html import strip_tags
-
 from django.utils import timezone
-from datetime import timedelta
 from django.db import models
 from .models import News
 from .forms import NewsForm
-import json
 
-# =====================================================
-# WEB DJANGO (UNTUK OWNER / USER VIA BROWSER)
-# =====================================================
+
+def _serialize_news(request, news):
+    default_thumbnail = "https://images.pexels.com/photos/17724042/pexels-photo-17724042.jpeg"
+    if news.url_thumbnail:
+        thumb = news.url_thumbnail
+    elif news.thumbnail:
+        thumb = request.build_absolute_uri(news.thumbnail.url)
+    else:
+        thumb = default_thumbnail
+    return {
+        "id": news.id_berita,
+        "title": news.title,
+        "content": news.content,
+        "kategori": news.kategori,
+        "thumbnail_url": thumb,
+        "created_at": news.created_at.isoformat(),
+        "author": news.author.username if news.author else "",
+    }
+
+
+def _json_error(message, status=400):
+    return JsonResponse({"status": "error", "message": message}, status=status)
+
 
 @login_required
 def news_list_view(request):
     try:
         user_profile = request.user.userprofile
         if user_profile.role == 'penyedia':
-            news_list = News.objects.all().order_by('-created_at')
+            news_list = News.objects.filter(author=request.user).order_by('-created_at')
             search_query = request.GET.get('q', '')
             date_filter = request.GET.get('date_filter', '')
 
-            # Filter berdasarkan pencarian (judul atau kategori)
             if search_query:
                 news_list = news_list.filter(
                     models.Q(title__icontains=search_query) | models.Q(kategori__icontains=search_query)
                 )
 
-            # Filter berdasarkan tanggal post
             if date_filter == 'today':
                 news_list = news_list.filter(created_at__date=timezone.now().date())
             elif date_filter == 'week':
@@ -44,17 +61,15 @@ def news_list_view(request):
             return render(
                 request,
                 'artikel/berita_list_owner.html',
-                {'news_list': news_list, 'form': form}
+                {
+                    'news_list': news_list,
+                    'form': form,
+                    'search_query': search_query,
+                    'selected_filter': date_filter
+                }
             )
-            return render(request, 'artikel/berita_list_owner.html', {
-                'news_list': news_list,
-                'form': form,
-                'search_query': search_query,
-                'selected_filter': date_filter
-            })
-        else:
-            return redirect('artikel:news_public_list')
-    except:
+        return redirect('artikel:news_public_list')
+    except Exception:
         return redirect('artikel:news_public_list')
 
 
@@ -67,7 +82,7 @@ def news_create_view(request):
                 {'success': False, 'errors': {'permission': 'Akses ditolak'}},
                 status=403
             )
-    except:
+    except Exception:
         return JsonResponse(
             {'success': False, 'errors': {'permission': 'Profile tidak ditemukan'}},
             status=400
@@ -96,7 +111,7 @@ def news_update_view(request, pk):
                 {'success': False, 'errors': {'permission': 'Akses ditolak'}},
                 status=403
             )
-    except:
+    except Exception:
         return JsonResponse(
             {'success': False, 'errors': {'permission': 'Profile tidak ditemukan'}},
             status=400
@@ -123,7 +138,7 @@ def news_delete_view(request, pk):
                 {'success': False, 'errors': {'permission': 'Akses ditolak'}},
                 status=403
             )
-    except:
+    except Exception:
         return JsonResponse(
             {'success': False, 'errors': {'permission': 'Profile tidak ditemukan'}},
             status=400
@@ -151,435 +166,149 @@ def news_detail_view(request, pk):
     )
 
 
-# =====================================================
-# API UNTUK FLUTTER (JSON)
-# =====================================================
-
 def news_list_json(request):
     news_list = News.objects.all().order_by('-created_at')
-    data = []
-
-    for item in news_list:
-        data.append({
-            "id": item.id_berita,
-            "title": item.title,
-            "content": item.content,
-            "kategori": item.kategori,
-            "thumbnail": (
-                request.build_absolute_uri(item.thumbnail.url)
-                if item.thumbnail else ""
-            ),
-            "created_at": item.created_at.isoformat(),
-            "author": item.author.username if item.author else "",
-        })
-
+    data = [_serialize_news(request, item) for item in news_list]
     return JsonResponse(data, safe=False)
+
+
+@login_required
+def my_news(request):
+    qs = News.objects.filter(author=request.user).order_by('-created_at')
+    data = [_serialize_news(request, news) for news in qs]
+    return JsonResponse({"status": "success", "news": data})
 
 
 @csrf_exempt
 def create_news_flutter(request):
     if request.method != "POST":
-        return JsonResponse(
-            {"status": "error", "message": "Invalid method"},
-            status=405
-        )
+        return _json_error("Invalid method", status=405)
 
-    # 🔐 WAJIB LOGIN
     if not request.user.is_authenticated:
-        return JsonResponse(
-            {"status": "error", "message": "User not authenticated"},
-            status=401
-        )
+        return _json_error("User not authenticated", status=401)
 
-    # 🔐 WAJIB ROLE PENYEDIA
     try:
         user_profile = request.user.userprofile
         if user_profile.role != 'penyedia':
-            return JsonResponse(
-                {"status": "error", "message": "Bukan penyedia"},
-                status=403
-            )
-    except:
-        return JsonResponse(
-            {"status": "error", "message": "User profile tidak ditemukan"},
-            status=400
-        )
+            return _json_error("Bukan penyedia", status=403)
+    except Exception:
+        return _json_error("User profile tidak ditemukan", status=400)
 
     try:
-        data = json.loads(request.body)
+        data = json.loads(request.body.decode('utf-8') or '{}')
+    except json.JSONDecodeError:
+        return _json_error("Format JSON tidak valid", status=400)
 
-        title = strip_tags(data.get("title", ""))
-        content = strip_tags(data.get("content", ""))
-        kategori = data.get("kategori", "Komunitas")
+    title = strip_tags(data.get("title", ""))
+    content = strip_tags(data.get("content", ""))
+    kategori = data.get("kategori", "Komunitas")
+    url_thumbnail = data.get("url_thumbnail") or None
 
-        if not title or not content:
-            return JsonResponse(
-                {"status": "error", "message": "Judul dan konten wajib diisi"},
-                status=400
-            )
+    if not title or not content:
+        return _json_error("Judul dan konten wajib diisi", status=400)
 
-        news = News.objects.create(
-            title=title,
-            content=content,
-            kategori=kategori,
-            author=request.user,
-        )
+    news = News.objects.create(
+        title=title,
+        content=content,
+        kategori=kategori,
+        url_thumbnail=url_thumbnail,
+        author=request.user,
+    )
 
-        return JsonResponse(
-            {"status": "success", "id": news.id_berita},
-            status=200
-        )
-
-    except Exception as e:
-        return JsonResponse(
-            {"status": "error", "message": str(e)},
-            status=500
-        )
+    return JsonResponse(
+        {"status": "success", "id": news.id_berita, "news": _serialize_news(request, news)},
+        status=201
+    )
 
 
 @csrf_exempt
 def delete_news_flutter(request, id):
     if request.method != "POST":
-        return JsonResponse(
-            {"status": "error", "message": "Invalid method"},
-            status=405
-        )
+        return _json_error("Invalid method", status=405)
 
     if not request.user.is_authenticated:
-        return JsonResponse(
-            {"status": "error", "message": "User not authenticated"},
-            status=401
-        )
+        return _json_error("User not authenticated", status=401)
 
     try:
         user_profile = request.user.userprofile
         if user_profile.role != 'penyedia':
-            return JsonResponse(
-                {"status": "error", "message": "Bukan penyedia"},
-                status=403
-            )
-    except:
-        return JsonResponse(
-            {"status": "error", "message": "User profile tidak ditemukan"},
-            status=400
-        )
+            return _json_error("Bukan penyedia", status=403)
+    except Exception:
+        return _json_error("User profile tidak ditemukan", status=400)
 
     try:
-        news = News.objects.get(id_berita=id, author=request.user)
+        news = News.objects.get(id_berita=id)
+        if news.author != request.user:
+            return _json_error("Bukan pemilik artikel", status=403)
         news.delete()
         return JsonResponse({"status": "success"}, status=200)
     except News.DoesNotExist:
-        return JsonResponse(
-            {"status": "error", "message": "News not found"},
-            status=404
-        )
-
-# from django.shortcuts import render, get_object_or_404, redirect
-# from django.http import JsonResponse
-# from django.contrib.auth.decorators import login_required
-# from django.views.decorators.csrf import csrf_exempt
-# from django.utils.html import strip_tags
-
-# from .models import News
-# from .forms import NewsForm
-# import json
-
-# # =====================================================
-# # WEB DJANGO (UNTUK OWNER / USER DI BROWSER)
-# # =====================================================
-
-# @login_required
-# def news_list_view(request):
-#     try:
-#         user_profile = request.user.userprofile
-#         if user_profile.role == 'penyedia':
-#             news_list = News.objects.all().order_by('-created_at')
-#             form = NewsForm()
-#             return render(
-#                 request,
-#                 'artikel/berita_list_owner.html',
-#                 {'news_list': news_list, 'form': form}
-#             )
-#         else:
-#             return redirect('artikel:news_public_list')
-#     except:
-#         return redirect('artikel:news_public_list')
+        return _json_error("News not found", status=404)
 
 
-# @login_required
-# def news_create_view(request):
-#     try:
-#         user_profile = request.user.userprofile
-#         if user_profile.role != 'penyedia':
-#             return JsonResponse({'success': False, 'errors': {'permission': 'Akses ditolak'}})
-#     except:
-#         return JsonResponse({'success': False, 'errors': {'permission': 'Profile tidak ditemukan'}})
+@csrf_exempt
+def list_own_news_flutter(request):
+    if request.method != "GET":
+        return _json_error("Invalid method", status=405)
 
-#     if request.method == 'POST':
-#         form = NewsForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             news = form.save(commit=False)
-#             news.author = request.user
-#             news.save()
-#             return JsonResponse({'success': True})
-#         return JsonResponse({'success': False, 'errors': form.errors})
+    if not request.user.is_authenticated:
+        return _json_error("User not authenticated", status=401)
 
-#     return JsonResponse({'success': False})
+    try:
+        user_profile = request.user.userprofile
+        if user_profile.role != 'penyedia':
+            return _json_error("Bukan penyedia", status=403)
+    except Exception:
+        return _json_error("User profile tidak ditemukan", status=400)
 
-
-# @login_required
-# def news_update_view(request, pk):
-#     news = get_object_or_404(News, pk=pk)
-
-#     try:
-#         user_profile = request.user.userprofile
-#         if user_profile.role != 'penyedia' or news.author != request.user:
-#             return JsonResponse({'success': False, 'errors': {'permission': 'Akses ditolak'}})
-#     except:
-#         return JsonResponse({'success': False, 'errors': {'permission': 'Profile tidak ditemukan'}})
-
-#     if request.method == 'POST':
-#         form = NewsForm(request.POST, request.FILES, instance=news)
-#         if form.is_valid():
-#             form.save()
-#             return JsonResponse({'success': True})
-#         return JsonResponse({'success': False, 'errors': form.errors})
-
-#     return JsonResponse({'success': False})
+    news_list = News.objects.filter(author=request.user).order_by('-created_at')
+    data = [_serialize_news(request, item) for item in news_list]
+    return JsonResponse({"status": "success", "news": data})
 
 
-# @login_required
-# def news_delete_view(request, pk):
-#     news = get_object_or_404(News, pk=pk)
+@csrf_exempt
+def update_news_flutter(request, id):
+    if request.method != "POST":
+        return _json_error("Invalid method", status=405)
 
-#     try:
-#         user_profile = request.user.userprofile
-#         if user_profile.role != 'penyedia' or news.author != request.user:
-#             return JsonResponse({'success': False, 'errors': {'permission': 'Akses ditolak'}})
-#     except:
-#         return JsonResponse({'success': False, 'errors': {'permission': 'Profile tidak ditemukan'}})
+    if not request.user.is_authenticated:
+        return _json_error("User not authenticated", status=401)
 
-#     news.delete()
-#     return JsonResponse({'success': True})
+    try:
+        user_profile = request.user.userprofile
+        if user_profile.role != 'penyedia':
+            return _json_error("Bukan penyedia", status=403)
+    except Exception:
+        return _json_error("User profile tidak ditemukan", status=400)
 
+    try:
+        news = News.objects.get(id_berita=id)
+    except News.DoesNotExist:
+        return _json_error("News not found", status=404)
 
-# def news_public_list_view(request):
-#     news_list = News.objects.all().order_by('-created_at')
-#     return render(request, 'artikel/berita_public_list.html', {'news_list': news_list})
+    if news.author != request.user:
+        return _json_error("Bukan pemilik artikel", status=403)
 
+    try:
+        if request.content_type and 'application/json' in request.content_type:
+            data = json.loads(request.body.decode('utf-8') or '{}')
+        else:
+            data = request.POST
+    except json.JSONDecodeError:
+        return _json_error("Format JSON tidak valid", status=400)
 
-# def news_detail_view(request, pk):
-#     news = get_object_or_404(News, pk=pk)
-#     return render(request, 'artikel/berita_detail.html', {'news': news})
+    title = strip_tags(data.get("title", news.title))
+    content = strip_tags(data.get("content", news.content))
+    kategori = data.get("kategori", news.kategori)
+    url_thumbnail = data.get("url_thumbnail", news.url_thumbnail)
 
+    if not title or not content:
+        return _json_error("Judul dan konten wajib diisi", status=400)
 
-# # =====================================================
-# # API UNTUK FLUTTER (JSON)
-# # =====================================================
+    news.title = title
+    news.content = content
+    news.kategori = kategori
+    news.url_thumbnail = url_thumbnail
+    news.save()
 
-# def news_list_json(request):
-#     news_list = News.objects.all().order_by('-created_at')
-#     data = []
-
-#     for item in news_list:
-#         data.append({
-#             "id": item.id_berita,
-#             "title": item.title,
-#             "content": item.content,
-#             "kategori": item.kategori,
-#             "thumbnail": request.build_absolute_uri(item.thumbnail.url) if item.thumbnail else "",
-#             "created_at": item.created_at.isoformat(),
-#             "author": item.author.username if item.author else "",
-#         })
-
-#     return JsonResponse(data, safe=False)
-
-
-# @csrf_exempt
-# def create_news_flutter(request):
-#     if request.method == "POST":
-#         try:
-#             data = json.loads(request.body)
-
-#             news = News.objects.create(
-#                 title=strip_tags(data.get("title", "")),
-#                 content=strip_tags(data.get("content", "")),
-#                 kategori=data.get("kategori", "Komunitas"),
-#                 author=request.user if request.user.is_authenticated else None,
-#             )
-
-#             return JsonResponse({"status": "success", "id": news.id_berita}, status=200)
-
-#         except Exception as e:
-#             return JsonResponse({"status": "error", "message": str(e)}, status=400)
-
-#     return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
-
-
-# @csrf_exempt
-# def delete_news_flutter(request, id):
-#     if request.method == "POST":
-#         try:
-#             news = News.objects.get(id_berita=id)
-#             news.delete()
-#             return JsonResponse({"status": "success"}, status=200)
-#         except News.DoesNotExist:
-#             return JsonResponse({"status": "error", "message": "News not found"}, status=404)
-
-#     return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
-
-# from django.shortcuts import render, get_object_or_404, redirect
-# from django.http import JsonResponse
-# from django.contrib.auth.decorators import login_required
-# from .models import News
-# from .forms import NewsForm
-
-# @login_required
-# def news_list_view(request):
-#     # Check user role
-#     try:
-#         user_profile = request.user.userprofile
-#         if user_profile.role == 'penyedia':
-#             news_list = News.objects.all().order_by('-created_at')
-#             form = NewsForm()
-#             return render(request, 'artikel/berita_list_owner.html', {'news_list': news_list, 'form': form})
-#         else:
-#             # Regular user - redirect to public list
-#             return redirect('artikel:news_public_list')
-#     except:
-#         # If no profile, treat as regular user
-#         return redirect('artikel:news_public_list')
-
-# @login_required
-# def news_create_view(request):
-#     # Check if user is penyedia
-#     try:
-#         user_profile = request.user.userprofile
-#         if user_profile.role != 'penyedia':
-#             return JsonResponse({'success': False, 'errors': {'permission': 'Hanya penyedia yang dapat menambah berita.'}})
-#     except:
-#         return JsonResponse({'success': False, 'errors': {'permission': 'Profile tidak ditemukan.'}})
-
-#     if request.method == 'POST':
-#         form = NewsForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             news = form.save(commit=False)
-#             news.author = request.user
-#             news.save()
-#             return JsonResponse({'success': True})
-#         return JsonResponse({'success': False, 'errors': form.errors})
-#     return JsonResponse({'success': False})
-
-# @login_required
-# def news_update_view(request, pk):
-#     news = get_object_or_404(News, pk=pk)
-
-#     # Check if user is penyedia and owns the news
-#     try:
-#         user_profile = request.user.userprofile
-#         if user_profile.role != 'penyedia' or news.author != request.user:
-#             return JsonResponse({'success': False, 'errors': {'permission': 'Hanya penyedia yang memiliki berita ini yang dapat mengedit.'}})
-#     except:
-#         return JsonResponse({'success': False, 'errors': {'permission': 'Profile tidak ditemukan.'}})
-
-#     if request.method == 'POST':
-#         form = NewsForm(request.POST, request.FILES, instance=news)
-#         if form.is_valid():
-#             form.save()
-#             return JsonResponse({'success': True})
-#         return JsonResponse({'success': False, 'errors': form.errors})
-#     return JsonResponse({'success': False})
-
-# @login_required
-# def news_delete_view(request, pk):
-#     news = get_object_or_404(News, pk=pk)
-
-#     # Check if user is penyedia and owns the news
-#     try:
-#         user_profile = request.user.userprofile
-#         if user_profile.role != 'penyedia' or news.author != request.user:
-#             return JsonResponse({'success': False, 'errors': {'permission': 'Hanya penyedia yang memiliki berita ini yang dapat menghapus.'}})
-#     except:
-#         return JsonResponse({'success': False, 'errors': {'permission': 'Profile tidak ditemukan.'}})
-
-#     news.delete()
-#     return JsonResponse({'success': True})
-
-
-# def news_public_list_view(request):
-#     news_list = News.objects.all().order_by('-created_at')
-#     return render(request, 'artikel/berita_public_list.html', {'news_list': news_list})
-
-# def news_detail_view(request, pk):
-#     news = get_object_or_404(News, pk=pk)
-#     return render(request, 'artikel/berita_detail.html', {'news': news})
-
-# from django.http import JsonResponse
-# from django.views.decorators.csrf import csrf_exempt
-# from django.utils.html import strip_tags
-# from .models import News
-# import json
-
-# def news_list_json(request):
-#     news_list = News.objects.all().order_by('-created_at')
-#     data = []
-
-#     for item in news_list:
-#         thumbnail_url = (
-#             request.build_absolute_uri(item.thumbnail.url)
-#             if item.thumbnail
-#             else ""
-#         )
-
-#         data.append({
-#             "id": item.id_berita,
-#             "title": item.title,
-#             "content": item.content,
-#             "kategori": item.kategori,
-#             "thumbnail": thumbnail_url,
-#             "created_at": item.created_at.isoformat(),
-#             "author": item.author.username if item.author else "",
-#         })
-
-#     return JsonResponse(data, safe=False)
-
-
-# @csrf_exempt
-# def create_news_flutter(request):
-#     if request.method == "POST":
-#         try:
-#             data = json.loads(request.body)
-
-#             title = strip_tags(data.get("title", ""))
-#             content = strip_tags(data.get("content", ""))
-#             kategori = data.get("kategori", "Komunitas")
-
-#             news = News.objects.create(
-#                 title=title,
-#                 content=content,
-#                 kategori=kategori,
-#                 author=request.user if request.user.is_authenticated else None,
-#             )
-
-#             return JsonResponse({
-#                 "status": "success",
-#                 "id": news.id_berita
-#             }, status=200)
-#         except Exception as e:
-#             return JsonResponse({
-#                 "status": "error",
-#                 "message": str(e),
-#             }, status=400)
-
-#     return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
-
-# @csrf_exempt
-# def delete_news_flutter(request, id):
-#     if request.method == "POST":
-#         try:
-#             news = News.objects.get(id_berita=id)
-#             news.delete()
-#             return JsonResponse({"status": "success"}, status=200)
-#         except News.DoesNotExist:
-#             return JsonResponse({"status": "error", "message": "News not found"}, status=404)
-#     return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+    return JsonResponse({"status": "success", "news": _serialize_news(request, news)}, status=200)
