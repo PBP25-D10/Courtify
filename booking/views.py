@@ -345,6 +345,26 @@ def flutter_api_booking_list(request):
 
 @csrf_exempt
 @login_required
+def flutter_api_owner_booking_list(request):
+    if request.method != 'GET':
+        return _json_error('Method not allowed', status=405)
+
+    try:
+        if request.user.userprofile.role != 'penyedia':
+            return _json_error('Only penyedia can access this', status=403)
+    except AttributeError:
+        return _json_error('User profile not found', status=403)
+
+    status_filter = request.GET.get('status')
+    bookings = Booking.objects.filter(lapangan__owner=request.user).order_by('-created_at')
+    if status_filter:
+        bookings = bookings.filter(status=status_filter)
+
+    return JsonResponse({'success': True, 'bookings': [_serialize_booking(b) for b in bookings]})
+
+
+@csrf_exempt
+@login_required
 def flutter_api_create_booking(request, id_lapangan):
     if request.method != 'POST':
         return _json_error('Method not allowed', status=405)
