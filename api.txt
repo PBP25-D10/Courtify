@@ -185,7 +185,13 @@ Semua endpoint butuh cookie `sessionid` user login. Endpoint Flutter di-backend 
 1) List booking user
 - GET /flutter/bookings/
 - Response:
- { "success": true, "bookings": [ {id, lapangan:{...}, tanggal, jam_mulai, jam_selesai, total_harga, status, created_at}, ... ] }
+  { "success": true, "bookings": [ {id, lapangan:{...}, tanggal, jam_mulai, jam_selesai, total_harga, status, created_at}, ... ] }
+
+1b) List booking penyedia (hanya lapangan milik penyedia login)
+- GET /flutter/bookings/owner/?status=pending|confirmed|cancelled (opsional filter status)
+- Auth: cookie sessionid penyedia.
+- Response:
+  { "success": true, "bookings": [ {...booking...} ] }
 
 2) Buat booking
 - POST /flutter/bookings/create/<uuid:id_lapangan>/
