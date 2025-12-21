@@ -185,7 +185,7 @@ Semua endpoint butuh cookie `sessionid` user login. Endpoint Flutter di-backend 
 1) List booking user
 - GET /flutter/bookings/
 - Response:
-  { "success": true, "bookings": [ {id, lapangan:{...}, tanggal, jam_mulai, jam_selesai, total_harga, status, created_at}, ... ] }
+ { "success": true, "bookings": [ {id, lapangan:{...}, tanggal, jam_mulai, jam_selesai, total_harga, status, created_at}, ... ] }
 
 2) Buat booking
 - POST /flutter/bookings/create/<uuid:id_lapangan>/
@@ -201,6 +201,7 @@ Semua endpoint butuh cookie `sessionid` user login. Endpoint Flutter di-backend 
 
 3) Batalkan booking (pemilik booking)
 - POST /flutter/bookings/cancel/<int:booking_id>/
+- Hanya si pembuat booking yang bisa membatalkan miliknya sendiri (status jadi cancelled).
 - Response:
   { "success": true, "message": "Booking dibatalkan", "booking_id": <id> }
 
@@ -210,7 +211,13 @@ Semua endpoint butuh cookie `sessionid` user login. Endpoint Flutter di-backend 
 - Response:
   { "success": true, "message": "Booking dikonfirmasi", "booking_id": <id> }
 
-5) Cek jam yang sudah terpakai
+5) Batalkan booking oleh penyedia (reject)
+- POST /flutter/bookings/owner/cancel/<int:booking_id>/
+- Hanya pemilik lapangan yang boleh; status harus pending.
+- Response:
+  { "success": true, "message": "Booking dibatalkan oleh penyedia", "booking_id": <id> }
+
+6) Cek jam yang sudah terpakai
 - GET /flutter/booked/<uuid:id_lapangan>/<YYYY-MM-DD>/
 - Response:
   { "success": true, "jam_terpakai": [10,11,12] }  // list jam integer
@@ -218,6 +225,7 @@ Semua endpoint butuh cookie `sessionid` user login. Endpoint Flutter di-backend 
 Catatan cepat:
 - Kirim waktu dengan format "HH:MM". Durasi dihitung dalam jam penuh.
 - Pastikan kirim cookie `sessionid` agar sesi dikenali.
+- Alur status: create => pending; penyedia dapat confirm => confirmed atau cancel => cancelled; user hanya bisa mengubah booking miliknya ke cancelled (tidak bisa confirm).
 
 
 API Artikel (Flutter)

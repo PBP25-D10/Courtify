@@ -21,5 +21,6 @@ urlpatterns = [
     path('api/flutter/bookings/create/<uuid:id_lapangan>/', views.flutter_api_create_booking, name='flutter_create_booking'),
     path('api/flutter/bookings/cancel/<int:booking_id>/', views.flutter_api_cancel_booking, name='flutter_cancel_booking'),
     path('api/flutter/bookings/confirm/<int:booking_id>/', views.flutter_api_confirm_booking, name='flutter_confirm_booking'),
+    path('api/flutter/bookings/owner/cancel/<int:booking_id>/', views.flutter_api_owner_cancel_booking, name='flutter_owner_cancel_booking'),
     path('api/flutter/booked/<uuid:lapangan_id>/<str:tanggal>/', views.flutter_api_get_booked_hours, name='flutter_get_booked_hours'),
 ]

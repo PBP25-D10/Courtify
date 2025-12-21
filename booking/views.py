@@ -412,6 +412,24 @@ def flutter_api_confirm_booking(request, booking_id):
 
 
 @csrf_exempt
+@login_required
+def flutter_api_owner_cancel_booking(request, booking_id):
+    if request.method != 'POST':
+        return _json_error('Method not allowed', status=405)
+
+    booking = get_object_or_404(Booking, id=booking_id)
+    if request.user != booking.lapangan.owner:
+        return _json_error('Unauthorized', status=403)
+
+    if booking.status != 'pending':
+        return _json_error('Booking sudah diproses.', status=400)
+
+    booking.status = 'cancelled'
+    booking.save()
+    return JsonResponse({'success': True, 'message': 'Booking dibatalkan oleh penyedia', 'booking_id': booking.id})
+
+
+@csrf_exempt
 def flutter_api_get_booked_hours(request, lapangan_id, tanggal):
     if request.method != 'GET':
         return _json_error('Method not allowed', status=405)
