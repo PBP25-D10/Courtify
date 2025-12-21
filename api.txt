@@ -45,7 +45,7 @@ Base URL: http://<host>/auth/api/flutter/auth/
       "last_name": "",
       "role": "user"
     }
-  }
+ }
 - Catatan: Django juga mengirim cookie `sessionid`; simpan cookie itu di client Flutter (mis. dengan cookie jar) agar request berikutnya otomatis terautentikasi.
 - Error umum: 400 (field kosong), 401 (username/password salah).
 
@@ -69,14 +69,14 @@ Base URL: http://<host>/auth/api/flutter/auth/
 
 4) Logout
 - Endpoint: /logout/
-- Method: POST
-- Header: sertakan cookie `sessionid`.
-- Respons sukses (200):
+- Method: POST (endpoint @csrf_exempt, aman dipanggil dari mobile tanpa CSRF token).
+- Header: kirim cookie `sessionid` jika ada; jika tidak ada/expired, server tetap merespons sukses.
+- Respons sukses (200, selalu):
   {
     "status": true,
-    "message": "Logout berhasil, sampai jumpa jane!"
+    "message": "Logout berhasil, sampai jumpa jane!" // atau "Logout berhasil." jika sesi sudah hilang
   }
-- Error: 401 jika belum login.
+- Catatan: respon tetap 200 meski tidak ada sesi, supaya UI mobile tidak menggantung; server akan menghapus cookie `sessionid` jika ada.
 
 Cara pakai cepat (curl contoh):
 - Register: curl -X POST http://127.0.0.1:8000/auth/api/flutter/auth/register/ -H "Content-Type: application/json" -d "{\"username\":\"jane\",\"password\":\"rahasia123\",\"email\":\"jane@example.com\",\"role\":\"user\"}"
