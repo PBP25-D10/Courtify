@@ -67,6 +67,7 @@ INSTALLED_APPS = [
 LOGIN_URL = reverse_lazy('authentication:login')
 
 
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
