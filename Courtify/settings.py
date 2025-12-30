@@ -40,10 +40,10 @@ SESSION_COOKIE_SAMESITE = "None"
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-b3645r!1&(-$r$n6*uu0fjgk4g($8wvz4(cs47srd*n8*la*rg'
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "justin-timothy-courtify.pbp.cs.ui.ac.id", "10.0.2.2"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "justin-timothy-courtify.pbp.cs.ui.ac.id", "10.0.2.2", ".stndar.dev"]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://justin-timothy-courtify.pbp.cs.ui.ac.id', 'http://justin-timothy-courtify.pbp.cs.ui.ac.id'
+    'https://justin-timothy-courtify.pbp.cs.ui.ac.id', 'http://justin-timothy-courtify.pbp.cs.ui.ac.id', 'https://*.stndar.dev'
 ]
 
 # Application definition
