@@ -1,12 +1,31 @@
+import requests
 from datetime import timedelta
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-
 from main.forms import IklanForm
 from main.models import Iklan
+from django.views.decorators.csrf import csrf_exempt
+
+def proxy_image(request):
+    image_url = request.GET.get('url')
+    if not image_url:
+        return HttpResponse('No URL provided', status=400)
+    
+    try:
+        # Fetch image from external source
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Return the image with proper content type
+        return HttpResponse(
+            response.content,
+            content_type=response.headers.get('Content-Type', 'image/jpeg')
+        )
+    except requests.RequestException as e:
+        return HttpResponse(f'Error fetching image: {str(e)}', status=500)
 
 def landing_page_view(request):
     iklan_list = Iklan.objects.all()[:10]
@@ -49,6 +68,7 @@ def iklan_list_view(request):
         'selected_filter': date_filter
     })
 
+@csrf_exempt
 @login_required
 def iklan_create_view(request):
     if request.method == 'POST':
@@ -65,6 +85,7 @@ def iklan_create_view(request):
 
     return render(request, 'main/iklan_form.html', {'form': form})
 
+@csrf_exempt
 @login_required
 def iklan_edit_view(request, id):
     iklans = get_object_or_404(Iklan, pk=id, host=request.user)
@@ -79,6 +100,7 @@ def iklan_edit_view(request, id):
       form = IklanForm(instance=iklans)
     return render(request, 'main/iklan_form.html', {'form': form})
 
+@csrf_exempt
 @login_required
 def iklan_delete_view(request, id):
     iklan = get_object_or_404(Iklan, pk=id, host=request.user)
@@ -88,4 +110,41 @@ def iklan_delete_view(request, id):
     else:
         return JsonResponse({'success': False, 'error': 'Error'}, status=400)
 
+@login_required
+def show_json_iklan(request):
+    data_iklan = Iklan.objects.filter(host=request.user).select_related('lapangan')
+    
+    list_iklan = []
+    for iklan in data_iklan:
+        image_path = iklan.get_banner_url()
 
+        item = {
+            'pk': iklan.pk,      
+            'judul': iklan.judul,        
+            'deskripsi': iklan.deskripsi,
+            'banner': image_path if image_path else None,
+            'tanggal': iklan.date,
+            'lapangan': iklan.lapangan.pk, 
+        }
+        list_iklan.append(item)
+
+    return JsonResponse(list_iklan, safe=False)
+
+def show_iklan_landing_page(request):
+    data_iklan = Iklan.objects.select_related('lapangan').all()[:10]
+    
+    list_iklan = []
+    for iklan in data_iklan:
+        image_path = iklan.get_banner_url()
+        
+        item = {
+            'pk': iklan.pk,
+            'judul': iklan.judul,
+            'deskripsi': iklan.deskripsi,
+            'banner': image_path if image_path else None,
+            'tanggal': iklan.date,
+            'lapangan': iklan.lapangan.pk, 
+        }
+        list_iklan.append(item)
+
+    return JsonResponse(list_iklan, safe=False)

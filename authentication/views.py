@@ -133,49 +133,38 @@ def logout_api(request):
 # ==============================================================================
 # BAGIAN 3: Views API Khusus untuk FLUTTER (Mengembalikan Role & Cookie Session)
 # ==============================================================================
-
 @csrf_exempt
 def flutter_login_api(request):
-    """
-    API Login khusus untuk Flutter.
-    Menerima JSON: {"username": "...", "password": "..."}
-    Mengembalikan JSON dengan status, pesan, username, dan ROLE.
-    """
     if request.method != 'POST':
-         return JsonResponse({'status': False, 'message': 'Metode harus POST'}, status=405)
-         
+        return JsonResponse({'status': False, 'message': 'Metode harus POST'}, status=405)
+
     try:
         data = json.loads(request.body)
         username = data.get('username')
         password = data.get('password')
 
-        # 1. Autentikasi user
         user = authenticate(request, username=username, password=password)
 
-        if user is not None:
-            if user.is_active:
-                # 2. Login session (PENTING: Gunakan alias auth_login)
-                # Ini akan membuat dan mengirim cookie 'sessionid' ke Flutter
-                auth_login(request, user)
-
-                # 3. AMBIL ROLE (Penting untuk navigasi di Flutter)
-                try:
-                    role = user.userprofile.role
-                except AttributeError:
-                    # Fallback jika userprofile belum ada
-                    role = 'user' 
-                
-                # 4. Kembalikan respons sukses beserta ROLE
-                return JsonResponse({
-                    "status": True,
-                    "message": "Login berhasil!",
-                    "username": user.username,
-                    "role": role
-                }, status=200)
-            else:
-                return JsonResponse({"status": False, "message": "Akun dinonaktifkan."}, status=401)
-        else:
+        if user is None:
             return JsonResponse({"status": False, "message": "Username atau password salah."}, status=401)
+
+        # Login session
+        auth_login(request, user)
+
+        # 3. AMBIL ROLE (Penting untuk navigasi di Flutter)
+        try:
+            role = user.userprofile.role
+        except AttributeError:
+            # Fallback jika userprofile belum ada
+            role = 'user'
+        
+        # 4. Kembalikan respons sukses beserta ROLE
+        return JsonResponse({
+            "status": True,
+            "message": "Login berhasil!",
+            "username": user.username,
+            "role": role
+        }, status=200)
 
     except json.JSONDecodeError:
         return JsonResponse({'status': False, 'message': 'Format JSON tidak valid'}, status=400)
