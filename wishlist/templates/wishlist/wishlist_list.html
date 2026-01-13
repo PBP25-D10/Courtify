@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-10">
+  <div class="max-w-6xl mx-auto px-4">
+    <h1 class="text-3xl font-bold mb-8 text-center">Wishlist Saya</h1>
+
+    <!-- Filter -->
+    <div class="bg-white rounded-xl shadow p-6 mb-6">
+      <form method="get" class="flex flex-wrap items-end gap-4">
+        <div class="flex-1 min-w-[250px]">
+          <label class="block text-sm font-medium mb-2">Cari Nama Lapangan</label>
+          <input type="text" name="q" value="{{ search_query }}" placeholder="Cari nama lapangan..."
+            class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div class="w-48">
+          <label class="block text-sm font-medium mb-2">Kategori</label>
+          <select name="kategori" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+            <option value="">Semua Kategori</option>
+            <option value="futsal" {% if selected_kategori == 'futsal' %}selected{% endif %}>Futsal</option>
+            <option value="basket" {% if selected_kategori == 'basket' %}selected{% endif %}>Basket</option>
+            <option value="badminton" {% if selected_kategori == 'badminton' %}selected{% endif %}>Badminton</option>
+            <option value="tenis" {% if selected_kategori == 'tenis' %}selected{% endif %}>Tenis</option>
+            <option value="voli" {% if selected_kategori == 'voli' %}selected{% endif %}>Voli</option>
+            <option value="lainnya" {% if selected_kategori == 'lainnya' %}selected{% endif %}>Lainnya</option>
+          </select>
+        </div>
+
+        <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded-lg font-semibold">Terapkan</button>
+        <a href="{% url 'wishlist:wishlist_list' %}" class="bg-gray-500 text-white px-5 py-2 rounded-lg font-semibold">Reset</a>
+      </form>
+    </div>
+
+    <!-- Wishlist -->
+    {% if wishlists %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in wishlists %}
+        <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition">
+          {% if item.lapangan.foto %}
+            <img src="{{ item.lapangan.foto.url }}" alt="{{ item.lapangan.nama }}" class="w-full h-48 object-cover">
+          {% endif %}
+          <div class="p-5">
+            <h2 class="text-xl font-semibold">{{ item.lapangan.nama }}</h2>
+            <p class="text-sm text-gray-500">{{ item.lapangan.kategori }} • {{ item.lapangan.lokasi }}</p>
+            <p class="text-gray-700 font-medium">Rp {{ item.lapangan.harga_per_jam }} / jam</p>
+            <div class="mt-4 flex justify-between">
+              <a href="{% url 'booking:booking_create' item.lapangan.id_lapangan %}" class="bg-green-600 text-white px-4 py-2 rounded-lg">Booking</a>
+              <a href="{% url 'wishlist:wishlist_delete' item.id %}" class="bg-gray-500 text-white px-4 py-2 rounded-lg">Hapus</a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center text-gray-500 py-16">Belum ada lapangan di wishlist kamu.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

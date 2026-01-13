@@ -13,11 +13,25 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.urls import reverse_lazy
 # Load environment variables from .env file
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# SECURITY WARNING: don't run with debug turned on in production!
+PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
+DEBUG = not PRODUCTION
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
+CSRF_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SAMESITE = "None"
 
 
 # Quick-start development settings - unsuitable for production
@@ -26,12 +40,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-b3645r!1&(-$r$n6*uu0fjgk4g($8wvz4(cs47srd*n8*la*rg'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
-DEBUG = True
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "justin-timothy-courtify.pbp.cs.ui.ac.id", "10.0.2.2", ".stndar.dev"]
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "justin-timothy-courtify.pbp.cs.ui.ac.id"]
-
+CSRF_TRUSTED_ORIGINS = [
+    'https://justin-timothy-courtify.pbp.cs.ui.ac.id', 'http://justin-timothy-courtify.pbp.cs.ui.ac.id', 'https://*.stndar.dev'
+]
 
 # Application definition
 
@@ -43,14 +56,21 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'authentication',
-    'manajemen_lapangan',
-    'booking_lapangan',
+    'lapangan',
+    'booking',
     'main',
-
+    'artikel',
+    'wishlist',
+    'corsheaders',
 ]
+
+LOGIN_URL = reverse_lazy('authentication:login')
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -142,7 +162,18 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+# URL to serve static files
+STATIC_URL = "/static/"
+
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
+# Media files (uploads)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
