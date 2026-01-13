@@ -1,13 +1,62 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    {% block meta %} {% endblock meta %}
+    {% block meta %}{% endblock meta %}
+
+    <title>{% block title %}Courtify{% endblock title %}</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
-    {% block content %} {% endblock content %}
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-gray-900 text-white shadow-md">
+        <div class="container mx-auto flex items-center justify-between px-6 py-3">
+            <!-- Left: Brand -->
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'main:landing_page' %}" class="text-xl font-semibold hover:text-blue-400 transition">
+                    Courtify
+                </a>
+                <a href="{% url 'booking:booking_list' %}" class="hover:text-blue-400 transition">Booking</a>
+                <a href="{% url 'manajemen_lapangan:lapangan_list_owner' %}" class="hover:text-blue-400 transition">Lapangan</a>
+            </div>
+
+            <!-- Right: Auth Links -->
+            <div class="flex items-center space-x-4">
+                {% if user.is_authenticated %}
+                    <span class="text-gray-300">Halo, <span class="font-semibold">{{ user.username }}</span>!</span>
+                    <a href="{% url 'authentication:logout' %}" 
+                       class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm transition">
+                       Logout
+                    </a>
+                {% else %}
+                    <a href="{% url 'authentication:login' %}"
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition">
+                       Login
+                    </a>
+                    <a href="{% url 'authentication:register' %}"
+                       class="border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white px-3 py-1 rounded-lg text-sm transition">
+                       Register
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="flex-grow container mx-auto p-6">
+        {% block content %}{% endblock content %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 text-center py-3 mt-6 text-sm">
+        &copy; 2025 Courtify — All rights reserved.
+    </footer>
+
 </body>
 </html>

@@ -1,0 +1,48 @@
+Courtify/
+│
+├── authentication/                ← Aplikasi untuk login, register, dan profil pengguna
+│   ├── urls.py
+│   │   └── /auth/
+│   │       ├── login/             → Login user
+│   │       ├── register/          → Registrasi user baru
+│   │       └── profile/           → Halaman profil pengguna
+│   └── views.py
+│
+├── lapangan/                      ← Aplikasi untuk manajemen lapangan (khusus penyedia)
+│   ├── urls.py
+│   │   └── /manajemen/
+│   │       ├── list/              → Daftar lapangan milik penyedia
+│   │       ├── create/            → Tambah lapangan baru
+│   │       ├── update/<id>/       → Edit lapangan
+│   │       ├── delete/<id>/       → Hapus lapangan
+│   │       └── dashboard/         → Dashboard penyedia
+│   └── views.py
+│
+├── booking/                       ← Aplikasi untuk pemesanan lapangan
+│   ├── urls.py
+│   │   └── /booking/
+│   │       ├── ''                 → Daftar booking (booking_list_view)
+│   │       ├── create/            → Form pemesanan lapangan baru
+│   │       ├── <pk>/cancel/       → Batalkan booking
+│   │       ├── <pk>/update/       → Ubah booking
+│   │       └── dashboard/         → Dashboard booking (target redirect)
+│   └── views.py
+│
+├── main/                          ← Aplikasi utama (landing page, artikel, wishlist, dsb.)
+│   ├── urls.py
+│   │   └── /
+│   │       ├── ''                 → Landing page utama
+│   │       ├── artikel/           → Daftar artikel
+│   │       ├── wishlist/          → Wishlist pengguna
+│   │       ├── about/             → Tentang aplikasi
+│   │       └── contact/           → Kontak
+│   └── views.py
+│
+├── Courtify/                      ← Folder utama proyek
+│   ├── settings.py                → Pengaturan proyek (termasuk database & apps)
+│   ├── urls.py                    → Router utama (menggabungkan semua app)
+│   └── wsgi.py
+│
+├── templates/                     ← Folder global untuk template HTML
+│
+└── db.sqlite3                     ← Database lokal (development)
